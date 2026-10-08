@@ -1,0 +1,10 @@
+{
+  "name": "SecondMedic Staff Portal",
+  "description": "Internal HR and staff portal for healthcare staff covering attendance punch, multi-level leave approvals, team calendars, KPI reviews, and confidential payroll management.",
+  "requestFramePermissions": [
+    "geolocation"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
