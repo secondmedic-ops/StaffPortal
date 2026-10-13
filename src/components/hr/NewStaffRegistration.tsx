@@ -333,7 +333,7 @@ export const NewStaffRegistration: React.FC = () => {
               <button
                 type="button"
                 onClick={() => i < step && setStep(i)}
-                className={`w-full flex flex-col sm:flex-row items-center gap-1.5 p-2 rounded-lg text-[11px] font-semibold border transition-colors ${
+                className={`w-full flex flex-col sm:flex-row items-center gap-1.5 p-2 rounded-lg text-[12.5px] font-semibold border transition-colors ${
                   state === 'current'
                     ? 'bg-teal-700 text-white border-teal-700'
                     : state === 'done'
@@ -465,7 +465,7 @@ export const NewStaffRegistration: React.FC = () => {
             {field('IFSC', <input value={form.bankIfsc} onChange={e => set('bankIfsc', e.target.value.toUpperCase())} maxLength={11} className={`${inputClass} font-mono`} placeholder="HDFC0001234" />)}
             {field('Account number', <input value={form.bankAccountNumber} onChange={e => set('bankAccountNumber', e.target.value.replace(/\s/g, ''))} className={`${inputClass} font-mono`} />)}
             {field('Confirm account number', <input value={form.bankAccountConfirm} onChange={e => set('bankAccountConfirm', e.target.value.replace(/\s/g, ''))} onPaste={e => e.preventDefault()} className={`${inputClass} font-mono`} />)}
-            <p className="sm:col-span-2 text-[11px] text-slate-500">
+            <p className="sm:col-span-2 text-[12.5px] text-slate-500">
               Visible only to the employee, HR and Accounts. Full Aadhaar numbers are never stored.
             </p>
           </div>
@@ -475,7 +475,7 @@ export const NewStaffRegistration: React.FC = () => {
           <div className="space-y-5">
             <div>
               <h3 className="text-xs font-bold text-slate-800 dark:text-slate-200 mb-2">Portal access</h3>
-              <p className="text-[11px] text-slate-500 mb-2">
+              <p className="text-[12.5px] text-slate-500 mb-2">
                 Everyone gets Employee self-service. Manager approvals switch on automatically once someone reports to them.
               </p>
               <div className="flex flex-wrap gap-2">
@@ -521,7 +521,7 @@ export const NewStaffRegistration: React.FC = () => {
                 </label>
               </div>
               {ctcSplit && (
-                <div className="mt-3 grid grid-cols-3 gap-2 text-[11px]">
+                <div className="mt-3 grid grid-cols-3 gap-2 text-[12.5px]">
                   {[
                     ['Basic / month', ctcSplit.basicMonthly],
                     ['HRA / month', ctcSplit.hraMonthly],

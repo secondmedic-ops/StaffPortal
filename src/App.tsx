@@ -63,7 +63,7 @@ import { CeoDashboard } from './components/ceo/CeoDashboard';
 import { UserManagement } from './components/admin/UserManagement';
 import { AuditLog } from './components/admin/AuditLog';
 
-import { AlertTriangle, Stethoscope } from 'lucide-react';
+import { Lock } from 'lucide-react';
 
 const MainPortal: React.FC = () => {
   const {
@@ -76,6 +76,11 @@ const MainPortal: React.FC = () => {
     isCeo,
     isAdmin
   } = useAuth();
+  const [menuOpen, setMenuOpen] = React.useState(false);
+
+  React.useEffect(() => {
+    window.scrollTo({ top: 0 });
+  }, [activeNav]);
 
   if (!currentUser) {
     return null;
@@ -211,42 +216,39 @@ const MainPortal: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col font-sans text-slate-800 dark:text-slate-100 antialiased selection:bg-teal-100 selection:text-teal-900 dark:selection:bg-teal-900 dark:selection:text-teal-100 transition-colors">
-      {/* Top Bar */}
-      <Header />
+    <div className="min-h-screen flex bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100">
+      <Sidebar />
 
-      {/* App Body with fixed sidebar and scrollable content */}
-      <div className="flex-1 flex overflow-hidden">
-        {/* Desktop Sidebar */}
-        <Sidebar />
-
-        {/* Main Content Area */}
-        <main className="flex-1 overflow-y-auto pb-20 md:pb-6 focus:outline-none bg-slate-50 dark:bg-slate-950 transition-colors">
+      <div className="flex-1 min-w-0 flex flex-col">
+        <Header onOpenMenu={() => setMenuOpen(true)} />
+        <main className="flex-1 pb-24 md:pb-10 focus:outline-none" key={activeNav}>
           {renderContent()}
         </main>
       </div>
 
-      {/* Mobile Navigation Drawer */}
-      <MobileNav />
-
-      {/* Global Toast System */}
+      <MobileNav open={menuOpen} onOpenChange={setMenuOpen} />
       <ToastContainer />
     </div>
   );
 };
 
+const ROLE_NAMES: Record<string, string> = {
+  MANAGER: 'Manager',
+  HR: 'HR',
+  ACCOUNTS: 'Accounts',
+  IT: 'IT',
+  CEO: 'CEO',
+  SYSTEM_ADMIN: 'System admin'
+};
+
 const UnauthorizedView: React.FC<{ role: string }> = ({ role }) => (
-  <div className="p-12 text-center max-w-lg mx-auto space-y-4">
-    <div className="w-12 h-12 rounded-full bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-400 flex items-center justify-center mx-auto">
-      <AlertTriangle className="w-6 h-6" />
+  <div className="px-6 py-20 text-center max-w-md mx-auto">
+    <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 flex items-center justify-center mx-auto">
+      <Lock className="w-5 h-5" />
     </div>
-    <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">Access Restricted</h2>
-    <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-      Your account does not possess the <strong>{role}</strong> entitlement.
-      In accordance with SecondMedic zero-trust security separation, this module requires explicit authorization.
-    </p>
-    <p className="text-[11px] text-teal-800 dark:text-teal-300 bg-teal-50 dark:bg-teal-950/50 p-2.5 rounded-lg border border-teal-200 dark:border-teal-800">
-      Need this access? Ask HR or your System Administrator to grant the role.
+    <h2 className="mt-4 text-lg font-semibold text-slate-900 dark:text-slate-100">This page needs the {ROLE_NAMES[role] ?? role} role</h2>
+    <p className="mt-2 text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
+      Ask HR or a system admin to add the role to your account, then sign in again.
     </p>
   </div>
 );

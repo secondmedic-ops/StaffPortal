@@ -3,7 +3,7 @@ import { Smartphone, CheckCircle, MessageSquare, Bell, Fingerprint, Globe } from
 
 export const MobileCapabilitiesView: React.FC = () => {
   return (
-    <div className="p-6 space-y-6 max-w-7xl mx-auto">
+    <div className="px-4 sm:px-8 py-6 sm:py-8 max-w-7xl mx-auto space-y-6">
       <div>
         <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
           <Smartphone className="w-6 h-6 text-teal-600 dark:text-teal-400" />
@@ -23,7 +23,7 @@ export const MobileCapabilitiesView: React.FC = () => {
           <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
             Install directly to your iPhone or Android home screen from browser settings for native app performance without app store friction.
           </p>
-          <div className="pt-2 text-[11px] text-teal-600 dark:text-teal-400 font-semibold flex items-center gap-1">
+          <div className="pt-2 text-[12.5px] text-teal-600 dark:text-teal-400 font-semibold flex items-center gap-1">
             <CheckCircle className="w-3.5 h-3.5" /> ServiceWorker cached
           </div>
         </div>
@@ -36,7 +36,7 @@ export const MobileCapabilitiesView: React.FC = () => {
           <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
             Instant WhatsApp alerts for leave requests, payslip dispatches, shift reminders, and urgent patient escalations.
           </p>
-          <div className="pt-2 text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1">
+          <div className="pt-2 text-[12.5px] text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1">
             <CheckCircle className="w-3.5 h-3.5" /> API Connected (Twilio / WATI)
           </div>
         </div>
@@ -49,7 +49,7 @@ export const MobileCapabilitiesView: React.FC = () => {
           <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
             Secure attendance check-ins using FaceID / TouchID browser webauthn and GPS fence verification at clinic locations.
           </p>
-          <div className="pt-2 text-[11px] text-blue-600 dark:text-blue-400 font-semibold flex items-center gap-1">
+          <div className="pt-2 text-[12.5px] text-blue-600 dark:text-blue-400 font-semibold flex items-center gap-1">
             <CheckCircle className="w-3.5 h-3.5" /> GPS Geofence Active (100m)
           </div>
         </div>
@@ -59,17 +59,17 @@ export const MobileCapabilitiesView: React.FC = () => {
         <h2 className="text-sm font-bold text-slate-900 dark:text-slate-100">Mobile App Installation Guide</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-xs text-slate-600 dark:text-slate-300">
           <div className="space-y-2">
-            <div className="w-6 h-6 rounded-full bg-teal-700 dark:bg-teal-600 text-white flex items-center justify-center font-bold text-[11px]">1</div>
+            <div className="w-6 h-6 rounded-full bg-teal-700 dark:bg-teal-600 text-white flex items-center justify-center font-bold text-[12.5px]">1</div>
             <h4 className="font-semibold text-slate-900 dark:text-slate-100">Open in Mobile Browser</h4>
             <p>Open Safari on iOS or Google Chrome on Android and navigate to the portal URL.</p>
           </div>
           <div className="space-y-2">
-            <div className="w-6 h-6 rounded-full bg-teal-700 dark:bg-teal-600 text-white flex items-center justify-center font-bold text-[11px]">2</div>
+            <div className="w-6 h-6 rounded-full bg-teal-700 dark:bg-teal-600 text-white flex items-center justify-center font-bold text-[12.5px]">2</div>
             <h4 className="font-semibold text-slate-900 dark:text-slate-100">Tap Share or Menu</h4>
             <p>On iOS, tap the Share icon at the bottom. On Android, tap the 3-dot menu in top right.</p>
           </div>
           <div className="space-y-2">
-            <div className="w-6 h-6 rounded-full bg-teal-700 dark:bg-teal-600 text-white flex items-center justify-center font-bold text-[11px]">3</div>
+            <div className="w-6 h-6 rounded-full bg-teal-700 dark:bg-teal-600 text-white flex items-center justify-center font-bold text-[12.5px]">3</div>
             <h4 className="font-semibold text-slate-900 dark:text-slate-100">Select "Add to Home Screen"</h4>
             <p>Confirm name as "SecondMedic Staff" and launch directly like a native mobile app.</p>
           </div>

@@ -32,7 +32,7 @@ export const ThemeToggle: React.FC<ThemeToggleProps> = ({ variant = 'compact', c
           <span className="font-medium">{isDark ? 'Dark Mode' : 'Light Mode'}</span>
         </div>
         <span
-          className={`text-[10px] px-1.5 py-0.5 rounded font-mono font-semibold uppercase ${
+          className={`text-[11.5px] px-1.5 py-0.5 rounded font-mono font-semibold uppercase ${
             isDark ? 'bg-slate-700 text-teal-300' : 'bg-white text-slate-600 shadow-2xs'
           }`}
         >

@@ -32,7 +32,7 @@ export const ItDashboard: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="p-6 max-w-7xl mx-auto">
+      <div className="px-4 sm:px-8 py-6 sm:py-8 max-w-7xl mx-auto">
         <SkeletonLoader rows={6} />
       </div>
     );
@@ -50,7 +50,7 @@ export const ItDashboard: React.FC = () => {
   const inUse = (list: Asset[]) => `${list.filter(a => a.status === 'ASSIGNED').length} issued · ${list.filter(a => a.status === 'IN_STOCK').length} in stock`;
 
   return (
-    <div className="p-4 sm:p-6 max-w-7xl mx-auto space-y-6">
+    <div className="px-4 sm:px-8 py-6 sm:py-8 max-w-7xl mx-auto space-y-6">
       <PageHeader title="IT Operations Overview" subtitle="Company devices, numbers and service requests at a glance" />
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -78,7 +78,7 @@ export const ItDashboard: React.FC = () => {
                   <li key={r.id} className="py-2.5 flex items-center gap-3 text-xs">
                     <Icon className="w-4 h-4 text-teal-700 dark:text-teal-400 shrink-0" />
                     <span className="flex-1 truncate text-slate-800 dark:text-slate-200">{r.title}</span>
-                    <span className={`text-[10px] font-bold ${r.priority === 'HIGH' ? 'text-rose-600' : 'text-slate-400'}`}>{r.priority}</span>
+                    <span className={`text-[11.5px] font-bold ${r.priority === 'HIGH' ? 'text-rose-600' : 'text-slate-400'}`}>{r.priority}</span>
                   </li>
                 );
               })}

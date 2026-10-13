@@ -64,25 +64,25 @@ export const MyLeaveRequests: React.FC = () => {
   });
 
   return (
-    <div className="p-4 sm:p-6 max-w-7xl mx-auto space-y-6">
+    <div className="px-4 sm:px-8 py-6 sm:py-8 max-w-7xl mx-auto space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-xl border border-slate-200 shadow-xs">
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-1">
         <div>
-          <h1 className="text-xl font-bold text-slate-900">My Leave Applications</h1>
-          <p className="text-xs text-slate-500 mt-1">
+          <h1 className="text-[22px] sm:text-2xl font-semibold text-slate-900 dark:text-slate-50">My Leave Applications</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-[70ch]">
             Track status, multi-tier approval timeline, and withdraw active requests
           </p>
         </div>
 
         <div className="flex items-center gap-3">
           {/* Status Filter */}
-          <div className="flex items-center gap-1.5 bg-slate-100 p-1 rounded-lg border border-slate-200 text-xs">
+          <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 p-1 rounded-lg border border-slate-200 dark:border-slate-800 text-xs">
             {['ALL', 'PENDING', 'APPROVED', 'REJECTED'].map(st => (
               <button
                 key={st}
                 onClick={() => setFilterStatus(st)}
                 className={`px-3 py-1 rounded-md font-medium transition-colors ${
-                  filterStatus === st ? 'bg-white text-teal-800 shadow-xs font-bold' : 'text-slate-600 hover:text-slate-900'
+                  filterStatus === st ? 'bg-white dark:bg-slate-900 text-teal-800 dark:text-teal-300 shadow-xs font-bold' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
                 }`}
               >
                 {st}
@@ -103,10 +103,10 @@ export const MyLeaveRequests: React.FC = () => {
       {loading ? (
         <SkeletonLoader type="table" rows={4} />
       ) : filtered.length === 0 ? (
-        <div className="bg-white p-12 text-center rounded-xl border border-slate-200 shadow-xs">
+        <div className="bg-white dark:bg-slate-900 p-12 text-center rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs">
           <Calendar className="w-10 h-10 text-slate-300 mx-auto mb-2" />
-          <h3 className="text-sm font-bold text-slate-800">No Leave Requests Found</h3>
-          <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
+          <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200">No Leave Requests Found</h3>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-sm mx-auto">
             {filterStatus === 'ALL'
               ? 'You have not submitted any leave applications yet.'
               : `No requests with status "${filterStatus}".`}
@@ -119,10 +119,10 @@ export const MyLeaveRequests: React.FC = () => {
           </button>
         </div>
       ) : (
-        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-xs">
+        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-xs">
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs text-slate-700">
-              <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 uppercase tracking-wider text-[11px] font-bold">
+            <table className="w-full text-left text-xs text-slate-700 dark:text-slate-300">
+              <thead className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 text-[12.5px] font-bold">
                 <tr>
                   <th className="px-5 py-3">Leave Type</th>
                   <th className="px-5 py-3">Dates</th>
@@ -133,42 +133,42 @@ export const MyLeaveRequests: React.FC = () => {
                   <th className="px-5 py-3 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                 {filtered.map(req => {
                   const isExpanded = expandedId === req.id;
                   return (
                     <React.Fragment key={req.id}>
                       <tr
                         onClick={() => setExpandedId(isExpanded ? null : req.id)}
-                        className={`hover:bg-slate-50/80 cursor-pointer transition-colors ${
-                          isExpanded ? 'bg-teal-50/20' : ''
+                        className={`hover:bg-slate-50/80 dark:hover:bg-slate-800/50 cursor-pointer transition-colors ${
+                          isExpanded ? 'bg-teal-50/20 dark:bg-teal-950/40' : ''
                         }`}
                       >
-                        <td className="px-5 py-4 font-semibold text-slate-900">
-                          <span className="inline-block font-bold text-teal-800 mr-1.5">
+                        <td className="px-5 py-4 font-semibold text-slate-900 dark:text-slate-100">
+                          <span className="inline-block font-bold text-teal-800 dark:text-teal-300 mr-1.5">
                             [{req.leaveTypeCode}]
                           </span>
                           {req.leaveTypeName}
                         </td>
                         <td className="px-5 py-4">
-                          <div className="font-medium text-slate-900">
+                          <div className="font-medium text-slate-900 dark:text-slate-100">
                             {formatDate(req.fromDate)} – {formatDate(req.toDate)}
                           </div>
                           {(req.fromHalf || req.toHalf) && (
-                            <span className="text-[10px] text-amber-700 font-medium">
+                            <span className="text-[11.5px] text-amber-700 dark:text-amber-300 font-medium">
                               Half day tagged
                             </span>
                           )}
                         </td>
-                        <td className="px-5 py-4 font-bold text-slate-900">
+                        <td className="px-5 py-4 font-bold text-slate-900 dark:text-slate-100">
                           {req.totalDays} {req.totalDays === 1 ? 'day' : 'days'}
                         </td>
-                        <td className="px-5 py-4 text-slate-500 font-mono">
+                        <td className="px-5 py-4 text-slate-500 dark:text-slate-400 font-mono">
                           {formatDate(req.appliedAt)}
                         </td>
                         <td className="px-5 py-4">
-                          <span className="font-medium text-slate-800">{req.currentApproverName}</span>
-                          <span className="block text-[10px] text-slate-400">Level {req.currentLevel}</span>
+                          <span className="font-medium text-slate-800 dark:text-slate-200">{req.currentApproverName}</span>
+                          <span className="block text-[11.5px] text-slate-400 dark:text-slate-500">Level {req.currentLevel}</span>
                         </td>
                         <td className="px-5 py-4">
                           <StatusPill status={req.status} />
@@ -179,7 +179,7 @@ export const MyLeaveRequests: React.FC = () => {
                               e.stopPropagation();
                               setExpandedId(isExpanded ? null : req.id);
                             }}
-                            className="p-1 rounded text-slate-400 hover:text-slate-600"
+                            className="p-1 rounded text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-400"
                           >
                             {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                           </button>
@@ -188,24 +188,24 @@ export const MyLeaveRequests: React.FC = () => {
 
                       {/* Expandable Row with Timeline & Reason */}
                       {isExpanded && (
-                        <tr className="bg-slate-50/50">
-                          <td colSpan={7} className="px-6 py-4 border-t border-slate-100">
+                        <tr className="bg-slate-50/50 dark:bg-slate-800/50">
+                          <td colSpan={7} className="px-6 py-4 border-t border-slate-100 dark:border-slate-800">
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
                               {/* Reason & Details */}
                               <div className="space-y-2">
-                                <span className="font-bold text-slate-700 block text-[11px] uppercase tracking-wider">
+                                <span className="font-bold text-slate-700 dark:text-slate-300 block text-[12.5px]">
                                   Application Reason
                                 </span>
-                                <p className="text-slate-700 bg-white p-3 rounded-lg border border-slate-200">
+                                <p className="text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-900 p-3 rounded-lg border border-slate-200 dark:border-slate-800">
                                   {req.reason}
                                 </p>
                                 {req.contactDuring && (
-                                  <p className="text-[11px] text-slate-500">
+                                  <p className="text-[12.5px] text-slate-500 dark:text-slate-400">
                                     <span className="font-medium">Emergency Contact:</span> {req.contactDuring}
                                   </p>
                                 )}
                                 {req.documentName && (
-                                  <div className="flex items-center gap-2 text-teal-800 bg-white p-2 rounded-lg border border-slate-200 w-fit">
+                                  <div className="flex items-center gap-2 text-teal-800 dark:text-teal-300 bg-white dark:bg-slate-900 p-2 rounded-lg border border-slate-200 dark:border-slate-800 w-fit">
                                     <FileText className="w-4 h-4" />
                                     <span className="font-medium">{req.documentName}</span>
                                   </div>
@@ -214,35 +214,35 @@ export const MyLeaveRequests: React.FC = () => {
 
                               {/* Approver Timeline */}
                               <div className="md:col-span-2 space-y-2">
-                                <span className="font-bold text-slate-700 block text-[11px] uppercase tracking-wider">
+                                <span className="font-bold text-slate-700 dark:text-slate-300 block text-[12.5px]">
                                   Approval Chain & Audit Trail
                                 </span>
                                 <div className="space-y-2">
                                   {req.timeline.map((step, idx) => (
                                     <div
                                       key={idx}
-                                      className="flex items-start gap-3 p-2.5 rounded-lg bg-white border border-slate-200"
+                                      className="flex items-start gap-3 p-2.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800"
                                     >
                                       <div className="mt-0.5">
                                         {step.action === 'APPROVED' ? (
-                                          <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                                          <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                                         ) : step.action === 'REJECTED' ? (
-                                          <XCircle className="w-4 h-4 text-rose-600" />
+                                          <XCircle className="w-4 h-4 text-rose-600 dark:text-rose-400" />
                                         ) : (
                                           <Clock className="w-4 h-4 text-amber-500" />
                                         )}
                                       </div>
                                       <div className="flex-1">
                                         <div className="flex items-center justify-between">
-                                          <span className="font-semibold text-slate-900">
+                                          <span className="font-semibold text-slate-900 dark:text-slate-100">
                                             {step.approverName} ({step.approverRole})
                                           </span>
-                                          <span className="text-[10px] text-slate-400 font-mono">
+                                          <span className="text-[11.5px] text-slate-400 dark:text-slate-500 font-mono">
                                             {step.actedAt ? formatDate(step.actedAt) : 'Pending Action'}
                                           </span>
                                         </div>
                                         {step.remarks && (
-                                          <p className="text-slate-600 mt-1 italic">
+                                          <p className="text-slate-600 dark:text-slate-400 mt-1 italic">
                                             "{step.remarks}"
                                           </p>
                                         )}
@@ -257,7 +257,7 @@ export const MyLeaveRequests: React.FC = () => {
                                     <button
                                       onClick={() => handleWithdraw(req.id)}
                                       disabled={withdrawingId === req.id}
-                                      className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 transition-colors flex items-center gap-1.5"
+                                      className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-950/60 border border-rose-200 dark:border-rose-800/70 transition-colors flex items-center gap-1.5"
                                     >
                                       <XCircle className="w-3.5 h-3.5" />
                                       {withdrawingId === req.id ? 'Cancelling...' : 'Withdraw / Cancel Request'}

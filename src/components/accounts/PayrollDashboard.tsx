@@ -89,17 +89,17 @@ export const PayrollDashboard: React.FC = () => {
   };
 
   return (
-    <div className="p-4 sm:p-6 max-w-7xl mx-auto space-y-6">
+    <div className="px-4 sm:px-8 py-6 sm:py-8 max-w-7xl mx-auto space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-xl border border-slate-200 shadow-xs">
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-1">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-xl font-bold text-slate-900">Accounts & Compensation Console</h1>
-            <span className="text-xs px-2 py-0.5 rounded font-bold bg-purple-50 text-purple-800 border border-purple-200 flex items-center gap-1">
+            <h1 className="text-[22px] sm:text-2xl font-semibold text-slate-900 dark:text-slate-50">Accounts & Compensation Console</h1>
+            <span className="text-xs px-2 py-0.5 rounded font-bold bg-purple-50 dark:bg-purple-950/40 text-purple-800 dark:text-purple-300 border border-purple-200 dark:border-purple-800/70 flex items-center gap-1">
               <Lock className="w-3 h-3" /> Isolated Schema
             </span>
           </div>
-          <p className="text-xs text-slate-500 mt-1">
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-[70ch]">
             Payroll processing, salary structures, tax deductions & confidential payslip disbursement
           </p>
         </div>
@@ -119,7 +119,7 @@ export const PayrollDashboard: React.FC = () => {
         <div className="flex items-start gap-3">
           <ShieldAlert className="w-5 h-5 text-purple-400 flex-shrink-0 mt-0.5" />
           <div>
-            <h4 className="text-xs font-bold uppercase tracking-wider text-purple-200">
+            <h4 className="text-xs font-bold text-purple-200">
               Zero-Trust Architecture: Confidential to Accounts
             </h4>
             <p className="text-xs text-purple-100/90 mt-1 leading-relaxed max-w-3xl">
@@ -133,15 +133,15 @@ export const PayrollDashboard: React.FC = () => {
       {loading ? (
         <SkeletonLoader type="table" rows={4} />
       ) : (
-        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-xs">
-          <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
-            <h3 className="text-sm font-bold text-slate-900">Disbursement Cycles ({year})</h3>
-            <span className="text-xs text-slate-500">Auto-synced with frozen monthly_attendance_summary</span>
+        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-xs">
+          <div className="px-5 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+            <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">Disbursement Cycles ({year})</h3>
+            <span className="text-xs text-slate-500 dark:text-slate-400">Auto-synced with frozen monthly_attendance_summary</span>
           </div>
 
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs text-slate-700">
-              <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 uppercase tracking-wider text-[11px] font-bold">
+            <table className="w-full text-left text-xs text-slate-700 dark:text-slate-300">
+              <thead className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 text-[12.5px] font-bold">
                 <tr>
                   <th className="px-5 py-3.5">Payroll Period</th>
                   <th className="px-5 py-3.5">Status</th>
@@ -152,14 +152,14 @@ export const PayrollDashboard: React.FC = () => {
                   <th className="px-5 py-3.5 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                 {runs.map(run => (
-                  <tr key={run.id} className="hover:bg-slate-50/80 transition-colors">
+                  <tr key={run.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors">
                     <td className="px-5 py-4">
-                      <div className="font-bold text-slate-900">
+                      <div className="font-bold text-slate-900 dark:text-slate-100">
                         {getMonthName(run.month)} {run.year}
                       </div>
-                      <div className="text-[11px] text-slate-400 font-mono">
+                      <div className="text-[12.5px] text-slate-400 dark:text-slate-500 font-mono">
                         Run ID: #{run.id} • Processed by {run.processedBy}
                       </div>
                     </td>
@@ -169,20 +169,20 @@ export const PayrollDashboard: React.FC = () => {
                     <td className="px-5 py-4 text-center font-bold font-mono">
                       {run.totalEmployees}
                     </td>
-                    <td className="px-5 py-4 text-right font-mono font-medium text-slate-900">
+                    <td className="px-5 py-4 text-right font-mono font-medium text-slate-900 dark:text-slate-100">
                       ₹{run.totalGross.toLocaleString('en-IN')}
                     </td>
-                    <td className="px-5 py-4 text-right font-mono font-medium text-rose-700">
+                    <td className="px-5 py-4 text-right font-mono font-medium text-rose-700 dark:text-rose-300">
                       ₹{run.totalDeductions.toLocaleString('en-IN')}
                     </td>
-                    <td className="px-5 py-4 text-right font-mono font-extrabold text-teal-800 text-sm">
+                    <td className="px-5 py-4 text-right font-mono font-extrabold text-teal-800 dark:text-teal-300 text-sm">
                       ₹{run.totalNet.toLocaleString('en-IN')}
                     </td>
                     <td className="px-5 py-4 text-right">
                       <div className="flex items-center justify-end gap-2">
                         <button
                           onClick={() => setActiveNav('payslip-generator')}
-                          className="px-2.5 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-100 text-slate-700 font-medium"
+                          className="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 font-medium"
                         >
                           View Slips
                         </button>
@@ -214,9 +214,9 @@ export const PayrollDashboard: React.FC = () => {
           subtitle="Reads locked HR attendance and computes salary components and LOP deductions"
         >
           <div className="space-y-4">
-            <div className="p-3 rounded-lg bg-teal-50 border border-teal-200 text-xs text-teal-900">
+            <div className="p-3 rounded-lg bg-teal-50 dark:bg-teal-950/40 border border-teal-200 dark:border-teal-800/70 text-xs text-teal-900 dark:text-teal-200">
               <span className="font-bold block mb-1">Pre-flight Verification:</span>
-              <ul className="list-disc list-inside space-y-0.5 text-teal-800">
+              <ul className="list-disc list-inside space-y-0.5 text-teal-800 dark:text-teal-300">
                 <li>HR Attendance Ledger for August 2026: <strong>LOCKED & CERTIFIED</strong></li>
                 <li>Active Salary Structures: <strong>Configured</strong></li>
                 <li>Statutory Tax & PT Rates: <strong>2026-2027 Slab Applied</strong></li>
@@ -224,11 +224,11 @@ export const PayrollDashboard: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">Select Month</label>
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Select Month</label>
               <select
                 value={runMonth}
                 onChange={e => setRunMonth(Number(e.target.value))}
-                className="w-full text-xs p-2.5 rounded-lg border border-slate-300 font-medium"
+                className="w-full text-xs p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 font-medium"
               >
                 <option value={8}>August 2026 (Ready for processing)</option>
                 <option value={9}>September 2026 (In Progress)</option>
@@ -239,7 +239,7 @@ export const PayrollDashboard: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setShowRunModal(false)}
-                className="px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-100 rounded"
+                className="px-3 py-1.5 text-xs text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded"
               >
                 Cancel
               </button>
@@ -265,10 +265,10 @@ export const PayrollDashboard: React.FC = () => {
           subtitle="This releases finalized salary slips into employees' encrypted Self-Service portals"
         >
           <div className="space-y-4">
-            <p className="text-xs text-slate-600 leading-relaxed">
+            <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
               You are about to publish <strong>{publishingRun.totalEmployees} payslips</strong> totaling <strong>₹{publishingRun.totalNet.toLocaleString('en-IN')}</strong>. Once published:
             </p>
-            <ul className="text-xs text-slate-600 list-disc list-inside space-y-1 bg-slate-50 p-3 rounded-lg border border-slate-200">
+            <ul className="text-xs text-slate-600 dark:text-slate-400 list-disc list-inside space-y-1 bg-slate-50 dark:bg-slate-800/50 p-3 rounded-lg border border-slate-200 dark:border-slate-800">
               <li>Employees can immediately view and download their encrypted payslip PDFs.</li>
               <li>Bank disbursement NEFT/RTGS batch file is sealed for bank upload.</li>
               <li>Salary register is locked against accidental modification.</li>
@@ -278,7 +278,7 @@ export const PayrollDashboard: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setPublishingRun(null)}
-                className="px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-100 rounded"
+                className="px-3 py-1.5 text-xs text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded"
               >
                 Cancel
               </button>

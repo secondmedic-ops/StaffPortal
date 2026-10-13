@@ -12,7 +12,7 @@ export const BenefitsManagement: React.FC = () => {
   ];
 
   return (
-    <div className="p-6 space-y-6 max-w-7xl mx-auto">
+    <div className="px-4 sm:px-8 py-6 sm:py-8 max-w-7xl mx-auto space-y-6">
       <div>
         <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
           <HeartHandshake className="w-6 h-6 text-teal-600 dark:text-teal-400" />
@@ -30,7 +30,7 @@ export const BenefitsManagement: React.FC = () => {
             <Shield className="w-5 h-5 text-teal-600 dark:text-teal-400" />
           </div>
           <div className="text-lg font-bold text-slate-900 dark:text-slate-100">Care Health Supreme</div>
-          <p className="text-[11px] text-slate-500 mt-1">Policy #SM-MED-2026-90 (Valid till Mar 2027)</p>
+          <p className="text-[12.5px] text-slate-500 mt-1">Policy #SM-MED-2026-90 (Valid till Mar 2027)</p>
         </div>
         <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs">
           <div className="flex items-center justify-between mb-3">
@@ -38,7 +38,7 @@ export const BenefitsManagement: React.FC = () => {
             <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
           </div>
           <div className="text-2xl font-bold text-slate-900 dark:text-slate-100">98.6%</div>
-          <p className="text-[11px] text-emerald-600 dark:text-emerald-400 mt-1">142 of 144 eligible staff covered</p>
+          <p className="text-[12.5px] text-emerald-600 dark:text-emerald-400 mt-1">142 of 144 eligible staff covered</p>
         </div>
         <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs">
           <div className="flex items-center justify-between mb-3">
@@ -46,7 +46,7 @@ export const BenefitsManagement: React.FC = () => {
             <Gift className="w-5 h-5 text-blue-600 dark:text-blue-400" />
           </div>
           <div className="text-2xl font-bold text-slate-900 dark:text-slate-100">₹4.8L</div>
-          <p className="text-[11px] text-slate-500 mt-1">Processed across 98 claims</p>
+          <p className="text-[12.5px] text-slate-500 mt-1">Processed across 98 claims</p>
         </div>
       </div>
 
@@ -56,7 +56,7 @@ export const BenefitsManagement: React.FC = () => {
             <div>
               <div className="flex items-center justify-between mb-2">
                 <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">{b.title}</h3>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
+                <span className="px-2 py-0.5 rounded-full text-[11.5px] font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
                   {b.status}
                 </span>
               </div>

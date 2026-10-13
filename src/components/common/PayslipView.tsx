@@ -25,14 +25,14 @@ export const AttendanceStrip: React.FC<{ days: PayDay[] }> = ({ days }) => (
         <div
           key={d.date}
           title={`${d.date}: ${d.kind.replace(/_/g, ' ').toLowerCase()}${d.late ? ' · late' : ''}${d.note ? ` · ${d.note}` : ''}`}
-          className={`relative w-5 h-6 rounded-sm text-[8px] leading-6 text-center text-white font-bold ${DAY_STYLE[d.kind]}`}
+          className={`relative w-5 h-6 rounded-sm text-[11.5px] leading-6 text-center text-white font-bold ${DAY_STYLE[d.kind]}`}
         >
           {Number(d.date.slice(8))}
           {d.late && <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-orange-500 ring-1 ring-white" />}
         </div>
       ))}
     </div>
-    <div className="flex flex-wrap gap-x-3 gap-y-1 mt-2 text-[10px] text-slate-500">
+    <div className="flex flex-wrap gap-x-3 gap-y-1 mt-2 text-[11.5px] text-slate-500">
       {(
         [
           ['PRESENT', 'Present'],
@@ -102,14 +102,14 @@ export const PayslipView: React.FC<PayslipViewProps> = ({ entry, employee, bank,
             </div>
             <div>
               <div className="font-bold text-sm">SecondMedic</div>
-              <div className="text-[10px] text-slate-500">Salary slip · computed from attendance</div>
+              <div className="text-[11.5px] text-slate-500">Salary slip · computed from attendance</div>
             </div>
           </div>
           <div className="text-right">
             <div className="font-bold text-sm">
               {getMonthName(entry.month)} {entry.year}
             </div>
-            {status && <div className="text-[10px] text-slate-500 uppercase">{status}</div>}
+            {status && <div className="text-[11.5px] text-slate-500 uppercase">{status}</div>}
           </div>
         </div>
 
@@ -132,7 +132,7 @@ export const PayslipView: React.FC<PayslipViewProps> = ({ entry, employee, bank,
             ['LOP days', entry.lopDays]
           ].map(([l, v]) => (
             <div key={l as string} className={`p-2 rounded border ${l === 'LOP days' && Number(v) > 0 ? 'border-rose-200 bg-rose-50' : 'border-slate-200 bg-slate-50'}`}>
-              <div className="text-[10px] text-slate-500">{l}</div>
+              <div className="text-[11.5px] text-slate-500">{l}</div>
               <div className="font-bold text-sm">{v}</div>
             </div>
           ))}
@@ -141,7 +141,7 @@ export const PayslipView: React.FC<PayslipViewProps> = ({ entry, employee, bank,
         {days && days.length > 0 && <AttendanceStrip days={days} />}
 
         <table className="w-full border border-slate-200">
-          <thead className="bg-slate-50 text-[10px] uppercase text-slate-600">
+          <thead className="bg-slate-50 text-[11.5px] uppercase text-slate-600">
             <tr>
               <th className="text-left px-2 py-1.5">Earnings</th>
               <th className="text-right px-2 py-1.5">Amount</th>
@@ -169,19 +169,19 @@ export const PayslipView: React.FC<PayslipViewProps> = ({ entry, employee, bank,
 
         <div className="flex flex-col sm:flex-row justify-between gap-2 p-3 rounded-lg bg-teal-50 border border-teal-200">
           <div>
-            <div className="text-[10px] uppercase text-teal-800 font-bold">Net pay</div>
-            <div className="text-[11px] text-teal-900 italic">{amountInWords(entry.netPay)}</div>
+            <div className="text-[11.5px] uppercase text-teal-800 font-bold">Net pay</div>
+            <div className="text-[12.5px] text-teal-900 italic">{amountInWords(entry.netPay)}</div>
           </div>
           <div className="text-xl font-bold text-teal-900">{formatInr(entry.netPay)}</div>
         </div>
 
         {entry.employerContributions.length > 0 && (
-          <div className="text-[10px] text-slate-500">
+          <div className="text-[11.5px] text-slate-500">
             Employer contributions (part of CTC, not deducted):{' '}
             {entry.employerContributions.map(c => `${c.label} ${formatInr(c.amount)}`).join(' · ')}
           </div>
         )}
-        <div className="text-[10px] text-slate-400 border-t border-slate-100 pt-2">
+        <div className="text-[11.5px] text-slate-400 border-t border-slate-100 pt-2">
           Pay is prorated on paid days. Absence without approved leave reduces paid days; a missing punch-out counts as a half day, and every {ATTENDANCE_POLICY.lateMarksPerHalfDayLop} late marks deduct half a day.
         </div>
       </div>

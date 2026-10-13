@@ -81,7 +81,7 @@ export const PayrollApproval: React.FC = () => {
   const lop = list.reduce((s, e) => s + e.lopDays, 0);
 
   return (
-    <div className="p-4 sm:p-6 max-w-7xl mx-auto space-y-6">
+    <div className="px-4 sm:px-8 py-6 sm:py-8 max-w-7xl mx-auto space-y-6">
       <PageHeader
         title="Payroll Approval"
         subtitle="Payroll computed by Accounts must be approved by their reporting manager before payslips are published"
@@ -154,7 +154,7 @@ export const PayrollApproval: React.FC = () => {
                     <tr key={e.id} onClick={() => setViewing(e)} className="cursor-pointer hover:bg-slate-50/80 dark:hover:bg-slate-800/40">
                       <td className="px-4 py-2.5">
                         <div className="font-semibold text-slate-900 dark:text-slate-100">{e.employeeName}</div>
-                        <div className="text-[11px] text-slate-500">
+                        <div className="text-[12.5px] text-slate-500">
                           {e.employeeCode} · {e.departmentName}
                         </div>
                       </td>

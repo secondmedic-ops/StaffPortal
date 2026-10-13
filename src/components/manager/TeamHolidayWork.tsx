@@ -74,9 +74,9 @@ export const TeamHolidayWork: React.FC = () => {
               <div>
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="font-bold text-sm text-slate-900 dark:text-slate-100">{c.employeeName}</span>
-                  <span className="text-[11px] font-mono text-slate-500">{c.employeeCode}</span>
+                  <span className="text-[12.5px] font-mono text-slate-500">{c.employeeCode}</span>
                   <span
-                    className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                    className={`text-[11.5px] font-bold px-2 py-0.5 rounded-full border ${
                       c.compensation === 'COMP_OFF'
                         ? 'bg-sky-50 text-sky-800 border-sky-200 dark:bg-sky-950/50 dark:text-sky-300 dark:border-sky-800'
                         : 'bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-800'
@@ -85,7 +85,7 @@ export const TeamHolidayWork: React.FC = () => {
                     {c.compensation === 'COMP_OFF' ? 'Comp-off' : 'Overtime pay'} · {c.days} day
                   </span>
                 </div>
-                <div className="text-[11px] text-slate-500 mt-0.5">
+                <div className="text-[12.5px] text-slate-500 mt-0.5">
                   Worked {formatDate(c.workDate)}
                   {c.workedHours != null && ` · ${c.workedHours}h punched`}
                 </div>

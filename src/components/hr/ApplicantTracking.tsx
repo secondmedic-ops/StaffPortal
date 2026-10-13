@@ -43,7 +43,7 @@ export const ApplicantTracking: React.FC = () => {
   };
 
   return (
-    <div className="p-6 space-y-6 max-w-7xl mx-auto">
+    <div className="px-4 sm:px-8 py-6 sm:py-8 max-w-7xl mx-auto space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
@@ -67,22 +67,22 @@ export const ApplicantTracking: React.FC = () => {
         <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs">
           <div className="text-xs text-slate-500 dark:text-slate-400">Active Openings</div>
           <div className="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-1">12</div>
-          <div className="text-[11px] text-teal-600 dark:text-teal-400 mt-1 font-medium">4 Urgent Clinical Roles</div>
+          <div className="text-[12.5px] text-teal-600 dark:text-teal-400 mt-1 font-medium">4 Urgent Clinical Roles</div>
         </div>
         <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs">
           <div className="text-xs text-slate-500 dark:text-slate-400">Total Applicants</div>
           <div className="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-1">148</div>
-          <div className="text-[11px] text-blue-600 dark:text-blue-400 mt-1 font-medium">+24 this week</div>
+          <div className="text-[12.5px] text-blue-600 dark:text-blue-400 mt-1 font-medium">+24 this week</div>
         </div>
         <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs">
           <div className="text-xs text-slate-500 dark:text-slate-400">Interviews Scheduled</div>
           <div className="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-1">18</div>
-          <div className="text-[11px] text-amber-600 dark:text-amber-400 mt-1 font-medium">Next 48 hours</div>
+          <div className="text-[12.5px] text-amber-600 dark:text-amber-400 mt-1 font-medium">Next 48 hours</div>
         </div>
         <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs">
           <div className="text-xs text-slate-500 dark:text-slate-400">Offers Accepted</div>
           <div className="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-1">7</div>
-          <div className="text-[11px] text-emerald-600 dark:text-emerald-400 mt-1 font-medium">Onboarding in progress</div>
+          <div className="text-[12.5px] text-emerald-600 dark:text-emerald-400 mt-1 font-medium">Onboarding in progress</div>
         </div>
       </div>
 
@@ -119,7 +119,7 @@ export const ApplicantTracking: React.FC = () => {
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
-              <tr className="border-b border-slate-200 dark:border-slate-800 text-slate-400 uppercase tracking-wider text-[10px]">
+              <tr className="border-b border-slate-200 dark:border-slate-800 text-slate-400 text-[11.5px]">
                 <th className="py-3 px-4">Candidate</th>
                 <th className="py-3 px-4">Role Applied</th>
                 <th className="py-3 px-4">Department</th>
@@ -138,14 +138,14 @@ export const ApplicantTracking: React.FC = () => {
                   <td className="py-3 px-4 text-slate-500">{c.appliedDate}</td>
                   <td className="py-3 px-4 font-mono font-bold text-amber-600 dark:text-amber-400">★ {c.rating}</td>
                   <td className="py-3 px-4">
-                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${getStageBadge(c.stage)}`}>
+                    <span className={`px-2 py-0.5 rounded-full text-[11.5px] font-semibold ${getStageBadge(c.stage)}`}>
                       {c.stage}
                     </span>
                   </td>
                   <td className="py-3 px-4 text-right">
                     <button
                       onClick={() => alert(`Reviewing candidate: ${c.name}`)}
-                      className="px-2.5 py-1 rounded bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 hover:bg-teal-100 text-[11px] font-medium"
+                      className="px-2.5 py-1 rounded bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 hover:bg-teal-100 text-[12.5px] font-medium"
                     >
                       View Profile
                     </button>

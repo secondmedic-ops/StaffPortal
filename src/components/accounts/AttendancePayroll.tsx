@@ -140,7 +140,7 @@ export const AttendancePayroll: React.FC = () => {
   };
 
   return (
-    <div className="p-4 sm:p-6 max-w-7xl mx-auto space-y-6">
+    <div className="px-4 sm:px-8 py-6 sm:py-8 max-w-7xl mx-auto space-y-6">
       <PageHeader
         title="Attendance-Based Payroll"
         subtitle="Salary is calculated from punches, approved leave, holidays and late marks — no attendance, no pay"
@@ -162,7 +162,7 @@ export const AttendancePayroll: React.FC = () => {
       />
 
       {/* Policy summary keeps the rules visible to Accounts */}
-      <div className={`${cardClass} p-4 text-[11px] text-slate-600 dark:text-slate-400 flex gap-3`}>
+      <div className={`${cardClass} p-4 text-[12.5px] text-slate-600 dark:text-slate-400 flex gap-3`}>
         <Info className="w-4 h-4 text-teal-700 dark:text-teal-400 shrink-0 mt-0.5" />
         <div className="space-y-0.5">
           <div>
@@ -206,7 +206,7 @@ export const AttendancePayroll: React.FC = () => {
           </div>
 
           <div className={`${cardClass} p-3 flex flex-col md:flex-row gap-3 md:items-center justify-between`}>
-            <div className="flex flex-wrap items-center gap-2 text-[11px]">
+            <div className="flex flex-wrap items-center gap-2 text-[12.5px]">
               <span className="text-slate-500">Saved:</span>
               <StatusPill status="DRAFT" /> <strong className="text-slate-700 dark:text-slate-300">{totals.drafts}</strong>
               <StatusPill status="APPROVED" /> <strong className="text-slate-700 dark:text-slate-300">{totals.approved}</strong>
@@ -225,7 +225,7 @@ export const AttendancePayroll: React.FC = () => {
                 <Save className="w-4 h-4" /> {busy === 'Saved as draft' ? 'Saving…' : 'Save & Send for Approval'}
               </button>
               {totals.drafts > 0 && (
-                <span className="text-[11px] font-semibold text-amber-700 dark:text-amber-400 self-center">
+                <span className="text-[12.5px] font-semibold text-amber-700 dark:text-amber-400 self-center">
                   {totals.drafts} awaiting {awaitingApprover ? `${awaitingApprover}'s` : "your reporting manager's"} approval
                 </span>
               )}
@@ -260,7 +260,7 @@ export const AttendancePayroll: React.FC = () => {
                       <tr key={r.employee.id} onClick={() => openPayslip(r)} className="cursor-pointer hover:bg-slate-50/80 dark:hover:bg-slate-800/40">
                         <td className="px-4 py-2.5">
                           <div className="font-semibold text-slate-900 dark:text-slate-100">{r.employee.fullName}</div>
-                          <div className="text-[11px] text-slate-500">
+                          <div className="text-[12.5px] text-slate-500">
                             {r.employee.empCode} · {r.employee.departmentName}
                           </div>
                         </td>
@@ -273,20 +273,20 @@ export const AttendancePayroll: React.FC = () => {
                         <td className={`px-3 py-2.5 text-center ${c.lopDays > 0 ? 'text-rose-600 font-bold' : ''}`}>{c.lopDays}</td>
                         <td className={`px-3 py-2.5 text-center ${c.holidayWorkedDays > 0 ? 'text-sky-700 dark:text-sky-400 font-semibold' : ''}`}>
                           {c.holidayWorkedDays}
-                          {c.overtimeDays > 0 && <span className="ml-1 text-[10px] text-emerald-700 dark:text-emerald-400">/ {c.overtimeDays} OT</span>}
+                          {c.overtimeDays > 0 && <span className="ml-1 text-[11.5px] text-emerald-700 dark:text-emerald-400">/ {c.overtimeDays} OT</span>}
                         </td>
                         <td className="px-3 py-2.5 text-right font-mono">{r.revision ? formatInr(c.grossEarnings) : '—'}</td>
                         <td className="px-3 py-2.5 text-right font-mono">{r.revision ? formatInr(c.totalDeductions) : '—'}</td>
                         <td className="px-3 py-2.5 text-right font-mono font-bold text-slate-900 dark:text-slate-100">{r.revision ? formatInr(c.netPay) : '—'}</td>
                         <td className="px-3 py-2.5">
                           {!r.revision ? (
-                            <span className="text-[10px] font-semibold text-amber-700 dark:text-amber-400 flex items-center gap-1">
+                            <span className="text-[11.5px] font-semibold text-amber-700 dark:text-amber-400 flex items-center gap-1">
                               <AlertTriangle className="w-3 h-3" /> No salary
                             </span>
                           ) : r.existing ? (
                             <StatusPill status={r.existing.status} />
                           ) : (
-                            <span className="text-[10px] text-slate-400">Not saved</span>
+                            <span className="text-[11.5px] text-slate-400">Not saved</span>
                           )}
                         </td>
                       </tr>
@@ -309,7 +309,7 @@ export const AttendancePayroll: React.FC = () => {
         {viewing && (
           <div className="space-y-3">
             {viewing.computation.warnings.map(w => (
-              <div key={w} className="p-2 rounded bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-[11px] text-amber-900 dark:text-amber-200">
+              <div key={w} className="p-2 rounded bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-[12.5px] text-amber-900 dark:text-amber-200">
                 {w}
               </div>
             ))}

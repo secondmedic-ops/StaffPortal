@@ -166,25 +166,25 @@ export const ApplyLeave: React.FC = () => {
   return (
     <div className="p-4 sm:p-6 max-w-4xl mx-auto space-y-6">
       {/* Header */}
-      <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs">
-        <h1 className="text-xl font-bold text-slate-900">Apply for Leave</h1>
-        <p className="text-xs text-slate-500 mt-1">
+      <div className="pb-1">
+        <h1 className="text-[22px] sm:text-2xl font-semibold text-slate-900 dark:text-slate-50">Apply for Leave</h1>
+        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-[70ch]">
           Goes to your reporting manager; leave over {LEAVE_APPROVAL_POLICY.skipLevelThresholdDays} days also needs their manager's approval
         </p>
       </div>
 
       <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left 2 Cols: Form Fields */}
-        <div className="lg:col-span-2 bg-white p-6 rounded-xl border border-slate-200 shadow-xs space-y-5">
+        <div className="lg:col-span-2 bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-5">
           {/* Leave Type Selector */}
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
               Leave Type <span className="text-rose-500">*</span>
             </label>
             <select
               value={selectedTypeId}
               onChange={e => setSelectedTypeId(Number(e.target.value))}
-              className="w-full text-xs p-2.5 rounded-lg border border-slate-300 bg-white font-medium text-slate-900 focus:outline-none focus:ring-1 focus:ring-teal-700"
+              className="w-full text-xs p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 font-medium text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-teal-700"
             >
               {leaveTypes.map(t => {
                 const b = balances.find(item => item.leaveTypeId === t.id);
@@ -200,7 +200,7 @@ export const ApplyLeave: React.FC = () => {
           {/* Date Pickers */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                 From Date <span className="text-rose-500">*</span>
               </label>
               <input
@@ -209,17 +209,17 @@ export const ApplyLeave: React.FC = () => {
                 onChange={e => setFromDate(e.target.value)}
                 min="2026-01-01"
                 max="2027-03-31"
-                className="w-full text-xs p-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-1 focus:ring-teal-700 font-medium"
+                className="w-full text-xs p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 focus:outline-none focus:ring-1 focus:ring-teal-700 font-medium"
                 required
               />
               {currentType?.allowHalfDay && (
                 <div className="mt-2 flex items-center gap-2 text-xs">
-                  <label className="flex items-center gap-1.5 text-slate-600">
+                  <label className="flex items-center gap-1.5 text-slate-600 dark:text-slate-400">
                     <input
                       type="checkbox"
                       checked={fromHalf !== null}
                       onChange={e => setFromHalf(e.target.checked ? 'FIRST_HALF' : null)}
-                      className="rounded border-slate-300 text-teal-700 focus:ring-teal-700"
+                      className="rounded border-slate-300 dark:border-slate-700 text-teal-700 dark:text-teal-300 focus:ring-teal-700"
                     />
                     Half Day (Start)
                   </label>
@@ -227,7 +227,7 @@ export const ApplyLeave: React.FC = () => {
                     <select
                       value={fromHalf}
                       onChange={e => setFromHalf(e.target.value as any)}
-                      className="text-[11px] p-1 border rounded"
+                      className="text-[12.5px] p-1 border rounded"
                     >
                       <option value="FIRST_HALF">Morning (1st Half)</option>
                       <option value="SECOND_HALF">Afternoon (2nd Half)</option>
@@ -238,7 +238,7 @@ export const ApplyLeave: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                 To Date <span className="text-rose-500">*</span>
               </label>
               <input
@@ -247,17 +247,17 @@ export const ApplyLeave: React.FC = () => {
                 onChange={e => setToDate(e.target.value)}
                 min={fromDate}
                 max="2027-03-31"
-                className="w-full text-xs p-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-1 focus:ring-teal-700 font-medium"
+                className="w-full text-xs p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 focus:outline-none focus:ring-1 focus:ring-teal-700 font-medium"
                 required
               />
               {currentType?.allowHalfDay && (
                 <div className="mt-2 flex items-center gap-2 text-xs">
-                  <label className="flex items-center gap-1.5 text-slate-600">
+                  <label className="flex items-center gap-1.5 text-slate-600 dark:text-slate-400">
                     <input
                       type="checkbox"
                       checked={toHalf !== null}
                       onChange={e => setToHalf(e.target.checked ? 'SECOND_HALF' : null)}
-                      className="rounded border-slate-300 text-teal-700 focus:ring-teal-700"
+                      className="rounded border-slate-300 dark:border-slate-700 text-teal-700 dark:text-teal-300 focus:ring-teal-700"
                     />
                     Half Day (End)
                   </label>
@@ -265,7 +265,7 @@ export const ApplyLeave: React.FC = () => {
                     <select
                       value={toHalf}
                       onChange={e => setToHalf(e.target.value as any)}
-                      className="text-[11px] p-1 border rounded"
+                      className="text-[12.5px] p-1 border rounded"
                     >
                       <option value="FIRST_HALF">Morning (1st Half)</option>
                       <option value="SECOND_HALF">Afternoon (2nd Half)</option>
@@ -278,7 +278,7 @@ export const ApplyLeave: React.FC = () => {
 
           {/* Reason */}
           <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1">
+            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
               Reason for Leave <span className="text-rose-500">*</span>
             </label>
             <textarea
@@ -286,14 +286,14 @@ export const ApplyLeave: React.FC = () => {
               value={reason}
               onChange={e => setReason(e.target.value)}
               placeholder="Please provide details (e.g. personal family event, planned medical rest)..."
-              className="w-full text-xs p-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-1 focus:ring-teal-700"
+              className="w-full text-xs p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 focus:outline-none focus:ring-1 focus:ring-teal-700"
               required
             />
           </div>
 
           {/* Contact Details During Leave */}
           <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1">
+            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
               Emergency Contact Phone / Location During Leave
             </label>
             <input
@@ -301,17 +301,17 @@ export const ApplyLeave: React.FC = () => {
               value={contactDuring}
               onChange={e => setContactDuring(e.target.value)}
               placeholder="+91 98765 43210 (Pune / Home)"
-              className="w-full text-xs p-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-1 focus:ring-teal-700"
+              className="w-full text-xs p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 focus:outline-none focus:ring-1 focus:ring-teal-700"
             />
           </div>
 
           {/* File Upload (Mandatory for Sick Leave > 2 days) */}
           <div>
             <div className="flex items-center justify-between mb-1">
-              <label className="block text-xs font-semibold text-slate-700">
-                Supporting Document {requiresDocument && <span className="text-rose-600 font-bold">* Mandatory for SL &gt; 2 days</span>}
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                Supporting Document {requiresDocument && <span className="text-rose-600 dark:text-rose-400 font-bold">* Mandatory for SL &gt; 2 days</span>}
               </label>
-              <span className="text-[11px] text-slate-400">PDF, JPG, PNG up to 5MB</span>
+              <span className="text-[12.5px] text-slate-400 dark:text-slate-500">PDF, JPG, PNG up to 5MB</span>
             </div>
 
             <div
@@ -319,32 +319,32 @@ export const ApplyLeave: React.FC = () => {
               onDrop={handleFileDrop}
               className={`border-2 border-dashed rounded-xl p-5 text-center transition-colors ${
                 requiresDocument && !attachedFile
-                  ? 'border-amber-400 bg-amber-50/40'
-                  : 'border-slate-200 bg-slate-50/50 hover:bg-slate-100/50'
+                  ? 'border-amber-400 bg-amber-50/40 dark:bg-amber-950/40'
+                  : 'border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 hover:bg-slate-100/50 dark:hover:bg-slate-800'
               }`}
             >
               {attachedFile ? (
-                <div className="flex items-center justify-between p-2.5 bg-white rounded-lg border border-slate-200 max-w-sm mx-auto">
+                <div className="flex items-center justify-between p-2.5 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 max-w-sm mx-auto">
                   <div className="flex items-center gap-2 truncate">
-                    <FileText className="w-5 h-5 text-teal-700 flex-shrink-0" />
-                    <span className="text-xs font-medium text-slate-900 truncate">
+                    <FileText className="w-5 h-5 text-teal-700 dark:text-teal-300 flex-shrink-0" />
+                    <span className="text-xs font-medium text-slate-900 dark:text-slate-100 truncate">
                       {attachedFile.name}
                     </span>
                   </div>
                   <button
                     type="button"
                     onClick={() => setAttachedFile(null)}
-                    className="text-slate-400 hover:text-rose-600 p-1"
+                    className="text-slate-400 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 p-1"
                   >
                     <X className="w-4 h-4" />
                   </button>
                 </div>
               ) : (
                 <div>
-                  <UploadCloud className="w-7 h-7 text-slate-400 mx-auto mb-1" />
-                  <p className="text-xs font-medium text-slate-700">
+                  <UploadCloud className="w-7 h-7 text-slate-400 dark:text-slate-500 mx-auto mb-1" />
+                  <p className="text-xs font-medium text-slate-700 dark:text-slate-300">
                     Drag and drop file here, or{' '}
-                    <label className="text-teal-700 hover:underline cursor-pointer font-bold">
+                    <label className="text-teal-700 dark:text-teal-300 hover:underline cursor-pointer font-bold">
                       browse
                       <input
                         type="file"
@@ -354,7 +354,7 @@ export const ApplyLeave: React.FC = () => {
                       />
                     </label>
                   </p>
-                  <p className="text-[11px] text-slate-400 mt-0.5">
+                  <p className="text-[12.5px] text-slate-400 dark:text-slate-500 mt-0.5">
                     Medical prescription / certificate / hospital discharge
                   </p>
                 </div>
@@ -366,43 +366,43 @@ export const ApplyLeave: React.FC = () => {
         {/* Right Col: Live Summary & Validation */}
         <div className="space-y-4">
           {/* Days Calculation Breakdown */}
-          <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs space-y-3">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">
+          <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-3">
+            <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400">
               Leave Duration Breakdown
             </h3>
 
-            <div className="p-3 rounded-lg bg-teal-50/60 border border-teal-100 text-center">
-              <div className="text-3xl font-extrabold text-teal-800">
+            <div className="p-3 rounded-lg bg-teal-50/60 dark:bg-teal-950/40 border border-teal-100 dark:border-teal-900/60 text-center">
+              <div className="text-3xl font-extrabold text-teal-800 dark:text-teal-300">
                 {calculation.totalDays}
               </div>
-              <div className="text-xs font-semibold text-teal-700 mt-0.5">
+              <div className="text-xs font-semibold text-teal-700 dark:text-teal-300 mt-0.5">
                 Total Chargeable Days
               </div>
             </div>
 
-            <div className="space-y-1.5 text-xs text-slate-600 pt-1">
+            <div className="space-y-1.5 text-xs text-slate-600 dark:text-slate-400 pt-1">
               <div className="flex justify-between">
                 <span>Calendar Duration:</span>
-                <span className="font-semibold text-slate-800">
+                <span className="font-semibold text-slate-800 dark:text-slate-200">
                   {calculation.workingDays + calculation.weekendDays + calculation.holidayDays} days
                 </span>
               </div>
               <div className="flex justify-between">
                 <span>Working Days:</span>
-                <span className="font-semibold text-slate-800">{calculation.workingDays}</span>
+                <span className="font-semibold text-slate-800 dark:text-slate-200">{calculation.workingDays}</span>
               </div>
-              <div className="flex justify-between text-slate-500">
+              <div className="flex justify-between text-slate-500 dark:text-slate-400">
                 <span>Weekends Excluded:</span>
                 <span>-{calculation.weekendDays}</span>
               </div>
-              <div className="flex justify-between text-slate-500">
+              <div className="flex justify-between text-slate-500 dark:text-slate-400">
                 <span>Holidays Excluded:</span>
                 <span>-{calculation.holidayDays}</span>
               </div>
             </div>
 
             {/* Sandwich rule note */}
-            <div className="p-2 rounded bg-slate-50 text-[10px] text-slate-500 border border-slate-100">
+            <div className="p-2 rounded bg-slate-50 dark:bg-slate-800/50 text-[11.5px] text-slate-500 dark:text-slate-400 border border-slate-100 dark:border-slate-800">
               {currentType?.sandwichRule
                 ? 'Note: Sandwich policy enabled for this leave type (weekends are charged).'
                 : 'Note: Standard policy excludes weekends and declared company holidays.'}
@@ -410,19 +410,19 @@ export const ApplyLeave: React.FC = () => {
           </div>
 
           {/* Available Quota Card */}
-          <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs">
+          <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs">
             <div className="flex justify-between items-center text-xs">
-              <span className="text-slate-500">Current Balance:</span>
-              <span className="font-bold text-slate-800">
+              <span className="text-slate-500 dark:text-slate-400">Current Balance:</span>
+              <span className="font-bold text-slate-800 dark:text-slate-200">
                 {currentBalance?.available ?? 0} days
               </span>
             </div>
 
             <div className="flex justify-between items-center text-xs mt-2">
-              <span className="text-slate-500">Balance After Approval:</span>
+              <span className="text-slate-500 dark:text-slate-400">Balance After Approval:</span>
               <span
                 className={`font-bold ${
-                  isBalanceExceeded ? 'text-rose-600' : 'text-emerald-700'
+                  isBalanceExceeded ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-700 dark:text-emerald-300'
                 }`}
               >
                 {currentBalance
@@ -434,8 +434,8 @@ export const ApplyLeave: React.FC = () => {
 
             {/* Warning if exceeded */}
             {isBalanceExceeded && (
-              <div className="mt-3 p-2.5 rounded-lg bg-rose-50 border border-rose-200 text-[11px] text-rose-800 flex items-start gap-2">
-                <AlertTriangle className="w-4 h-4 text-rose-600 flex-shrink-0 mt-0.5" />
+              <div className="mt-3 p-2.5 rounded-lg bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/70 text-[12.5px] text-rose-800 dark:text-rose-300 flex items-start gap-2">
+                <AlertTriangle className="w-4 h-4 text-rose-600 dark:text-rose-400 flex-shrink-0 mt-0.5" />
                 <span>
                   Insufficient leave balance. Applying beyond quota will require HR conversion to LOP (Loss of Pay).
                 </span>
@@ -444,18 +444,18 @@ export const ApplyLeave: React.FC = () => {
           </div>
 
           {/* Approver Route Card */}
-          <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs text-xs space-y-2">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">
+          <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs text-xs space-y-2">
+            <span className="text-[12.5px] font-bold text-slate-400 dark:text-slate-500 block">
               Approval Authority Route
             </span>
-            <div className="flex items-center gap-2 text-slate-700">
-              <span className="h-5 w-5 rounded-full bg-teal-100 text-teal-800 flex items-center justify-center text-[10px] font-bold">
+            <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300">
+              <span className="h-5 w-5 rounded-full bg-teal-100 dark:bg-teal-950/60 text-teal-800 dark:text-teal-300 flex items-center justify-center text-[11.5px] font-bold">
                 1
               </span>
               <span>{currentUser?.managerName || 'Reporting Manager'} (L1)</span>
             </div>
-            <div className="flex items-center gap-2 text-slate-400 text-[11px]">
-              <span className="h-5 w-5 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center text-[10px] font-bold">
+            <div className="flex items-center gap-2 text-slate-400 dark:text-slate-500 text-[12.5px]">
+              <span className="h-5 w-5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 flex items-center justify-center text-[11.5px] font-bold">
                 2
               </span>
               <span>HR Operations (Auto-notified upon approval)</span>
