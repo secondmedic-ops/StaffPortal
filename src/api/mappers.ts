@@ -22,7 +22,8 @@ import type {
   EmployeeProfile,
   SalaryRevision,
   PayrollEntry,
-  PayrollLine
+  PayrollLine,
+  HolidayWorkClaim
 } from '../types';
 
 export function mapEmployee(row: any): Employee {
@@ -480,8 +481,28 @@ export function mapPayrollEntry(row: any): PayrollEntry {
     netPay: num(row.net_pay),
     status: row.status,
     revisionId: opt(row.revision_id),
+    computedById: opt(row.computed_by),
     computedByName: opt(row.computer?.full_name),
     computedAt: opt(row.computed_at),
     publishedAt: opt(row.published_at)
+  };
+}
+
+export function mapHolidayWorkClaim(row: any): HolidayWorkClaim {
+  return {
+    id: row.id,
+    employeeId: row.employee_id,
+    employeeName: opt(row.employee?.full_name),
+    employeeCode: opt(row.employee?.emp_code),
+    workDate: row.work_date,
+    workedHours: row.worked_hours != null ? Number(row.worked_hours) : undefined,
+    days: num(row.days),
+    compensation: row.compensation,
+    reason: opt(row.reason),
+    status: row.status,
+    approverName: opt(row.approver?.full_name),
+    approverRemarks: opt(row.approver_remarks),
+    actedAt: opt(row.acted_at),
+    createdAt: row.created_at
   };
 }

@@ -1025,6 +1025,27 @@ export interface Database {
           EmployeeFk<'payroll_entries_computed_by_fkey', 'computed_by'>
         ]
       >;
+      holiday_work_claims: LifecycleTable<
+        {
+          id: number;
+          employee_id: number;
+          work_date: string;
+          worked_hours: number | null;
+          days: number;
+          compensation: 'COMP_OFF' | 'OVERTIME';
+          reason: string | null;
+          status: 'PENDING' | 'APPROVED' | 'REJECTED';
+          approver_id: number | null;
+          approver_remarks: string | null;
+          acted_at: string | null;
+          created_at: string;
+        },
+        'employee_id' | 'work_date' | 'days' | 'compensation',
+        [
+          EmployeeFk<'holiday_work_claims_employee_id_fkey', 'employee_id'>,
+          EmployeeFk<'holiday_work_claims_approver_id_fkey', 'approver_id'>
+        ]
+      >;
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;

@@ -296,16 +296,34 @@ export const teamApi = {
 
     if (regError || !reg) throw new Error(`Failed to action regularization: ${regError?.message}`);
 
-    if (action === 'APPROVE' && reg.attendance_id) {
-      await supabase
-        .from('attendance_records')
-        .update({
-          is_regularized: true,
-          status: 'PRESENT',
-          worked_hours: hoursBetween(reg.requested_in, reg.requested_out),
-          remarks: `Regularized by ${emp.full_name}: ${reg.reason}`
-        })
-        .eq('id', reg.attendance_id);
+    if (action === 'APPROVE') {
+      // Apply the approved times to the day's attendance so payroll uses them.
+      // Days with no punch at all (forgot to punch in) get a record created.
+      const toIso = (t: string) => (t.includes('T') ? t : new Date(`${reg.work_date}T${t.slice(0, 5)}:00`).toISOString());
+      const fields = {
+        punch_in: toIso(reg.requested_in),
+        punch_out: toIso(reg.requested_out),
+        worked_hours: hoursBetween(reg.requested_in, reg.requested_out),
+        is_regularized: true,
+        status: 'PRESENT' as const,
+        remarks: `Time updated, approved by ${emp.full_name}: ${reg.reason}`
+      };
+
+      let attendanceId = reg.attendance_id;
+      if (!attendanceId) {
+        const { data: existing } = await supabase
+          .from('attendance_records')
+          .select('id')
+          .eq('employee_id', reg.employee_id)
+          .eq('work_date', reg.work_date)
+          .maybeSingle();
+        attendanceId = existing?.id ?? null;
+      }
+
+      const { error: attError } = attendanceId
+        ? await supabase.from('attendance_records').update(fields).eq('id', attendanceId)
+        : await supabase.from('attendance_records').insert({ employee_id: reg.employee_id, work_date: reg.work_date, shift_id: 1, ...fields });
+      if (attError) throw new Error(`Request approved, but attendance not updated: ${attError.message}`);
     }
   },
 

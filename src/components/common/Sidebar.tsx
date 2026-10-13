@@ -29,7 +29,9 @@ import {
   ClipboardCheck,
   Calculator,
   TrendingUp,
-  MonitorSmartphone
+  MonitorSmartphone,
+  CalendarHeart,
+  BadgeCheck
 } from 'lucide-react';
 import { usePendingCounts } from '../../context/PendingCountsContext';
 
@@ -54,7 +56,8 @@ export const Sidebar: React.FC = () => {
     { id: 'calendar', label: 'Calendar', icon: Calendar },
     { id: 'kpis', label: 'My KPIs', icon: Award },
     { id: 'payslips', label: 'My Payslips', icon: FileText },
-    { id: 'my-assets', label: 'My Assets & IT Help', icon: Laptop, badge: badge(counts.myUnacknowledgedAssets) }
+    { id: 'my-assets', label: 'My Assets & IT Help', icon: Laptop, badge: badge(counts.myUnacknowledgedAssets) },
+    { id: 'holiday-work', label: 'Comp-off & Overtime', icon: CalendarHeart }
   ];
 
   // 2. Manager items
@@ -63,6 +66,8 @@ export const Sidebar: React.FC = () => {
     { id: 'team-approvals', label: 'Leave Approvals', icon: CheckSquare, badge: badge(counts.leaveApprovals) },
     { id: 'team-calendar', label: 'Team Calendar', icon: Calendar },
     { id: 'team-regularization', label: 'Regularizations', icon: Clock, badge: badge(counts.regularizations) },
+    { id: 'team-holiday-work', label: 'Comp-off / OT Approvals', icon: CalendarHeart, badge: badge(counts.holidayWorkClaims) },
+    ...(counts.payrollApprovals > 0 ? [{ id: 'payroll-approval', label: 'Payroll Approval', icon: BadgeCheck, badge: badge(counts.payrollApprovals) }] : []),
     { id: 'team-kpis', label: 'Team KPI', icon: Award }
   ];
 
@@ -70,7 +75,12 @@ export const Sidebar: React.FC = () => {
   const hrItems: NavItem[] = [
     { id: 'hr-register', label: 'Register New Staff', icon: UserPlus },
     { id: 'hr-lifecycle', label: 'Onboarding & Exit', icon: ClipboardCheck, badge: badge(counts.myLifecycleTasks) },
-    ...(!isManager ? [{ id: 'team-approvals', label: 'HR Leave Queue', icon: CheckSquare, badge: badge(counts.leaveApprovals) }] : []),
+    ...(!isManager
+      ? [
+          { id: 'team-approvals', label: 'HR Leave Queue', icon: CheckSquare, badge: badge(counts.leaveApprovals) },
+          { id: 'team-holiday-work', label: 'Comp-off / OT Claims', icon: CalendarHeart, badge: badge(counts.holidayWorkClaims) }
+        ]
+      : []),
     { id: 'hr-directory', label: 'Employee Directory', icon: Users },
     { id: 'hr-ats', label: 'Applicant Tracking', icon: Briefcase },
     { id: 'hr-benefits', label: 'Benefits Management', icon: HeartHandshake },

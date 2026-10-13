@@ -22,7 +22,8 @@ export const MobileNav: React.FC = () => {
         ['leave-requests', 'My Leave Requests'],
         ['calendar', 'Holidays & Team Calendar'],
         ['kpis', 'My KPIs'],
-        ['my-assets', 'My Assets & IT Help']
+        ['my-assets', 'My Assets & IT Help'],
+        ['holiday-work', 'Comp-off & Overtime']
       ]
     },
     {
@@ -32,6 +33,8 @@ export const MobileNav: React.FC = () => {
         ['team-dashboard', 'Team Dashboard'],
         ['team-approvals', 'Leave Approvals'],
         ['team-regularization', 'Regularizations'],
+        ['team-holiday-work', 'Comp-off / OT Approvals'],
+        ['payroll-approval', 'Payroll Approval'],
         ['team-calendar', 'Team Calendar']
       ]
     },

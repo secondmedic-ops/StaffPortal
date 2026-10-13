@@ -12,6 +12,8 @@ export const Header: React.FC = () => {
   const notifications = [
     { n: counts.leaveApprovals, title: 'Leave requests awaiting your approval', nav: 'team-approvals' },
     { n: counts.regularizations, title: 'Attendance regularizations to review', nav: 'team-regularization' },
+    { n: counts.holidayWorkClaims, title: 'Comp-off / overtime claims to approve', nav: 'team-holiday-work' },
+    { n: counts.payrollApprovals, title: 'Payslips awaiting your payroll approval', nav: 'payroll-approval' },
     { n: counts.salaryRevisions, title: 'Salary revisions awaiting approval', nav: 'payroll-increments' },
     { n: counts.itRequests, title: 'Open IT service requests', nav: 'it-requests' },
     { n: counts.myLifecycleTasks, title: 'Onboarding / exit tasks for your team', nav: 'hr-lifecycle' },

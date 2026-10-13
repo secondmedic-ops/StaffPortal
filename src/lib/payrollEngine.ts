@@ -7,7 +7,7 @@
  * entries, and employees see the same breakdown on their payslip, so the rule
  * that "salary follows attendance" is transparent to everyone.
  */
-import { ATTENDANCE_POLICY, PAYROLL_POLICY, SHIFT_POLICY } from '../config/policy';
+import { ATTENDANCE_POLICY, OVERTIME_POLICY, PAYROLL_POLICY, SHIFT_POLICY } from '../config/policy';
 import type { AttendanceRecord, PayrollLine } from '../types';
 import { toISODate } from '../utils/dateUtils';
 
@@ -28,6 +28,8 @@ export interface PayDay {
   /** Paid fraction of the day: 0, 0.5 or 1. */
   paid: number;
   late: boolean;
+  /** Punched in on a holiday or week-off. */
+  workedOnOffDay?: boolean;
   note?: string;
 }
 
@@ -59,6 +61,8 @@ export interface PayrollInput {
   leaves: PayrollLeave[];
   /** Mandatory (non-restricted) holiday dates, YYYY-MM-DD. */
   holidays: string[];
+  /** Approved holiday/Sunday work days the employee chose to be paid for (not comp-off). */
+  overtimeDays?: number;
   /** Override "today" for deterministic previews/tests. */
   today?: string;
 }
@@ -79,6 +83,9 @@ export interface PayrollComputation {
   lateMarks: number;
   lateLopDays: number;
   lopDays: number;
+  /** Holidays / week-offs on which the employee punched in. */
+  holidayWorkedDays: number;
+  overtimeDays: number;
   payFactor: number;
   earnings: PayrollLine[];
   deductions: PayrollLine[];
@@ -120,7 +127,8 @@ function workFraction(
   const lateCutoff = parseHm(SHIFT_POLICY.startTime) + SHIFT_POLICY.graceMinutes;
   const late = Boolean(rec.punchIn) && minutesOfDay(rec.punchIn as string) > lateCutoff;
 
-  if (rec.isRegularized) return { fraction: 1, late: false, note: 'Regularized' };
+  // Approved time update without times on record: treat the day as worked.
+  if (rec.isRegularized && !rec.punchIn) return { fraction: 1, late: false, note: 'Time update approved' };
   if (rec.status === 'ABSENT' || rec.status === 'LOP') return { fraction: 0, late: false };
   if (rec.status === 'HALF_DAY') return { fraction: 0.5, late };
 
@@ -146,12 +154,8 @@ function workFraction(
   return null;
 }
 
-function professionalTax(gross: number, month: number): number {
-  if (gross <= 0) return 0;
-  const slab = PAYROLL_POLICY.professionalTaxSlabs.find(s => gross >= s.minGross);
-  const amount = slab?.amount ?? 0;
-  if (month === 2 && amount === 200) return PAYROLL_POLICY.professionalTaxFebruaryAmount;
-  return amount;
+function professionalTax(gross: number): number {
+  return gross > 0 ? PAYROLL_POLICY.professionalTaxMonthly : 0;
 }
 
 export function computePayroll(input: PayrollInput): PayrollComputation {
@@ -171,12 +175,13 @@ export function computePayroll(input: PayrollInput): PayrollComputation {
       days.push({ date, kind: 'NOT_EMPLOYED', paid: 0, late: false });
       continue;
     }
+    const workedOff = Boolean(attByDate.get(date)?.punchIn);
     if (holidaySet.has(date)) {
-      days.push({ date, kind: 'HOLIDAY', paid: 1, late: false });
+      days.push({ date, kind: 'HOLIDAY', paid: 1, late: false, workedOnOffDay: workedOff, note: workedOff ? 'Worked on holiday' : undefined });
       continue;
     }
     if (SHIFT_POLICY.weekOffDays.includes(weekday)) {
-      days.push({ date, kind: 'WEEK_OFF', paid: 1, late: false });
+      days.push({ date, kind: 'WEEK_OFF', paid: 1, late: false, workedOnOffDay: workedOff, note: workedOff ? 'Worked on week-off' : undefined });
       continue;
     }
 
@@ -229,7 +234,8 @@ export function computePayroll(input: PayrollInput): PayrollComputation {
     const paid = Math.min(1 - unpaidLeave, work.fraction + paidLeave);
     const kind: PayDayKind =
       paid >= 1 ? 'PRESENT' : paid > 0 ? 'HALF_DAY' : 'ABSENT';
-    days.push({ date, kind, paid, late: work.late, note: work.note ?? (paidLeave ? 'Half-day leave' : undefined) });
+    const note = work.note ?? (rec?.isRegularized ? 'Time update approved' : paidLeave ? 'Half-day leave' : undefined);
+    days.push({ date, kind, paid, late: work.late, note });
   }
 
   const count = (kind: PayDayKind) => days.filter(d => d.kind === kind).length;
@@ -264,9 +270,17 @@ export function computePayroll(input: PayrollInput): PayrollComputation {
     if (salary.otherAllowanceMonthly > 0) {
       earnings.push({ code: 'OTHER', label: 'Other Allowance', amount: round(salary.otherAllowanceMonthly * payFactor) });
     }
-    const gross = sum(earnings);
     const fullGross =
       salary.basicMonthly + salary.hraMonthly + salary.specialMonthly + salary.otherAllowanceMonthly;
+    const overtimeDays = input.overtimeDays ?? 0;
+    if (overtimeDays > 0) {
+      earnings.push({
+        code: 'OVERTIME',
+        label: `Overtime — holiday/Sunday work (${overtimeDays} day${overtimeDays === 1 ? '' : 's'})`,
+        amount: round((fullGross / calendarDays) * overtimeDays * OVERTIME_POLICY.payMultiplier)
+      });
+    }
+    const gross = sum(earnings);
 
     if (salary.pfApplicable && basic > 0) {
       const pfWage = Math.min(basic, PAYROLL_POLICY.pfWageCeiling);
@@ -285,13 +299,13 @@ export function computePayroll(input: PayrollInput): PayrollComputation {
         amount: Math.ceil(gross * PAYROLL_POLICY.esiEmployerRate),
       });
     }
-    const pt = professionalTax(gross, month);
+    const pt = professionalTax(gross);
     if (pt > 0) deductions.push({ code: 'PT', label: 'Professional Tax', amount: pt });
     if (salary.tdsMonthly > 0 && gross > 0) {
       deductions.push({ code: 'TDS', label: 'Income Tax (TDS)', amount: round(Math.min(salary.tdsMonthly, gross)) });
     }
 
-    const lopAmount = round(fullGross - gross);
+    const lopAmount = round(fullGross - (gross - (earnings.find(e => e.code === 'OVERTIME')?.amount ?? 0)));
     if (lopAmount > 0) {
       // Informational: LOP is already applied through proration, not deducted twice.
       warnings.push(`Loss of pay: ${lopDays} day(s) ≈ ₹${lopAmount.toLocaleString('en-IN')} withheld.`);
@@ -317,6 +331,8 @@ export function computePayroll(input: PayrollInput): PayrollComputation {
     lateMarks,
     lateLopDays,
     lopDays,
+    holidayWorkedDays: days.filter(d => d.workedOnOffDay).length,
+    overtimeDays: input.overtimeDays ?? 0,
     payFactor,
     earnings,
     deductions,
