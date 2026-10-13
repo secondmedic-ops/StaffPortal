@@ -24,7 +24,7 @@ export const ceoApi = {
   async getExecutiveMetrics() {
     const { data: employees, error: empError } = await supabase
       .from('employees')
-      .select('*, department:departments(name)');
+      .select('*, department:departments!employees_department_id_fkey(name)');
 
     if (empError) throw new Error(`Failed to load employees: ${empError.message}`);
 
@@ -105,7 +105,7 @@ export const ceoApi = {
   async getOrgOverview() {
     const { data: employees, error: empError } = await supabase
       .from('employees')
-      .select('*, department:departments(name)');
+      .select('*, department:departments!employees_department_id_fkey(name)');
 
     if (empError) throw new Error(`Failed to load org overview: ${empError.message}`);
 
@@ -228,7 +228,7 @@ export const adminApi = {
   async getUsers(): Promise<Array<{ user: AppUser; employee: Employee }>> {
     const { data: usersData, error } = await supabase
       .from('system_users')
-      .select('*, employee:employees(*, department:departments(name), manager:employees!employees_manager_id_fkey(full_name)), employee_roles:employee_roles(role)');
+      .select('*, employee:employees(*, department:departments!employees_department_id_fkey(name), manager:employees!employees_manager_id_fkey(full_name)), employee_roles:employee_roles(role)');
 
     if (error) throw new Error(`Failed to load users: ${error.message}`);
 

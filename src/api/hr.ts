@@ -24,7 +24,7 @@ export const hrApi = {
   async getEmployees(): Promise<Employee[]> {
     const { data, error } = await supabase
       .from('employees')
-      .select('*, department:departments(name), manager:employees!employees_manager_id_fkey(full_name)')
+      .select('*, department:departments!employees_department_id_fkey(name), manager:employees!employees_manager_id_fkey(full_name)')
       .order('full_name');
 
     if (error) throw new Error(`Failed to load employees: ${error.message}`);
@@ -52,7 +52,7 @@ export const hrApi = {
         manager_id: data.managerId ?? null,
         avatar_url: data.avatarUrl ?? null
       })
-      .select('*, department:departments(name), manager:employees!employees_manager_id_fkey(full_name)')
+      .select('*, department:departments!employees_department_id_fkey(name), manager:employees!employees_manager_id_fkey(full_name)')
       .single();
 
     if (error || !created) throw new Error(`Failed to create employee: ${error?.message}`);
@@ -92,7 +92,7 @@ export const hrApi = {
       .from('employees')
       .update(updatePayload)
       .eq('id', id)
-      .select('*, department:departments(name), manager:employees!employees_manager_id_fkey(full_name)')
+      .select('*, department:departments!employees_department_id_fkey(name), manager:employees!employees_manager_id_fkey(full_name)')
       .single();
 
     if (error || !updated) throw new Error(`Failed to update employee: ${error?.message}`);
@@ -102,7 +102,7 @@ export const hrApi = {
   async getAttendanceSummary(month: number, year: number): Promise<MonthlyAttendanceSummary[]> {
     const { data, error } = await supabase
       .from('monthly_attendance_summaries')
-      .select('*, employee:employees(emp_code, full_name, department:departments(name))')
+      .select('*, employee:employees(emp_code, full_name, department:departments!employees_department_id_fkey(name))')
       .eq('year', year)
       .eq('month', month)
       .order('employee_id');

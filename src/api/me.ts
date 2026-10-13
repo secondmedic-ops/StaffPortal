@@ -189,7 +189,7 @@ export const meApi = {
     const emp = await getCurrentEmployee();
     const { data, error } = await supabase
       .from('leave_requests')
-      .select('*, employee:employees!leave_requests_employee_id_fkey(emp_code, full_name, department:departments(name)), leave_type:leave_types(code, name), current_approver:employees!leave_requests_current_approver_id_fkey(full_name)')
+      .select('*, employee:employees!leave_requests_employee_id_fkey(emp_code, full_name, department:departments!employees_department_id_fkey(name)), leave_type:leave_types(code, name), current_approver:employees!leave_requests_current_approver_id_fkey(full_name)')
       .eq('employee_id', emp.id)
       .order('applied_at', { ascending: false });
 
@@ -255,7 +255,7 @@ export const meApi = {
           }
         ]
       })
-      .select('*, employee:employees!leave_requests_employee_id_fkey(emp_code, full_name, department:departments(name)), leave_type:leave_types(code, name), current_approver:employees!leave_requests_current_approver_id_fkey(full_name)')
+      .select('*, employee:employees!leave_requests_employee_id_fkey(emp_code, full_name, department:departments!employees_department_id_fkey(name)), leave_type:leave_types(code, name), current_approver:employees!leave_requests_current_approver_id_fkey(full_name)')
       .single();
 
     if (error) throw new Error(`Failed to apply for leave: ${error.message}`);
@@ -297,7 +297,7 @@ export const meApi = {
 
     const { data: myLeavesData, error: myLeavesError } = await supabase
       .from('leave_requests')
-      .select('*, employee:employees!leave_requests_employee_id_fkey(emp_code, full_name, department:departments(name)), leave_type:leave_types(code, name), current_approver:employees!leave_requests_current_approver_id_fkey(full_name)')
+      .select('*, employee:employees!leave_requests_employee_id_fkey(emp_code, full_name, department:departments!employees_department_id_fkey(name)), leave_type:leave_types(code, name), current_approver:employees!leave_requests_current_approver_id_fkey(full_name)')
       .eq('employee_id', emp.id)
       .in('status', ['APPROVED', 'PENDING']);
 
