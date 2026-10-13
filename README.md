@@ -17,7 +17,11 @@ DB_ADMIN_URL=postgres://postgres@localhost:5432/postgres supabase/tests/run_poli
 
 ### Database migration
 
-Apply the migrations in `supabase/migrations/` in filename order (Supabase SQL editor or `supabase db push`). They are idempotent. `20261013000000_staff_lifecycle.sql`:
+Apply the migrations in `supabase/migrations/` in filename order (Supabase SQL editor or `supabase db push`). They are idempotent.
+
+`20261001000000_core_schema.sql` creates the core tables (employees, departments, roles, leave, attendance, KPIs, audit log) with row-level security, plus starter departments and leave types (EL, CL, SL, COMP_OFF, LOP). Skip it only if your project already has these tables.
+
+`20261013000000_staff_lifecycle.sql`:
 
 - adds the **IT** role
 - creates `employee_profiles`, `assets`, `asset_assignments`, `it_requests`, `lifecycle_tasks`, `salary_revisions`, `payroll_entries`, all with row-level security
