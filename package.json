@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "clean": "rm -rf dist",
     "lint": "tsc --noEmit",
-    "test": "tsx src/lib/payrollEngine.test.ts"
+    "test": "tsx src/lib/payrollEngine.test.ts",
+    "deploy": "npm run build && wrangler pages deploy dist"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.116.0",
@@ -31,6 +32,7 @@
     "tailwindcss": "^4.1.14",
     "tsx": "4.20.3",
     "typescript": "~5.8.2",
-    "vite": "^6.2.3"
+    "vite": "^6.2.3",
+    "wrangler": "^4.150.0"
   }
 }
