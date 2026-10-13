@@ -49,11 +49,13 @@ After migrating, grant the `IT` role to your IT staff (User & Role Mgmt → prop
 
 | Day | Paid |
 |---|---|
-| Worked ≥ 8h / regularized | 1 |
+| Worked ≥ 8h (shift 09:30–18:00) | 1 |
 | Worked 4–8h, or missing punch-out | ½ |
 | Worked < 4h, or absent without approved leave | 0 (LOP) |
 | Approved paid leave · mandatory holiday · week-off | 1 |
 | Approved LOP leave | 0 |
-| Every 3 late marks (after 09:30 + 15 min grace) | −½ |
+| Every 3 late marks (punch-in after 10:00, i.e. 30 min grace) | −½ |
 
-Deductions: PF 12% of basic (₹15,000 ceiling), ESI 0.75% when gross ≤ ₹21,000, Professional Tax (Maharashtra slab), TDS from the salary revision. All thresholds live in **`src/config/policy.ts`**.
+Staff fix a missed or wrong punch with a **time update request** (My Attendance → regularize). Once their manager approves, the approved times replace the day's punches (a record is created if they never punched) and pay follows those hours. Punching in on a Sunday or holiday is counted as **holiday worked** in the payroll view.
+
+Deductions: PF 12% of basic (₹15,000 ceiling), ESI 0.75% when gross ≤ ₹21,000, Professional Tax flat ₹200/month, TDS from the salary revision. All thresholds live in **`src/config/policy.ts`**.

@@ -164,7 +164,7 @@ export const AttendancePayroll: React.FC = () => {
           </div>
           <div>
             Pay basis: {PAYROLL_POLICY.payBasis === 'CALENDAR' ? 'monthly salary ÷ calendar days × paid days' : 'monthly salary ÷ 26 per LOP day'} · PF{' '}
-            {PAYROLL_POLICY.pfRate * 100}% of basic (ceiling {formatInr(PAYROLL_POLICY.pfWageCeiling)}) · ESI if gross ≤ {formatInr(PAYROLL_POLICY.esiGrossThreshold)} · PT per state slab · TDS from salary revision.
+            {PAYROLL_POLICY.pfRate * 100}% of basic (ceiling {formatInr(PAYROLL_POLICY.pfWageCeiling)}) · ESI if gross ≤ {formatInr(PAYROLL_POLICY.esiGrossThreshold)} · PT {formatInr(PAYROLL_POLICY.professionalTaxMonthly)}/month · TDS from salary revision · approved time updates replace punch times.
           </div>
         </div>
       </div>
@@ -240,6 +240,7 @@ export const AttendancePayroll: React.FC = () => {
                     <th className="px-3 py-3 text-center">Leave</th>
                     <th className="px-3 py-3 text-center">Late</th>
                     <th className="px-3 py-3 text-center">LOP</th>
+                    <th className="px-3 py-3 text-center" title="Punched in on a holiday or Sunday">Hol. worked</th>
                     <th className="px-3 py-3 text-right">Gross</th>
                     <th className="px-3 py-3 text-right">Deductions</th>
                     <th className="px-3 py-3 text-right">Net</th>
@@ -264,6 +265,7 @@ export const AttendancePayroll: React.FC = () => {
                         <td className="px-3 py-2.5 text-center">{c.paidLeaveDays}</td>
                         <td className={`px-3 py-2.5 text-center ${c.lateMarks >= ATTENDANCE_POLICY.lateMarksPerHalfDayLop ? 'text-orange-600 font-semibold' : ''}`}>{c.lateMarks}</td>
                         <td className={`px-3 py-2.5 text-center ${c.lopDays > 0 ? 'text-rose-600 font-bold' : ''}`}>{c.lopDays}</td>
+                        <td className={`px-3 py-2.5 text-center ${c.holidayWorkedDays > 0 ? 'text-sky-700 dark:text-sky-400 font-semibold' : ''}`}>{c.holidayWorkedDays}</td>
                         <td className="px-3 py-2.5 text-right font-mono">{r.revision ? formatInr(c.grossEarnings) : '—'}</td>
                         <td className="px-3 py-2.5 text-right font-mono">{r.revision ? formatInr(c.totalDeductions) : '—'}</td>
                         <td className="px-3 py-2.5 text-right font-mono font-bold text-slate-900 dark:text-slate-100">{r.revision ? formatInr(c.netPay) : '—'}</td>

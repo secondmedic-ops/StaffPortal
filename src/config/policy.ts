@@ -9,9 +9,9 @@
 export const SHIFT_POLICY = {
   /** Default shift start, local time (HH:MM). */
   startTime: '09:30',
-  endTime: '18:30',
+  endTime: '18:00',
   /** Punch-in after start + grace counts as a late mark. */
-  graceMinutes: 15,
+  graceMinutes: 30,
   /** Minimum worked hours for a full paid day. */
   fullDayHours: 8,
   /** Minimum worked hours for a half paid day. Below this the day is LOP. */
@@ -45,17 +45,8 @@ export const PAYROLL_POLICY = {
   esiGrossThreshold: 21000,
   esiEmployeeRate: 0.0075,
   esiEmployerRate: 0.0325,
-  /**
-   * Professional Tax monthly slabs on gross (first matching slab wins,
-   * ordered high → low). Default: Maharashtra. Adjust for your state.
-   */
-  professionalTaxSlabs: [
-    { minGross: 10001, amount: 200 },
-    { minGross: 7501, amount: 175 },
-    { minGross: 0, amount: 0 },
-  ],
-  /** February PT override for Maharashtra (₹300 in Feb to total ₹2,500/yr). */
-  professionalTaxFebruaryAmount: 300,
+  /** Flat Professional Tax deducted every month when there is any pay. */
+  professionalTaxMonthly: 200,
 } as const;
 
 export const SALARY_SPLIT_POLICY = {

@@ -86,3 +86,27 @@ for (const ctc of [300000, 600000, 1800000]) {
   const erPf = Math.round(Math.min(s.basicMonthly, 15000) * 0.12);
   assert(Math.abs((gross + erPf) * 12 - ctc) <= 24, `split ${ctc}: monthly gross ${gross} + erPF ${erPf} ≈ CTC/12`);
 }
+
+// 15. 30-minute grace: 09:55 is on time, 10:05 is late
+r = computePayroll({ year: 2026, month: 9, salary, attendance: workdays.map((d, i) => punch(d, i < 6 ? '09:55' : '09:20', 9)), leaves: [], holidays: [], today });
+assert(r.lateMarks === 0, `09:55 within 30-min grace → no late marks (got ${r.lateMarks})`);
+r = computePayroll({ year: 2026, month: 9, salary, attendance: workdays.map((d, i) => punch(d, i < 3 ? '10:05' : '09:20', 9)), leaves: [], holidays: [], today });
+assert(r.lateMarks === 3 && r.lateLopDays === 0.5, `3 late marks → ½ day LOP (got ${r.lateMarks}/${r.lateLopDays})`);
+
+// 16. Flat PT ₹200 even in February
+r = computePayroll({ year: 2026, month: 2, salary, attendance: [], leaves: [], holidays: [], today: '2026-01-01' });
+assert(r.deductions.find(d => d.code === 'PT')!.amount === 200, 'PT is a flat 200 in February');
+
+// 17. Approved time update replaces a missing punch-out
+const att17 = workdays.map(d => (d === 3 ? { ...punch(d, '09:30', 8.5), isRegularized: true } : punch(d, '09:20', 9)));
+r = computePayroll({ year: 2026, month: 9, salary, attendance: att17, leaves: [], holidays: [], today });
+assert(r.lopDays === 0 && r.days.find(x => x.date === iso(3))!.note === 'Time update approved', 'approved time update → full day');
+
+// 18. Approved time update for a short day still pays only what was worked
+const att18 = workdays.map(d => (d === 3 ? { ...punch(d, '09:30', 4.5), isRegularized: true } : punch(d, '09:20', 9)));
+r = computePayroll({ year: 2026, month: 9, salary, attendance: att18, leaves: [], holidays: [], today });
+assert(r.lopDays === 0.5, `time update for 4.5h → half day (got lop ${r.lopDays})`);
+
+// 19. Working on a Sunday / holiday is counted (for comp-off or overtime)
+r = computePayroll({ year: 2026, month: 9, salary, attendance: [...workdays.map(d => punch(d, '09:20', 9)), punch(6, '09:30', 8), punch(14, '09:30', 8)], leaves: [], holidays: [iso(14)], today });
+assert(r.holidayWorkedDays === 2 && r.payableDays === 30, `Sunday + holiday worked counted, pay unchanged (got ${r.holidayWorkedDays})`);
