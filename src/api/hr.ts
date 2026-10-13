@@ -14,21 +14,10 @@ import type {
   Holiday,
   Department
 } from '../types';
+import { getSessionEmployee } from './session';
 
 async function getCurrentEmployee() {
-  const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-  if (sessionError) throw new Error(`Failed to get session: ${sessionError.message}`);
-  const user = sessionData.session?.user;
-  if (!user) throw new Error('No active user session');
-
-  const { data: emp, error: empError } = await supabase
-    .from('employees')
-    .select('id, full_name')
-    .or(`auth_user_id.eq.${user.id},official_email.eq.${user.email ?? ''}`)
-    .single();
-
-  if (empError || !emp) throw new Error('Your login is not linked to a staff record — contact HR');
-  return emp;
+  return getSessionEmployee();
 }
 
 export const hrApi = {

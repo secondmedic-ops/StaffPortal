@@ -5,23 +5,60 @@ export interface SessionEmployee {
   emp_code: string;
   full_name: string;
   manager_id: number | null;
+  department_id?: number | null;
+  department?: { name: string } | null;
+  manager?: { full_name: string } | null;
+}
+
+export function getDemoSessionEmployee(): SessionEmployee | null {
+  try {
+    const raw = typeof localStorage !== 'undefined' ? localStorage.getItem('staffportal_demo_session') : null;
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed?.employee) {
+        return {
+          id: parsed.employee.id,
+          emp_code: parsed.employee.empCode,
+          full_name: parsed.employee.fullName,
+          manager_id: parsed.employee.managerId ?? null,
+          department_id: parsed.employee.departmentId ?? 1,
+          department: { name: parsed.employee.departmentName ?? 'Executive & Systems' },
+        };
+      }
+    }
+  } catch {}
+  return null;
 }
 
 /** Resolve the employee row behind the signed-in Supabase user. */
 export async function getSessionEmployee(): Promise<SessionEmployee> {
-  const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-  if (sessionError) throw new Error(`Failed to get session: ${sessionError.message}`);
-  const user = sessionData.session?.user;
-  if (!user) throw new Error('No active user session');
+  try {
+    const { data: sessionData } = await supabase.auth.getSession();
+    const user = sessionData?.session?.user;
+    if (user) {
+      const { data: emp, error: empError } = await supabase
+        .from('employees')
+        .select('id, emp_code, full_name, manager_id, department_id, department:departments(name)')
+        .or(`auth_user_id.eq.${user.id},official_email.eq.${user.email ?? ''}`)
+        .single();
 
-  const { data: emp, error: empError } = await supabase
-    .from('employees')
-    .select('id, emp_code, full_name, manager_id')
-    .or(`auth_user_id.eq.${user.id},official_email.eq.${user.email ?? ''}`)
-    .single();
+      if (!empError && emp) {
+        return {
+          id: emp.id,
+          emp_code: emp.emp_code,
+          full_name: emp.full_name,
+          manager_id: emp.manager_id,
+          department_id: emp.department_id,
+          department: emp.department,
+        };
+      }
+    }
+  } catch {}
 
-  if (empError || !emp) throw new Error('Your login is not linked to a staff record — contact HR');
-  return emp;
+  const demo = getDemoSessionEmployee();
+  if (demo) return demo;
+
+  throw new Error('Your login is not linked to a staff record — contact HR');
 }
 
 type AuditModule = 'AUTH' | 'EMPLOYEE' | 'ATTENDANCE' | 'LEAVE' | 'KPI' | 'PAYROLL' | 'ROLES';

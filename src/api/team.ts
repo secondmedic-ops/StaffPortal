@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabase';
-import { monthBounds } from './session';
+import { monthBounds, getSessionEmployee } from './session';
 import { LEAVE_APPROVAL_POLICY } from '../config/policy';
 import {
   mapEmployee,
@@ -33,19 +33,7 @@ function hoursBetween(from: string, to: string): number | null {
 }
 
 async function getCurrentEmployee() {
-  const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-  if (sessionError) throw new Error(`Failed to get session: ${sessionError.message}`);
-  const user = sessionData.session?.user;
-  if (!user) throw new Error('No active user session');
-
-  const { data: emp, error: empError } = await supabase
-    .from('employees')
-    .select('id, emp_code, full_name, manager_id')
-    .or(`auth_user_id.eq.${user.id},official_email.eq.${user.email ?? ''}`)
-    .single();
-
-  if (empError || !emp) throw new Error('Your login is not linked to a staff record — contact HR');
-  return emp;
+  return getSessionEmployee();
 }
 
 export const teamApi = {
