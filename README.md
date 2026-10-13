@@ -5,7 +5,7 @@ React + Supabase portal for staff self-service, reporting-line approvals, HR, IT
 ## Setup
 
 ```bash
-bun install            # or npm install
+npm ci                 # installs from package-lock.json
 cp .env.example .env   # set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY
 npm run dev
 npm run lint           # typecheck
