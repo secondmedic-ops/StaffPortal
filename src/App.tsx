@@ -6,6 +6,7 @@ import { Header } from './components/common/Header';
 import { Sidebar } from './components/common/Sidebar';
 import { MobileNav } from './components/common/MobileNav';
 import { ToastContainer } from './components/common/ToastContainer';
+import { PendingCountsProvider } from './context/PendingCountsContext';
 
 // Employee Components
 import { EmployeeDashboard } from './components/employee/EmployeeDashboard';
@@ -16,6 +17,7 @@ import { MyLeaveRequests } from './components/employee/MyLeaveRequests';
 import { CompanyCalendar } from './components/employee/CompanyCalendar';
 import { MyKpis } from './components/employee/MyKpis';
 import { MyPayslips } from './components/employee/MyPayslips';
+import { MyAssets } from './components/employee/MyAssets';
 
 // Manager Components
 import { TeamDashboard } from './components/manager/TeamDashboard';
@@ -35,12 +37,21 @@ import { BenefitsManagement } from './components/hr/BenefitsManagement';
 import { DocumentManagement } from './components/hr/DocumentManagement';
 import { MobileCapabilitiesView } from './components/hr/MobileCapabilitiesView';
 import { SecurityCompliance } from './components/hr/SecurityCompliance';
+import { NewStaffRegistration } from './components/hr/NewStaffRegistration';
+import { StaffLifecycle } from './components/hr/StaffLifecycle';
 
 // Accounts Components
 import { PayrollDashboard } from './components/accounts/PayrollDashboard';
 import { SalaryStructures } from './components/accounts/SalaryStructures';
 import { PayslipGenerator } from './components/accounts/PayslipGenerator';
 import { SalaryAccessLogs } from './components/accounts/SalaryAccessLogs';
+import { AttendancePayroll } from './components/accounts/AttendancePayroll';
+import { IncrementsRevisions } from './components/accounts/IncrementsRevisions';
+
+// IT Components
+import { ItDashboard } from './components/it/ItDashboard';
+import { AssetRegister } from './components/it/AssetRegister';
+import { ItRequests } from './components/it/ItRequests';
 
 // CEO Components
 import { CeoDashboard } from './components/ceo/CeoDashboard';
@@ -58,6 +69,7 @@ const MainPortal: React.FC = () => {
     isManager,
     isHr,
     isAccounts,
+    isIt,
     isCeo,
     isAdmin
   } = useAuth();
@@ -90,20 +102,26 @@ const MainPortal: React.FC = () => {
       case 'payslips':
       case 'my-payslips':
         return <MyPayslips />;
+      case 'my-assets':
+        return <MyAssets />;
 
       // Manager views
       case 'team-dashboard':
         return isManager ? <TeamDashboard /> : <UnauthorizedView role="MANAGER" />;
       case 'team-approvals':
-        return isManager ? <TeamApprovals /> : <UnauthorizedView role="MANAGER" />;
+        return isManager || isHr ? <TeamApprovals /> : <UnauthorizedView role="MANAGER" />;
       case 'team-regularization':
-        return isManager ? <TeamRegularization /> : <UnauthorizedView role="MANAGER" />;
+        return isManager || isHr ? <TeamRegularization /> : <UnauthorizedView role="MANAGER" />;
       case 'team-calendar':
         return isManager ? <TeamCalendar /> : <UnauthorizedView role="MANAGER" />;
       case 'team-kpis':
         return isManager ? <TeamKpis /> : <UnauthorizedView role="MANAGER" />;
 
       // HR views
+      case 'hr-register':
+        return isHr ? <NewStaffRegistration /> : <UnauthorizedView role="HR" />;
+      case 'hr-lifecycle':
+        return isHr || isIt || isAccounts || isManager ? <StaffLifecycle /> : <UnauthorizedView role="HR" />;
       case 'hr-directory':
       case 'employee-directory':
         return isHr ? <EmployeeDirectory /> : <UnauthorizedView role="HR" />;
@@ -133,6 +151,10 @@ const MainPortal: React.FC = () => {
         return isHr ? <MobileCapabilitiesView /> : <UnauthorizedView role="HR" />;
 
       // Accounts views (Confidential)
+      case 'payroll-attendance':
+        return isAccounts ? <AttendancePayroll /> : <UnauthorizedView role="ACCOUNTS" />;
+      case 'payroll-increments':
+        return isAccounts || isCeo ? <IncrementsRevisions /> : <UnauthorizedView role="ACCOUNTS" />;
       case 'payroll-dashboard':
         return isAccounts ? <PayrollDashboard /> : <UnauthorizedView role="ACCOUNTS" />;
       case 'payroll-structures':
@@ -146,6 +168,14 @@ const MainPortal: React.FC = () => {
       case 'payroll-access-log':
       case 'salary-access-logs':
         return isAccounts ? <SalaryAccessLogs /> : <UnauthorizedView role="ACCOUNTS" />;
+
+      // IT views
+      case 'it-dashboard':
+        return isIt ? <ItDashboard /> : <UnauthorizedView role="IT" />;
+      case 'it-assets':
+        return isIt ? <AssetRegister /> : <UnauthorizedView role="IT" />;
+      case 'it-requests':
+        return isIt ? <ItRequests /> : <UnauthorizedView role="IT" />;
 
       // CEO view
       case 'ceo-dashboard':
@@ -217,7 +247,9 @@ export default function App() {
     <ErrorBoundary>
       <ThemeProvider>
         <AuthProvider>
-          <MainPortal />
+          <PendingCountsProvider>
+            <MainPortal />
+          </PendingCountsProvider>
         </AuthProvider>
       </ThemeProvider>
     </ErrorBoundary>

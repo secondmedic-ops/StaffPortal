@@ -2,10 +2,21 @@ import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { ThemeToggle } from './ThemeToggle';
 import { Bell, LogOut, Stethoscope } from 'lucide-react';
+import { usePendingCounts } from '../../context/PendingCountsContext';
 
 export const Header: React.FC = () => {
-  const { currentUser, roles, logout } = useAuth();
+  const { currentUser, roles, logout, setActiveNav } = useAuth();
+  const { counts } = usePendingCounts();
   const [showNotifications, setShowNotifications] = useState(false);
+
+  const notifications = [
+    { n: counts.leaveApprovals, title: 'Leave requests awaiting your approval', nav: 'team-approvals' },
+    { n: counts.regularizations, title: 'Attendance regularizations to review', nav: 'team-regularization' },
+    { n: counts.salaryRevisions, title: 'Salary revisions awaiting approval', nav: 'payroll-increments' },
+    { n: counts.itRequests, title: 'Open IT service requests', nav: 'it-requests' },
+    { n: counts.myLifecycleTasks, title: 'Onboarding / exit tasks for your team', nav: 'hr-lifecycle' },
+    { n: counts.myUnacknowledgedAssets, title: 'Company assets to acknowledge', nav: 'my-assets' }
+  ].filter(x => x.n > 0);
 
   if (!currentUser) return null;
 
@@ -49,24 +60,36 @@ export const Header: React.FC = () => {
             aria-label="Notifications"
           >
             <Bell className="w-4 h-4" />
-            <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-teal-600 ring-2 ring-white dark:ring-slate-900" />
+            {notifications.length > 0 && (
+              <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-amber-500 ring-2 ring-white dark:ring-slate-900" />
+            )}
           </button>
 
           {showNotifications && (
             <div className="absolute right-0 mt-2 w-80 rounded-lg bg-white dark:bg-slate-900 p-3 shadow-xl border border-slate-200 dark:border-slate-800 z-50 text-xs animate-in fade-in zoom-in-95 duration-150">
               <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
-                <span className="font-semibold text-slate-900 dark:text-slate-100">Notifications</span>
-                <span className="text-[11px] text-teal-700 dark:text-teal-400 font-medium cursor-pointer">Mark all read</span>
+                <span className="font-semibold text-slate-900 dark:text-slate-100">Needs your attention</span>
               </div>
               <div className="py-2 space-y-2 max-h-60 overflow-y-auto">
-                <div className="p-2 rounded bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700/60">
-                  <p className="font-medium text-slate-800 dark:text-slate-200">August 2026 Payslip Available</p>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Published by Accounts. View in My Payslips.</p>
-                </div>
-                <div className="p-2 rounded bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700/60">
-                  <p className="font-medium text-slate-800 dark:text-slate-200">Q2 FY26-27 KPI Cycle Open</p>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Self-reviews due by 25 Sep 2026.</p>
-                </div>
+                {notifications.length === 0 ? (
+                  <p className="p-2 text-[11px] text-slate-500 dark:text-slate-400">You're all caught up.</p>
+                ) : (
+                  notifications.map(item => (
+                    <button
+                      key={item.nav}
+                      onClick={() => {
+                        setActiveNav(item.nav);
+                        setShowNotifications(false);
+                      }}
+                      className="w-full text-left p-2 rounded bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700/60 hover:border-teal-300 dark:hover:border-teal-700 flex items-center justify-between gap-2"
+                    >
+                      <span className="font-medium text-slate-800 dark:text-slate-200">{item.title}</span>
+                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300">
+                        {item.n}
+                      </span>
+                    </button>
+                  ))
+                )}
               </div>
             </div>
           )}

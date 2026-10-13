@@ -223,6 +223,7 @@ export const UserManagement: React.FC = () => {
                 <option value={Role.ACCOUNTS}>ACCOUNTS (Confidential Payroll & Compensation)</option>
                 <option value={Role.HR}>HR (Employee Master, Shifts, Attendance Lock)</option>
                 <option value={Role.MANAGER}>MANAGER (Direct Reports Approvals & KPIs)</option>
+                <option value={Role.IT}>IT (Asset Register, Company Numbers & Service Desk)</option>
                 <option value={Role.SYSTEM_ADMIN}>SYSTEM_ADMIN (IAM & Master Config)</option>
               </select>
             </div>

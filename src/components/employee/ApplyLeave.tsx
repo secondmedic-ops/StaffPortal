@@ -3,6 +3,7 @@ import { useAuth } from '../../context/AuthContext';
 import { meApi } from '../../api';
 import { LeaveType, LeaveBalance, Holiday } from '../../types';
 import { calculateLeaveDays, getTodayIsoString } from '../../utils/dateUtils';
+import { LEAVE_APPROVAL_POLICY } from '../../config/policy';
 import {
   CalendarPlus,
   AlertCircle,
@@ -26,8 +27,8 @@ export const ApplyLeave: React.FC = () => {
 
   // Form State
   const [selectedTypeId, setSelectedTypeId] = useState<number>(1);
-  const [fromDate, setFromDate] = useState<string>('2026-09-20');
-  const [toDate, setToDate] = useState<string>('2026-09-22');
+  const [fromDate, setFromDate] = useState<string>(getTodayIsoString());
+  const [toDate, setToDate] = useState<string>(getTodayIsoString());
   const [fromHalf, setFromHalf] = useState<'FIRST_HALF' | 'SECOND_HALF' | null>(null);
   const [toHalf, setToHalf] = useState<'FIRST_HALF' | 'SECOND_HALF' | null>(null);
   const [reason, setReason] = useState('');
@@ -40,7 +41,7 @@ export const ApplyLeave: React.FC = () => {
         setLoading(true);
         const [balData, calData] = await Promise.all([
           meApi.getLeaveBalances(),
-          meApi.getCalendar(9, 2026)
+          meApi.getCalendar(new Date().getMonth() + 1, new Date().getFullYear())
         ]);
         setBalances(balData);
         setHolidays(calData.holidays);
@@ -168,7 +169,7 @@ export const ApplyLeave: React.FC = () => {
       <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs">
         <h1 className="text-xl font-bold text-slate-900">Apply for Leave</h1>
         <p className="text-xs text-slate-500 mt-1">
-          Submit formal leave request through SecondMedic 2-tier approval workflow
+          Goes to your reporting manager; leave over {LEAVE_APPROVAL_POLICY.skipLevelThresholdDays} days also needs their manager's approval
         </p>
       </div>
 

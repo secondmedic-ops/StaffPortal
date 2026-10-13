@@ -14,7 +14,15 @@ import type {
   AuditLogEntry,
   SystemUser,
   AppUser,
-  RoleType
+  RoleType,
+  Asset,
+  AssetAssignment,
+  ItRequest,
+  LifecycleTask,
+  EmployeeProfile,
+  SalaryRevision,
+  PayrollEntry,
+  PayrollLine
 } from '../types';
 
 export function mapEmployee(row: any): Employee {
@@ -307,5 +315,173 @@ export function mapAppUser(row: any): AppUser {
     roles,
     lastLogin: row.last_login ?? undefined,
     isLocked: Boolean(row.is_locked)
+  };
+}
+
+const num = (v: any): number => (v == null ? 0 : Number(v));
+const opt = <T>(v: T | null | undefined): T | undefined => (v == null ? undefined : v);
+
+export function mapEmployeeProfile(row: any): EmployeeProfile {
+  return {
+    employeeId: row.employee_id,
+    dateOfBirth: opt(row.date_of_birth),
+    gender: opt(row.gender),
+    bloodGroup: opt(row.blood_group),
+    maritalStatus: opt(row.marital_status),
+    fatherName: opt(row.father_name),
+    currentAddress: opt(row.current_address),
+    permanentAddress: opt(row.permanent_address),
+    emergencyContactName: opt(row.emergency_contact_name),
+    emergencyContactPhone: opt(row.emergency_contact_phone),
+    emergencyContactRelation: opt(row.emergency_contact_relation),
+    panNumber: opt(row.pan_number),
+    aadhaarLast4: opt(row.aadhaar_last4),
+    uanNumber: opt(row.uan_number),
+    esicNumber: opt(row.esic_number),
+    bankName: opt(row.bank_name),
+    bankAccountNumber: opt(row.bank_account_number),
+    bankIfsc: opt(row.bank_ifsc)
+  };
+}
+
+export function mapAsset(row: any): Asset {
+  return {
+    id: row.id,
+    assetTag: row.asset_tag,
+    category: row.category,
+    brand: opt(row.brand),
+    model: opt(row.model),
+    serialNumber: opt(row.serial_number),
+    imei: opt(row.imei),
+    phoneNumber: opt(row.phone_number),
+    carrier: opt(row.carrier),
+    planDetails: opt(row.plan_details),
+    specs: opt(row.specs),
+    purchaseDate: opt(row.purchase_date),
+    purchaseCost: row.purchase_cost != null ? Number(row.purchase_cost) : undefined,
+    vendor: opt(row.vendor),
+    warrantyUntil: opt(row.warranty_until),
+    status: row.status,
+    condition: row.condition,
+    assignedTo: opt(row.assigned_to),
+    assignedToName: opt(row.assignee?.full_name),
+    assignedToCode: opt(row.assignee?.emp_code),
+    assignedAt: opt(row.assigned_at),
+    acknowledgedAt: opt(row.acknowledged_at),
+    notes: opt(row.notes)
+  };
+}
+
+export function mapAssetAssignment(row: any): AssetAssignment {
+  return {
+    id: row.id,
+    assetId: row.asset_id,
+    assetTag: opt(row.asset?.asset_tag),
+    employeeId: row.employee_id,
+    employeeName: opt(row.employee?.full_name),
+    assignedAt: row.assigned_at,
+    assignedByName: opt(row.assigner?.full_name),
+    returnedAt: opt(row.returned_at),
+    returnCondition: opt(row.return_condition),
+    notes: opt(row.notes)
+  };
+}
+
+export function mapItRequest(row: any): ItRequest {
+  return {
+    id: row.id,
+    employeeId: row.employee_id,
+    employeeName: opt(row.employee?.full_name),
+    employeeCode: opt(row.employee?.emp_code),
+    requestType: row.request_type,
+    title: row.title,
+    details: opt(row.details),
+    priority: row.priority,
+    status: row.status,
+    raisedById: opt(row.raised_by),
+    raisedByName: opt(row.raiser?.full_name),
+    resolution: opt(row.resolution),
+    createdAt: row.created_at,
+    closedAt: opt(row.closed_at)
+  };
+}
+
+export function mapLifecycleTask(row: any): LifecycleTask {
+  return {
+    id: row.id,
+    employeeId: row.employee_id,
+    employeeName: opt(row.employee?.full_name),
+    employeeCode: opt(row.employee?.emp_code),
+    kind: row.kind,
+    ownerRole: row.owner_role,
+    title: row.title,
+    dueDate: opt(row.due_date),
+    done: Boolean(row.done),
+    doneByName: opt(row.doer?.full_name),
+    doneAt: opt(row.done_at)
+  };
+}
+
+export function mapSalaryRevision(row: any): SalaryRevision {
+  return {
+    id: row.id,
+    employeeId: row.employee_id,
+    employeeName: opt(row.employee?.full_name),
+    employeeCode: opt(row.employee?.emp_code),
+    designation: opt(row.employee?.designation),
+    departmentName: opt(row.employee?.department?.name),
+    revisionType: row.revision_type,
+    effectiveFrom: row.effective_from,
+    ctcAnnual: num(row.ctc_annual),
+    basicMonthly: num(row.basic_monthly),
+    hraMonthly: num(row.hra_monthly),
+    specialMonthly: num(row.special_monthly),
+    otherAllowanceMonthly: num(row.other_allowance_monthly),
+    tdsMonthly: num(row.tds_monthly),
+    pfApplicable: row.pf_applicable !== false,
+    incrementPct: row.increment_pct != null ? Number(row.increment_pct) : undefined,
+    newDesignation: opt(row.new_designation),
+    reason: opt(row.reason),
+    status: row.status,
+    proposedById: opt(row.proposed_by),
+    proposedByName: opt(row.proposer?.full_name),
+    approvedByName: opt(row.approver?.full_name),
+    approvedAt: opt(row.approved_at),
+    createdAt: opt(row.created_at)
+  };
+}
+
+const lines = (v: any): PayrollLine[] =>
+  Array.isArray(v) ? v.map((l: any) => ({ code: String(l.code), label: String(l.label), amount: num(l.amount) })) : [];
+
+export function mapPayrollEntry(row: any): PayrollEntry {
+  return {
+    id: row.id,
+    employeeId: row.employee_id,
+    employeeName: opt(row.employee?.full_name),
+    employeeCode: opt(row.employee?.emp_code),
+    designation: opt(row.employee?.designation),
+    departmentName: opt(row.employee?.department?.name),
+    year: row.year,
+    month: row.month,
+    calendarDays: num(row.calendar_days),
+    payableDays: num(row.payable_days),
+    presentDays: num(row.present_days),
+    paidLeaveDays: num(row.paid_leave_days),
+    holidayDays: num(row.holiday_days),
+    weekOffDays: num(row.week_off_days),
+    lopDays: num(row.lop_days),
+    lateMarks: num(row.late_marks),
+    earnings: lines(row.earnings),
+    deductions: lines(row.deductions),
+    employerContributions: lines(row.employer_contributions),
+    grossEarnings: num(row.gross_earnings),
+    totalDeductions: num(row.total_deductions),
+    netPay: num(row.net_pay),
+    status: row.status,
+    revisionId: opt(row.revision_id),
+    computedByName: opt(row.computer?.full_name),
+    computedAt: opt(row.computed_at),
+    publishedAt: opt(row.published_at)
   };
 }

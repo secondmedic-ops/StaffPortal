@@ -17,6 +17,7 @@ import {
 import { StatusPill } from '../common/StatusPill';
 import { Modal } from '../common/Modal';
 import { SkeletonLoader } from '../common/SkeletonLoader';
+import { AttendancePayslips } from './AttendancePayslips';
 
 export const MyPayslips: React.FC = () => {
   const { currentUser, showToast } = useAuth();
@@ -111,6 +112,9 @@ export const MyPayslips: React.FC = () => {
           </span>
         </div>
       </div>
+
+      {/* Attendance-computed payslips & salary history */}
+      <AttendancePayslips />
 
       {/* Table of Payslips */}
       {loading ? (

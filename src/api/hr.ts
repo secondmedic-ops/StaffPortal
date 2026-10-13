@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase';
+import type { Database } from '../types/database';
 import {
   mapEmployee,
   mapMonthlyAttendanceSummary,
@@ -212,6 +213,20 @@ export const hrApi = {
 
     if (error || !created) throw new Error(`Failed to create holiday: ${error?.message}`);
     return mapHoliday(created);
+  },
+
+  async updateHoliday(id: number, data: Partial<Omit<Holiday, 'id'>>): Promise<void> {
+    const payload: Database['public']['Tables']['holidays']['Update'] = {};
+    if (data.name !== undefined) payload.name = data.name;
+    if (data.holidayDate !== undefined) {
+      payload.holiday_date = data.holidayDate;
+      payload.holiday_year = Number(data.holidayDate.slice(0, 4));
+    }
+    if (data.isOptional !== undefined) payload.is_optional = data.isOptional;
+    if (data.isRestricted !== undefined) payload.is_restricted = data.isRestricted;
+
+    const { error } = await supabase.from('holidays').update(payload).eq('id', id);
+    if (error) throw new Error(`Failed to update holiday: ${error.message}`);
   },
 
   async deleteHoliday(id: number): Promise<void> {

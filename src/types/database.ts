@@ -6,6 +6,30 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[];
 
+/** Compact table definition for tables added by the staff-lifecycle migration. */
+type LifecycleTable<
+  Row extends Record<string, unknown>,
+  RequiredOnInsert extends keyof Row,
+  Rel extends Array<{
+    foreignKeyName: string;
+    columns: string[];
+    referencedRelation: string;
+    referencedColumns: string[];
+  }> = []
+> = {
+  Row: Row;
+  Insert: Pick<Row, RequiredOnInsert> & Partial<Omit<Row, RequiredOnInsert>>;
+  Update: Partial<Row>;
+  Relationships: Rel;
+};
+
+type EmployeeFk<Name extends string, Col extends string> = {
+  foreignKeyName: Name;
+  columns: [Col];
+  referencedRelation: 'employees';
+  referencedColumns: ['id'];
+};
+
 export interface Database {
   public: {
     Tables: {
@@ -95,19 +119,19 @@ export interface Database {
         Row: {
           id: number;
           employee_id: number;
-          role: 'EMPLOYEE' | 'MANAGER' | 'HR' | 'ACCOUNTS' | 'CEO' | 'SYSTEM_ADMIN';
+          role: 'EMPLOYEE' | 'MANAGER' | 'HR' | 'ACCOUNTS' | 'IT' | 'CEO' | 'SYSTEM_ADMIN';
           created_at?: string;
         };
         Insert: {
           id?: number;
           employee_id: number;
-          role: 'EMPLOYEE' | 'MANAGER' | 'HR' | 'ACCOUNTS' | 'CEO' | 'SYSTEM_ADMIN';
+          role: 'EMPLOYEE' | 'MANAGER' | 'HR' | 'ACCOUNTS' | 'IT' | 'CEO' | 'SYSTEM_ADMIN';
           created_at?: string;
         };
         Update: {
           id?: number;
           employee_id?: number;
-          role?: 'EMPLOYEE' | 'MANAGER' | 'HR' | 'ACCOUNTS' | 'CEO' | 'SYSTEM_ADMIN';
+          role?: 'EMPLOYEE' | 'MANAGER' | 'HR' | 'ACCOUNTS' | 'IT' | 'CEO' | 'SYSTEM_ADMIN';
           created_at?: string;
         };
         Relationships: [
@@ -763,7 +787,7 @@ export interface Database {
           target_user_id: number;
           target_user_name: string;
           target_user_email: string;
-          proposed_role: 'EMPLOYEE' | 'MANAGER' | 'HR' | 'ACCOUNTS' | 'CEO' | 'SYSTEM_ADMIN';
+          proposed_role: 'EMPLOYEE' | 'MANAGER' | 'HR' | 'ACCOUNTS' | 'IT' | 'CEO' | 'SYSTEM_ADMIN';
           justification: string;
           proposed_by_name: string;
           proposed_at: string;
@@ -774,7 +798,7 @@ export interface Database {
           target_user_id: number;
           target_user_name: string;
           target_user_email: string;
-          proposed_role: 'EMPLOYEE' | 'MANAGER' | 'HR' | 'ACCOUNTS' | 'CEO' | 'SYSTEM_ADMIN';
+          proposed_role: 'EMPLOYEE' | 'MANAGER' | 'HR' | 'ACCOUNTS' | 'IT' | 'CEO' | 'SYSTEM_ADMIN';
           justification: string;
           proposed_by_name: string;
           proposed_at?: string;
@@ -785,7 +809,7 @@ export interface Database {
           target_user_id?: number;
           target_user_name?: string;
           target_user_email?: string;
-          proposed_role?: 'EMPLOYEE' | 'MANAGER' | 'HR' | 'ACCOUNTS' | 'CEO' | 'SYSTEM_ADMIN';
+          proposed_role?: 'EMPLOYEE' | 'MANAGER' | 'HR' | 'ACCOUNTS' | 'IT' | 'CEO' | 'SYSTEM_ADMIN';
           justification?: string;
           proposed_by_name?: string;
           proposed_at?: string;
@@ -824,6 +848,183 @@ export interface Database {
           }
         ];
       };
+
+      employee_profiles: LifecycleTable<
+        {
+          employee_id: number;
+          date_of_birth: string | null;
+          gender: string | null;
+          blood_group: string | null;
+          marital_status: string | null;
+          father_name: string | null;
+          current_address: string | null;
+          permanent_address: string | null;
+          emergency_contact_name: string | null;
+          emergency_contact_phone: string | null;
+          emergency_contact_relation: string | null;
+          pan_number: string | null;
+          aadhaar_last4: string | null;
+          uan_number: string | null;
+          esic_number: string | null;
+          bank_name: string | null;
+          bank_account_number: string | null;
+          bank_ifsc: string | null;
+          updated_at: string;
+        },
+        'employee_id',
+        [EmployeeFk<'employee_profiles_employee_id_fkey', 'employee_id'>]
+      >;
+      assets: LifecycleTable<
+        {
+          id: number;
+          asset_tag: string;
+          category: 'LAPTOP' | 'DESKTOP' | 'MOBILE' | 'SIM' | 'TABLET' | 'MONITOR' | 'ACCESSORY' | 'ID_CARD' | 'OTHER';
+          brand: string | null;
+          model: string | null;
+          serial_number: string | null;
+          imei: string | null;
+          phone_number: string | null;
+          carrier: string | null;
+          plan_details: string | null;
+          specs: string | null;
+          purchase_date: string | null;
+          purchase_cost: number | null;
+          vendor: string | null;
+          warranty_until: string | null;
+          status: 'IN_STOCK' | 'ASSIGNED' | 'IN_REPAIR' | 'RETIRED' | 'LOST';
+          condition: 'NEW' | 'GOOD' | 'FAIR' | 'DAMAGED';
+          assigned_to: number | null;
+          assigned_at: string | null;
+          acknowledged_at: string | null;
+          notes: string | null;
+          created_at: string;
+        },
+        'asset_tag' | 'category',
+        [EmployeeFk<'assets_assigned_to_fkey', 'assigned_to'>]
+      >;
+      asset_assignments: LifecycleTable<
+        {
+          id: number;
+          asset_id: number;
+          employee_id: number;
+          assigned_at: string;
+          assigned_by: number | null;
+          returned_at: string | null;
+          return_condition: 'NEW' | 'GOOD' | 'FAIR' | 'DAMAGED' | null;
+          notes: string | null;
+        },
+        'asset_id' | 'employee_id',
+        [
+          EmployeeFk<'asset_assignments_employee_id_fkey', 'employee_id'>,
+          EmployeeFk<'asset_assignments_assigned_by_fkey', 'assigned_by'>,
+          {
+            foreignKeyName: 'asset_assignments_asset_id_fkey';
+            columns: ['asset_id'];
+            referencedRelation: 'assets';
+            referencedColumns: ['id'];
+          }
+        ]
+      >;
+      it_requests: LifecycleTable<
+        {
+          id: number;
+          employee_id: number;
+          request_type: 'ONBOARDING' | 'OFFBOARDING' | 'NEW_ASSET' | 'REPAIR' | 'ACCESS' | 'OTHER';
+          title: string;
+          details: string | null;
+          priority: 'LOW' | 'MEDIUM' | 'HIGH';
+          status: 'OPEN' | 'IN_PROGRESS' | 'DONE' | 'CANCELLED';
+          raised_by: number | null;
+          resolution: string | null;
+          created_at: string;
+          closed_at: string | null;
+        },
+        'employee_id' | 'request_type' | 'title',
+        [
+          EmployeeFk<'it_requests_employee_id_fkey', 'employee_id'>,
+          EmployeeFk<'it_requests_raised_by_fkey', 'raised_by'>
+        ]
+      >;
+      lifecycle_tasks: LifecycleTable<
+        {
+          id: number;
+          employee_id: number;
+          kind: 'ONBOARDING' | 'OFFBOARDING';
+          owner_role: 'HR' | 'IT' | 'ACCOUNTS' | 'MANAGER';
+          title: string;
+          due_date: string | null;
+          done: boolean;
+          done_by: number | null;
+          done_at: string | null;
+          created_at: string;
+        },
+        'employee_id' | 'kind' | 'owner_role' | 'title',
+        [
+          EmployeeFk<'lifecycle_tasks_employee_id_fkey', 'employee_id'>,
+          EmployeeFk<'lifecycle_tasks_done_by_fkey', 'done_by'>
+        ]
+      >;
+      salary_revisions: LifecycleTable<
+        {
+          id: number;
+          employee_id: number;
+          revision_type: 'JOINING' | 'INCREMENT' | 'PROMOTION' | 'CORRECTION';
+          effective_from: string;
+          ctc_annual: number;
+          basic_monthly: number;
+          hra_monthly: number;
+          special_monthly: number;
+          other_allowance_monthly: number;
+          tds_monthly: number;
+          pf_applicable: boolean;
+          increment_pct: number | null;
+          new_designation: string | null;
+          reason: string | null;
+          status: 'PROPOSED' | 'APPROVED' | 'REJECTED';
+          proposed_by: number | null;
+          approved_by: number | null;
+          approved_at: string | null;
+          created_at: string;
+        },
+        'employee_id' | 'revision_type' | 'effective_from' | 'ctc_annual' | 'basic_monthly',
+        [
+          EmployeeFk<'salary_revisions_employee_id_fkey', 'employee_id'>,
+          EmployeeFk<'salary_revisions_proposed_by_fkey', 'proposed_by'>,
+          EmployeeFk<'salary_revisions_approved_by_fkey', 'approved_by'>
+        ]
+      >;
+      payroll_entries: LifecycleTable<
+        {
+          id: number;
+          employee_id: number;
+          year: number;
+          month: number;
+          calendar_days: number;
+          payable_days: number;
+          present_days: number;
+          paid_leave_days: number;
+          holiday_days: number;
+          week_off_days: number;
+          lop_days: number;
+          late_marks: number;
+          earnings: Json;
+          deductions: Json;
+          employer_contributions: Json;
+          gross_earnings: number;
+          total_deductions: number;
+          net_pay: number;
+          status: 'DRAFT' | 'APPROVED' | 'PUBLISHED';
+          revision_id: number | null;
+          computed_by: number | null;
+          computed_at: string;
+          published_at: string | null;
+        },
+        'employee_id' | 'year' | 'month',
+        [
+          EmployeeFk<'payroll_entries_employee_id_fkey', 'employee_id'>,
+          EmployeeFk<'payroll_entries_computed_by_fkey', 'computed_by'>
+        ]
+      >;
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;

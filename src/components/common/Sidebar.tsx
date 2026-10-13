@@ -22,8 +22,16 @@ import {
   ListOrdered,
   HeartHandshake,
   FolderOpen,
-  Smartphone
+  Smartphone,
+  Laptop,
+  LifeBuoy,
+  UserPlus,
+  ClipboardCheck,
+  Calculator,
+  TrendingUp,
+  MonitorSmartphone
 } from 'lucide-react';
+import { usePendingCounts } from '../../context/PendingCountsContext';
 
 interface NavItem {
   id: string;
@@ -33,7 +41,9 @@ interface NavItem {
 }
 
 export const Sidebar: React.FC = () => {
-  const { activeNav, setActiveNav, isManager, isHr, isAccounts, isCeo, isAdmin } = useAuth();
+  const { activeNav, setActiveNav, isManager, isHr, isAccounts, isIt, isCeo, isAdmin } = useAuth();
+  const { counts } = usePendingCounts();
+  const badge = (n: number) => (n > 0 ? n : undefined);
 
   // 1. Employee items (available to everyone)
   const employeeItems: NavItem[] = [
@@ -43,20 +53,24 @@ export const Sidebar: React.FC = () => {
     { id: 'leave-requests', label: 'My Leave', icon: Clock },
     { id: 'calendar', label: 'Calendar', icon: Calendar },
     { id: 'kpis', label: 'My KPIs', icon: Award },
-    { id: 'payslips', label: 'My Payslips', icon: FileText }
+    { id: 'payslips', label: 'My Payslips', icon: FileText },
+    { id: 'my-assets', label: 'My Assets & IT Help', icon: Laptop, badge: badge(counts.myUnacknowledgedAssets) }
   ];
 
   // 2. Manager items
   const managerItems: NavItem[] = [
     { id: 'team-dashboard', label: 'Team Dashboard', icon: Users },
-    { id: 'team-approvals', label: 'Pending Approvals', icon: CheckSquare, badge: 2 },
+    { id: 'team-approvals', label: 'Leave Approvals', icon: CheckSquare, badge: badge(counts.leaveApprovals) },
     { id: 'team-calendar', label: 'Team Calendar', icon: Calendar },
-    { id: 'team-regularization', label: 'Regularizations', icon: Clock, badge: 1 },
+    { id: 'team-regularization', label: 'Regularizations', icon: Clock, badge: badge(counts.regularizations) },
     { id: 'team-kpis', label: 'Team KPI', icon: Award }
   ];
 
   // 3. HR items
   const hrItems: NavItem[] = [
+    { id: 'hr-register', label: 'Register New Staff', icon: UserPlus },
+    { id: 'hr-lifecycle', label: 'Onboarding & Exit', icon: ClipboardCheck, badge: badge(counts.myLifecycleTasks) },
+    ...(!isManager ? [{ id: 'team-approvals', label: 'HR Leave Queue', icon: CheckSquare, badge: badge(counts.leaveApprovals) }] : []),
     { id: 'hr-directory', label: 'Employee Directory', icon: Users },
     { id: 'hr-ats', label: 'Applicant Tracking', icon: Briefcase },
     { id: 'hr-benefits', label: 'Benefits Management', icon: HeartHandshake },
@@ -70,6 +84,9 @@ export const Sidebar: React.FC = () => {
 
   // 4. Accounts items (Payroll module - accessible to Finance & Admin)
   const accountsItems: NavItem[] = [
+    { id: 'payroll-attendance', label: 'Attendance Payroll', icon: Calculator },
+    { id: 'payroll-increments', label: 'Increments & Revisions', icon: TrendingUp, badge: badge(counts.salaryRevisions) },
+    ...(!isHr ? [{ id: 'hr-lifecycle', label: 'Joiner / Exit Tasks', icon: ClipboardCheck, badge: badge(counts.myLifecycleTasks) }] : []),
     { id: 'payroll-dashboard', label: 'Payroll & Tax', icon: DollarSign },
     { id: 'payroll-structures', label: 'Salary Structures', icon: Briefcase },
     { id: 'payroll-generate', label: 'Generate Payslips', icon: FileText },
@@ -77,9 +94,18 @@ export const Sidebar: React.FC = () => {
     { id: 'payroll-access-log', label: 'Payslip Access Log', icon: ListOrdered }
   ];
 
-  // 5. CEO items (Org-wide overview, NO payroll)
+  // IT items (assets, numbers, service desk)
+  const itItems: NavItem[] = [
+    { id: 'it-dashboard', label: 'IT Overview', icon: MonitorSmartphone },
+    { id: 'it-assets', label: 'Asset Register', icon: Laptop },
+    { id: 'it-requests', label: 'Service Desk', icon: LifeBuoy, badge: badge(counts.itRequests) },
+    ...(!isHr && !isAccounts ? [{ id: 'hr-lifecycle', label: 'Joiner / Exit Tasks', icon: ClipboardCheck, badge: badge(counts.myLifecycleTasks) }] : [])
+  ];
+
+  // 5. CEO items (Org-wide overview; approves salary revisions)
   const ceoItems: NavItem[] = [
     { id: 'ceo-dashboard', label: 'Org-wide Dashboard', icon: BarChart3 },
+    ...(!isAccounts ? [{ id: 'payroll-increments', label: 'Salary Approvals', icon: TrendingUp, badge: badge(counts.salaryRevisions) }] : []),
     { id: 'ceo-orgchart', label: 'Complete Org Chart', icon: GitFork },
     { id: 'ceo-calendar', label: 'All-Staff Calendar', icon: Calendar }
   ];
@@ -151,6 +177,9 @@ export const Sidebar: React.FC = () => {
       {/* 4. ACCOUNTS SECTION */}
       {isAccounts && renderSection('Payroll & Finance', accountsItems, 'Accounts')}
 
+      {/* IT SECTION */}
+      {isIt && renderSection('IT Operations', itItems, 'IT')}
+
       {/* 5. CEO SECTION */}
       {isCeo && renderSection('Executive Leadership', ceoItems, 'CEO')}
 
@@ -159,8 +188,8 @@ export const Sidebar: React.FC = () => {
 
       <div className="mt-auto pt-4 border-t border-slate-100 dark:border-slate-800 px-2 text-[10px] text-slate-400 dark:text-slate-500">
         <p className="font-semibold text-slate-500 dark:text-slate-400">SecondMedic Health v1.0</p>
-        <p>Spring Boot 3.3 • Postgres 16</p>
-        <p className="text-teal-700 dark:text-teal-400 font-mono mt-0.5">JWT Memory Auth Active</p>
+        <p>Supabase • Postgres row-level security</p>
+        <p className="text-teal-700 dark:text-teal-400 font-mono mt-0.5">Approvals follow reporting line</p>
       </div>
     </aside>
   );

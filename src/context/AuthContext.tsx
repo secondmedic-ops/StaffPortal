@@ -34,13 +34,16 @@ export interface AuthContextType {
   isManager: boolean;
   isHr: boolean;
   isAccounts: boolean;
+  isIt: boolean;
   isCeo: boolean;
+  /** Number of people reporting directly to the signed-in employee. */
+  directReportCount: number;
   isAdmin: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-async function loadEmployeeForUser(user: User): Promise<{ employee: Employee; roles: RoleType[] }> {
+async function loadEmployeeForUser(user: User): Promise<{ employee: Employee; roles: RoleType[]; directReportCount: number }> {
   const { data: emp, error: empError } = await supabase
     .from('employees')
     .select('*, department:departments(name), manager:employees!employees_manager_id_fkey(full_name)')
@@ -69,9 +72,18 @@ async function loadEmployeeForUser(user: User): Promise<{ employee: Employee; ro
   }
 
   const roles = (rolesData ?? []).map((r: any) => r.role as RoleType);
+
+  // Anyone with direct reports approves for them, whether or not MANAGER was granted explicitly.
+  const { count } = await supabase
+    .from('employees')
+    .select('id', { count: 'exact', head: true })
+    .eq('manager_id', emp.id)
+    .neq('status', 'EXITED');
+
   return {
     employee: mapEmployee(emp),
-    roles
+    roles,
+    directReportCount: count ?? 0
   };
 }
 
@@ -79,6 +91,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [session, setSession] = useState<Session | null>(null);
   const [employee, setEmployee] = useState<Employee | null>(null);
   const [roles, setRoles] = useState<RoleType[]>([]);
+  const [directReportCount, setDirectReportCount] = useState(0);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [activeNav, setActiveNav] = useState<string>('dashboard');
@@ -121,10 +134,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setSession(initSession);
       if (initSession?.user) {
         loadEmployeeForUser(initSession.user)
-          .then(({ employee: emp, roles: r }) => {
+          .then(({ employee: emp, roles: r, directReportCount: reports }) => {
             if (!isMounted) return;
             setEmployee(emp);
             setRoles(r);
+            setDirectReportCount(reports);
             setError(null);
             setLoading(false);
           })
@@ -144,10 +158,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (newSession?.user) {
         setLoading(true);
         try {
-          const { employee: emp, roles: r } = await loadEmployeeForUser(newSession.user);
+          const { employee: emp, roles: r, directReportCount: reports } = await loadEmployeeForUser(newSession.user);
           if (isMounted) {
             setEmployee(emp);
             setRoles(r);
+            setDirectReportCount(reports);
             setError(null);
           }
         } catch (err: any) {
@@ -220,7 +235,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       avatarUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150',
     };
     setEmployee(demoEmployee);
-    setRoles(['SYSTEM_ADMIN', 'CEO', 'HR', 'ACCOUNTS', 'MANAGER']);
+    setRoles(['SYSTEM_ADMIN', 'CEO', 'HR', 'ACCOUNTS', 'IT', 'MANAGER']);
     setSession({
       access_token: 'demo-admin-token',
       refresh_token: 'demo-refresh',
@@ -237,12 +252,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     } as Session);
     setLoading(false);
-    showToast('Master Admin Session Active', 'Logged in as Admin@secondmedic with full SYSTEM_ADMIN, CEO, HR, and ACCOUNTS access.', 'success');
+    showToast('Master Admin Session Active', 'Logged in as Admin@secondmedic with full SYSTEM_ADMIN, CEO, HR, ACCOUNTS and IT access.', 'success');
   };
 
-  const isManager = roles.includes('MANAGER');
+  const isManager = roles.includes('MANAGER') || directReportCount > 0;
   const isHr = roles.includes('HR');
   const isAccounts = roles.includes('ACCOUNTS') || roles.includes('SYSTEM_ADMIN');
+  const isIt = roles.includes('IT');
   const isCeo = roles.includes('CEO');
   const isAdmin = roles.includes('SYSTEM_ADMIN');
 
@@ -454,7 +470,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isManager,
         isHr,
         isAccounts,
+        isIt,
         isCeo,
+        directReportCount,
         isAdmin,
         loginAsDemoAdmin
       }}
