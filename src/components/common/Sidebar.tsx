@@ -1,206 +1,135 @@
-import React from 'react';
-import { useAuth } from '../../context/AuthContext';
-import {
-  LayoutDashboard,
-  CalendarCheck,
-  CalendarPlus,
-  Clock,
-  Calendar,
-  Award,
-  FileText,
-  Users,
-  CheckSquare,
-  BarChart3,
-  GitFork,
-  Briefcase,
-  Settings,
-  ShieldCheck,
-  DollarSign,
-  UploadCloud,
-  FileSpreadsheet,
-  Lock,
-  ListOrdered,
-  HeartHandshake,
-  FolderOpen,
-  Smartphone,
-  Laptop,
-  LifeBuoy,
-  UserPlus,
-  ClipboardCheck,
-  Calculator,
-  TrendingUp,
-  MonitorSmartphone,
-  CalendarHeart,
-  BadgeCheck
-} from 'lucide-react';
-import { usePendingCounts } from '../../context/PendingCountsContext';
+import React, { useEffect, useMemo, useState } from 'react';
+import { ChevronDown } from 'lucide-react';
+import { BrandMark } from './BrandMark';
 
-interface NavItem {
-  id: string;
-  label: string;
-  icon: React.ElementType;
-  badge?: number | string;
+export { BrandMark };
+import { useAuth } from '../../context/AuthContext';
+import { usePendingCounts } from '../../context/PendingCountsContext';
+import { buildNavGroups, findNav, groupBadgeTotal, NavGroup } from '../../config/navigation';
+import { SHIFT_POLICY } from '../../config/policy';
+
+/** Navigation groups for the signed-in person, shared by the sidebar, mobile menu and header. */
+export function useNavGroups(): NavGroup[] {
+  const { isManager, isHr, isAccounts, isIt, isCeo, isAdmin } = useAuth();
+  const { counts } = usePendingCounts();
+  return useMemo(
+    () => buildNavGroups({ isManager, isHr, isAccounts, isIt, isCeo, isAdmin }, counts),
+    [isManager, isHr, isAccounts, isIt, isCeo, isAdmin, counts]
+  );
 }
 
-export const Sidebar: React.FC = () => {
-  const { activeNav, setActiveNav, isManager, isHr, isAccounts, isIt, isCeo, isAdmin } = useAuth();
-  const { counts } = usePendingCounts();
-  const badge = (n: number) => (n > 0 ? n : undefined);
+interface NavListProps {
+  groups: NavGroup[];
+  onNavigate?: () => void;
+}
 
-  // 1. Employee items (available to everyone)
-  const employeeItems: NavItem[] = [
-    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'attendance', label: 'My Attendance', icon: CalendarCheck },
-    { id: 'apply-leave', label: 'Apply Leave', icon: CalendarPlus },
-    { id: 'leave-requests', label: 'My Leave', icon: Clock },
-    { id: 'calendar', label: 'Calendar', icon: Calendar },
-    { id: 'kpis', label: 'My KPIs', icon: Award },
-    { id: 'payslips', label: 'My Payslips', icon: FileText },
-    { id: 'my-assets', label: 'My Assets & IT Help', icon: Laptop, badge: badge(counts.myUnacknowledgedAssets) },
-    { id: 'holiday-work', label: 'Comp-off & Overtime', icon: CalendarHeart }
-  ];
+/** Collapsible workspace groups; the group holding the current page stays open. */
+export const NavList: React.FC<NavListProps> = ({ groups, onNavigate }) => {
+  const { activeNav, setActiveNav } = useAuth();
+  const current = findNav(groups, activeNav)?.group.id ?? 'me';
+  const [open, setOpen] = useState<Record<string, boolean>>({ [current]: true });
 
-  // 2. Manager items
-  const managerItems: NavItem[] = [
-    { id: 'team-dashboard', label: 'Team Dashboard', icon: Users },
-    { id: 'team-approvals', label: 'Leave Approvals', icon: CheckSquare, badge: badge(counts.leaveApprovals) },
-    { id: 'team-calendar', label: 'Team Calendar', icon: Calendar },
-    { id: 'team-regularization', label: 'Regularizations', icon: Clock, badge: badge(counts.regularizations) },
-    { id: 'team-holiday-work', label: 'Comp-off / OT Approvals', icon: CalendarHeart, badge: badge(counts.holidayWorkClaims) },
-    ...(counts.payrollApprovals > 0 ? [{ id: 'payroll-approval', label: 'Payroll Approval', icon: BadgeCheck, badge: badge(counts.payrollApprovals) }] : []),
-    { id: 'team-kpis', label: 'Team KPI', icon: Award }
-  ];
+  useEffect(() => {
+    setOpen(prev => (prev[current] ? prev : { ...prev, [current]: true }));
+  }, [current]);
 
-  // 3. HR items
-  const hrItems: NavItem[] = [
-    { id: 'hr-register', label: 'Register New Staff', icon: UserPlus },
-    { id: 'hr-lifecycle', label: 'Onboarding & Exit', icon: ClipboardCheck, badge: badge(counts.myLifecycleTasks) },
-    ...(!isManager
-      ? [
-          { id: 'team-approvals', label: 'HR Leave Queue', icon: CheckSquare, badge: badge(counts.leaveApprovals) },
-          { id: 'team-holiday-work', label: 'Comp-off / OT Claims', icon: CalendarHeart, badge: badge(counts.holidayWorkClaims) }
-        ]
-      : []),
-    { id: 'hr-directory', label: 'Employee Directory', icon: Users },
-    { id: 'hr-ats', label: 'Applicant Tracking', icon: Briefcase },
-    { id: 'hr-benefits', label: 'Benefits Management', icon: HeartHandshake },
-    { id: 'hr-documents', label: 'Document Management', icon: FolderOpen },
-    { id: 'hr-orgchart', label: 'Org Chart', icon: GitFork },
-    { id: 'hr-attendance', label: 'Attendance Register', icon: FileSpreadsheet },
-    { id: 'hr-leave-policies', label: 'Leave Policy Config', icon: Settings },
-    { id: 'hr-holidays', label: 'Holiday Calendar', icon: Calendar },
-    { id: 'hr-mobile', label: 'Mobile Capabilities', icon: Smartphone }
-  ];
-
-  // 4. Accounts items (Payroll module - accessible to Finance & Admin)
-  const accountsItems: NavItem[] = [
-    { id: 'payroll-attendance', label: 'Attendance Payroll', icon: Calculator },
-    { id: 'payroll-increments', label: 'Increments & Revisions', icon: TrendingUp, badge: badge(counts.salaryRevisions) },
-    ...(!isHr ? [{ id: 'hr-lifecycle', label: 'Joiner / Exit Tasks', icon: ClipboardCheck, badge: badge(counts.myLifecycleTasks) }] : []),
-    { id: 'payroll-dashboard', label: 'Payroll & Tax', icon: DollarSign },
-    { id: 'payroll-structures', label: 'Salary Structures', icon: Briefcase },
-    { id: 'payroll-generate', label: 'Generate Payslips', icon: FileText },
-    { id: 'payroll-upload', label: 'Bulk Payslip Upload', icon: UploadCloud },
-    { id: 'payroll-access-log', label: 'Payslip Access Log', icon: ListOrdered }
-  ];
-
-  // IT items (assets, numbers, service desk)
-  const itItems: NavItem[] = [
-    { id: 'it-dashboard', label: 'IT Overview', icon: MonitorSmartphone },
-    { id: 'it-assets', label: 'Asset Register', icon: Laptop },
-    { id: 'it-requests', label: 'Service Desk', icon: LifeBuoy, badge: badge(counts.itRequests) },
-    ...(!isHr && !isAccounts ? [{ id: 'hr-lifecycle', label: 'Joiner / Exit Tasks', icon: ClipboardCheck, badge: badge(counts.myLifecycleTasks) }] : [])
-  ];
-
-  // 5. CEO items (Org-wide overview; approves salary revisions)
-  const ceoItems: NavItem[] = [
-    { id: 'ceo-dashboard', label: 'Org-wide Dashboard', icon: BarChart3 },
-    ...(!isAccounts ? [{ id: 'payroll-increments', label: 'Salary Approvals', icon: TrendingUp, badge: badge(counts.salaryRevisions) }] : []),
-    { id: 'ceo-orgchart', label: 'Complete Org Chart', icon: GitFork },
-    { id: 'ceo-calendar', label: 'All-Staff Calendar', icon: Calendar }
-  ];
-
-  // 6. System Admin items (Users, roles, audit log, security)
-  const adminItems: NavItem[] = [
-    { id: 'admin-users', label: 'User & Role Mgmt', icon: ShieldCheck },
-    { id: 'admin-audit', label: 'System Audit Log', icon: Lock },
-    { id: 'admin-security', label: 'Security & Compliance', icon: ShieldCheck }
-  ];
-
-  const renderSection = (title: string, items: NavItem[], roleBadge?: string) => (
-    <div className="mb-5">
-      <div className="flex items-center justify-between px-3 mb-1.5">
-        <span className="text-[10px] font-bold tracking-wider uppercase text-slate-400 dark:text-slate-500">{title}</span>
-        {roleBadge && (
-          <span className="text-[9px] font-semibold px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 uppercase">
-            {roleBadge}
-          </span>
-        )}
-      </div>
-      <div className="space-y-0.5">
-        {items.map(item => {
-          const Icon = item.icon;
-          const isActive = activeNav === item.id;
-          return (
-            <button
-              key={item.id}
-              onClick={() => setActiveNav(item.id)}
-              className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-all ${
-                isActive
-                  ? 'bg-teal-700 dark:bg-teal-600 text-white shadow-xs font-semibold'
-                  : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/70'
-              }`}
-            >
-              <div className="flex items-center gap-2.5">
-                <Icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-slate-400 dark:text-slate-400'}`} />
-                <span>{item.label}</span>
-              </div>
-              {item.badge !== undefined && (
-                <span
-                  className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
-                    isActive
-                      ? 'bg-white text-teal-800 dark:bg-teal-100'
-                      : 'bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300'
-                  }`}
-                >
-                  {item.badge}
-                </span>
-              )}
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
+  const single = groups.length === 1;
 
   return (
-    <aside className="hidden md:flex md:w-60 lg:w-64 flex-col flex-shrink-0 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 h-[calc(100vh-4rem)] overflow-y-auto p-3.5 select-none transition-colors">
-      {/* 1. EMPLOYEE SECTION (Everyone) */}
-      {renderSection('Employee Services', employeeItems)}
+    <nav aria-label="Main" className="space-y-1">
+      {groups.map(group => {
+        const isOpen = single || open[group.id];
+        const pending = groupBadgeTotal(group);
+        const GroupIcon = group.icon;
+        return (
+          <div key={group.id}>
+            {!single && (
+              <button
+                type="button"
+                onClick={() => setOpen(prev => ({ ...prev, [group.id]: !isOpen }))}
+                aria-expanded={isOpen}
+                className={`w-full flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13.5px] font-semibold transition-colors ${
+                  group.id === current ? 'text-white' : 'text-slate-300 hover:text-white'
+                } hover:bg-white/5`}
+              >
+                <GroupIcon className="h-4 w-4 shrink-0 opacity-80" aria-hidden />
+                <span className="flex-1 text-left">{group.label}</span>
+                {!isOpen && pending > 0 && (
+                  <span className="rounded-full bg-amber-400 px-1.5 text-[11.5px] font-bold text-ink tabular">{pending}</span>
+                )}
+                <ChevronDown
+                  className={`h-4 w-4 shrink-0 text-slate-400 transition-transform duration-200 ${isOpen ? '' : '-rotate-90'}`}
+                  aria-hidden
+                />
+              </button>
+            )}
+            {isOpen && (
+              <ul className={`${single ? '' : 'mt-0.5 mb-2 ml-[18px] border-l border-ink-line pl-2'} space-y-px`}>
+                {group.items.map(item => {
+                  const active = activeNav === item.id || (item.id === 'dashboard' && activeNav === 'employee-dashboard');
+                  const Icon = item.icon;
+                  return (
+                    <li key={`${group.id}-${item.id}`}>
+                      <button
+                        type="button"
+                        data-nav={item.id}
+                        onClick={() => {
+                          setActiveNav(item.id);
+                          onNavigate?.();
+                        }}
+                        aria-current={active ? 'page' : undefined}
+                        className={`group w-full flex items-center gap-2.5 rounded-md px-2.5 py-[7px] text-[13.5px] transition-colors ${
+                          active
+                            ? 'bg-teal-500/15 text-white font-semibold shadow-[inset_2px_0_0_var(--color-teal-300)]'
+                            : 'text-slate-300 hover:bg-white/5 hover:text-white'
+                        }`}
+                      >
+                        <Icon
+                          className={`h-4 w-4 shrink-0 ${active ? 'text-teal-300' : 'text-slate-400 group-hover:text-slate-200'}`}
+                          aria-hidden
+                        />
+                        <span className="flex-1 text-left truncate">{item.label}</span>
+                        {item.badge !== undefined && (
+                          <span
+                            className="rounded-full bg-amber-400 px-1.5 text-[11.5px] font-bold leading-[18px] text-ink tabular"
+                            aria-label={`${item.badge} pending`}
+                          >
+                            {item.badge}
+                          </span>
+                        )}
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </div>
+        );
+      })}
+    </nav>
+  );
+};
 
-      {/* 2. MANAGER SECTION */}
-      {isManager && renderSection('My Team', managerItems, 'Manager')}
+export const Sidebar: React.FC = () => {
+  const groups = useNavGroups();
+  const { currentUser } = useAuth();
 
-      {/* 3. HR SECTION */}
-      {isHr && renderSection('People Operations', hrItems, 'HR')}
-
-      {/* 4. ACCOUNTS SECTION */}
-      {isAccounts && renderSection('Payroll & Finance', accountsItems, 'Accounts')}
-
-      {/* IT SECTION */}
-      {isIt && renderSection('IT Operations', itItems, 'IT')}
-
-      {/* 5. CEO SECTION */}
-      {isCeo && renderSection('Executive Leadership', ceoItems, 'CEO')}
-
-      {/* 6. ADMIN SECTION */}
-      {isAdmin && renderSection('System Administration', adminItems, 'Admin')}
-
-      <div className="mt-auto pt-4 border-t border-slate-100 dark:border-slate-800 px-2 text-[10px] text-slate-400 dark:text-slate-500">
-        <p className="font-semibold text-slate-500 dark:text-slate-400">SecondMedic Health v1.0</p>
-        <p>Supabase • Postgres row-level security</p>
-        <p className="text-teal-700 dark:text-teal-400 font-mono mt-0.5">Approvals follow reporting line</p>
+  return (
+    <aside className="hidden md:flex md:w-64 lg:w-[268px] shrink-0 flex-col bg-ink text-slate-200 h-screen sticky top-0 select-none">
+      <div className="px-4 pt-4 pb-5">
+        <BrandMark />
       </div>
+
+      <div className="flex-1 overflow-y-auto scrollbar-thin px-3 pb-4">
+        <NavList groups={groups} />
+      </div>
+
+      {currentUser && (
+        <div className="border-t border-ink-line px-4 py-3 text-[12.5px] leading-snug text-slate-400">
+          <div className="font-medium text-slate-200 truncate">{currentUser.departmentName || 'SecondMedic'}</div>
+          <div className="truncate">Shift {SHIFT_POLICY.startTime} to {SHIFT_POLICY.endTime}</div>
+        </div>
+      )}
     </aside>
   );
 };

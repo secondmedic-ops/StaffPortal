@@ -19,31 +19,31 @@ const TreeNode: React.FC<TreeNodeProps> = ({ employee, allEmployees, depth = 0 }
     <div className="flex flex-col items-center">
       {/* Employee Node Card */}
       <div
-        className={`w-64 p-3.5 rounded-xl border bg-white shadow-xs transition-all hover:shadow-md ${
+        className={`w-64 p-3.5 rounded-xl border bg-white dark:bg-slate-900 shadow-xs transition-all hover:shadow-md ${
           depth === 0
-            ? 'border-teal-400 ring-2 ring-teal-100 bg-teal-50/20'
+            ? 'border-teal-400 ring-2 ring-teal-100 bg-teal-50/20 dark:bg-teal-950/40'
             : depth === 1
-            ? 'border-blue-300'
-            : 'border-slate-200'
+            ? 'border-blue-300 dark:border-blue-700'
+            : 'border-slate-200 dark:border-slate-800'
         }`}
       >
         <div className="flex items-center justify-between">
-          <span className="text-[10px] font-mono text-slate-400">{employee.empCode}</span>
-          <span className={`text-[10px] font-bold px-1.5 py-0.2 rounded ${
-            depth === 0 ? 'bg-teal-700 text-white' : 'bg-slate-100 text-slate-700'
+          <span className="text-[11.5px] font-mono text-slate-400 dark:text-slate-500">{employee.empCode}</span>
+          <span className={`text-[11.5px] font-bold px-1.5 py-0.2 rounded ${
+            depth === 0 ? 'bg-teal-700 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
           }`}>
             {employee.employmentType}
           </span>
         </div>
 
-        <div className="font-bold text-xs text-slate-900 mt-1">{employee.fullName}</div>
-        <div className="text-[11px] text-teal-800 font-medium">{employee.designation}</div>
-        <div className="text-[10px] text-slate-500 mt-0.5">{employee.departmentName}</div>
+        <div className="font-bold text-xs text-slate-900 dark:text-slate-100 mt-1">{employee.fullName}</div>
+        <div className="text-[12.5px] text-teal-800 dark:text-teal-300 font-medium">{employee.designation}</div>
+        <div className="text-[11.5px] text-slate-500 dark:text-slate-400 mt-0.5">{employee.departmentName}</div>
 
         {directReports.length > 0 && (
           <button
             onClick={() => setExpanded(!expanded)}
-            className="mt-2 pt-2 border-t border-slate-100 w-full flex items-center justify-between text-[11px] font-semibold text-slate-600 hover:text-teal-700"
+            className="mt-2 pt-2 border-t border-slate-100 dark:border-slate-800 w-full flex items-center justify-between text-[12.5px] font-semibold text-slate-600 dark:text-slate-400 hover:text-teal-700 dark:hover:text-teal-300"
           >
             <span>{directReports.length} Direct {directReports.length === 1 ? 'Report' : 'Reports'}</span>
             {expanded ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
@@ -54,7 +54,7 @@ const TreeNode: React.FC<TreeNodeProps> = ({ employee, allEmployees, depth = 0 }
       {/* Children connector lines */}
       {expanded && directReports.length > 0 && (
         <div className="flex flex-col items-center">
-          <div className="w-0.5 h-6 bg-slate-300" />
+          <div className="w-0.5 h-6 bg-slate-300 dark:bg-slate-600" />
           <div className="flex items-start justify-center gap-6 pt-2 relative">
             {directReports.map((report, idx) => (
               <div key={report.id} className="relative flex flex-col items-center">
@@ -92,10 +92,10 @@ export const OrgChart: React.FC = () => {
   const rootEmployees = employees.filter(e => !e.managerId);
 
   return (
-    <div className="p-4 sm:p-6 max-w-7xl mx-auto space-y-6">
-      <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs">
-        <h1 className="text-xl font-bold text-slate-900">Organization Reporting Hierarchy</h1>
-        <p className="text-xs text-slate-500 mt-1">
+    <div className="px-4 sm:px-8 py-6 sm:py-8 max-w-7xl mx-auto space-y-6">
+      <div className="pb-1">
+        <h1 className="text-[22px] sm:text-2xl font-semibold text-slate-900 dark:text-slate-50">Organization Reporting Hierarchy</h1>
+        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-[70ch]">
           Visual authority map controlling leave approvals, KPI evaluation and shift assignments
         </p>
       </div>
@@ -103,7 +103,7 @@ export const OrgChart: React.FC = () => {
       {loading ? (
         <SkeletonLoader rows={6} />
       ) : (
-        <div className="bg-slate-50/50 p-8 rounded-xl border border-slate-200 overflow-x-auto min-h-[500px]">
+        <div className="bg-slate-50/50 dark:bg-slate-800/50 p-8 rounded-xl border border-slate-200 dark:border-slate-800 overflow-x-auto min-h-[500px]">
           <div className="min-w-max flex justify-center">
             {rootEmployees.map(root => (
               <TreeNode key={root.id} employee={root} allEmployees={employees} />

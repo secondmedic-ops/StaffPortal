@@ -124,12 +124,12 @@ export const MyAttendance: React.FC = () => {
   };
 
   return (
-    <div className="p-4 sm:p-6 space-y-6 max-w-7xl mx-auto transition-colors">
+    <div className="px-4 sm:px-8 py-6 sm:py-8 max-w-7xl mx-auto space-y-6">
       {/* Header & Controls */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs transition-colors">
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-1">
         <div>
-          <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">My Attendance Register</h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+          <h1 className="text-[22px] sm:text-2xl font-semibold text-slate-900 dark:text-slate-50">My Attendance Register</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-[70ch]">
             Official monthly attendance ledger with punch timestamps and regularization
           </p>
         </div>
@@ -159,23 +159,23 @@ export const MyAttendance: React.FC = () => {
       {/* Metrics Bar */}
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
         <div className="bg-white dark:bg-slate-900 p-3.5 rounded-lg border border-slate-200 dark:border-slate-800 shadow-xs transition-colors">
-          <div className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Present Days</div>
+          <div className="text-[12.5px] text-slate-500 dark:text-slate-400 font-medium">Present Days</div>
           <div className="text-xl font-bold text-emerald-700 dark:text-emerald-400 mt-1">{presentDays}</div>
         </div>
         <div className="bg-white dark:bg-slate-900 p-3.5 rounded-lg border border-slate-200 dark:border-slate-800 shadow-xs transition-colors">
-          <div className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Half Days</div>
+          <div className="text-[12.5px] text-slate-500 dark:text-slate-400 font-medium">Half Days</div>
           <div className="text-xl font-bold text-amber-700 dark:text-amber-400 mt-1">{halfDays}</div>
         </div>
         <div className="bg-white dark:bg-slate-900 p-3.5 rounded-lg border border-slate-200 dark:border-slate-800 shadow-xs transition-colors">
-          <div className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Leave Days</div>
+          <div className="text-[12.5px] text-slate-500 dark:text-slate-400 font-medium">Leave Days</div>
           <div className="text-xl font-bold text-sky-700 dark:text-sky-400 mt-1">{leaveDays}</div>
         </div>
         <div className="bg-white dark:bg-slate-900 p-3.5 rounded-lg border border-slate-200 dark:border-slate-800 shadow-xs transition-colors">
-          <div className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Absent (LOP)</div>
+          <div className="text-[12.5px] text-slate-500 dark:text-slate-400 font-medium">Absent (LOP)</div>
           <div className="text-xl font-bold text-rose-700 dark:text-rose-400 mt-1">{absentDays}</div>
         </div>
         <div className="bg-white dark:bg-slate-900 p-3.5 rounded-lg border border-slate-200 dark:border-slate-800 shadow-xs transition-colors">
-          <div className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Week-Offs</div>
+          <div className="text-[12.5px] text-slate-500 dark:text-slate-400 font-medium">Week-Offs</div>
           <div className="text-xl font-bold text-slate-600 dark:text-slate-300 mt-1">{weekOffs}</div>
         </div>
       </div>
@@ -189,7 +189,7 @@ export const MyAttendance: React.FC = () => {
         <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-sky-500" /> Leave</span>
         <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-slate-400" /> Week-Off</span>
         <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-purple-500" /> Holiday</span>
-        <span className="text-[11px] text-slate-400 dark:text-slate-500 ml-auto hidden sm:inline">Click any day to view details or request regularization</span>
+        <span className="text-[12.5px] text-slate-400 dark:text-slate-500 ml-auto hidden sm:inline">Click any day to view details or request regularization</span>
       </div>
 
       {/* Monthly Grid Calendar */}
@@ -269,19 +269,19 @@ export const MyAttendance: React.FC = () => {
                       {day}
                     </span>
                     {record?.isRegularized && (
-                      <span className="text-[9px] font-bold px-1 rounded bg-teal-100 dark:bg-teal-950 text-teal-800 dark:text-teal-300 border border-teal-200 dark:border-teal-800" title="Regularized">
+                      <span className="text-[11.5px] font-bold px-1 rounded bg-teal-100 dark:bg-teal-950 text-teal-800 dark:text-teal-300 border border-teal-200 dark:border-teal-800" title="Regularized">
                         REG
                       </span>
                     )}
                   </div>
 
                   <div className="mt-1">
-                    <div className={`text-[10px] font-medium px-1.5 py-0.5 rounded border truncate ${badgeColor}`}>
+                    <div className={`text-[11.5px] font-medium px-1.5 py-0.5 rounded border truncate ${badgeColor}`}>
                       {statusLabel}
                     </div>
 
                     {record?.punchIn && (
-                      <div className="text-[10px] font-mono text-slate-500 dark:text-slate-400 mt-1 truncate">
+                      <div className="text-[11.5px] font-mono text-slate-500 dark:text-slate-400 mt-1 truncate">
                         {formatTime(record.punchIn)} {record.punchOut ? `– ${formatTime(record.punchOut)}` : ''}
                       </div>
                     )}
@@ -314,7 +314,7 @@ export const MyAttendance: React.FC = () => {
                   {selectedRecord.punchIn ? formatTime(selectedRecord.punchIn) : '—'}
                 </span>
                 {selectedRecord.inSource && (
-                  <span className="text-[10px] text-slate-400 dark:text-slate-500 mt-1 block">
+                  <span className="text-[11.5px] text-slate-400 dark:text-slate-500 mt-1 block">
                     Source: {selectedRecord.inSource}
                   </span>
                 )}
@@ -326,7 +326,7 @@ export const MyAttendance: React.FC = () => {
                   {selectedRecord.punchOut ? formatTime(selectedRecord.punchOut) : '—'}
                 </span>
                 {selectedRecord.workedHours !== undefined && (
-                  <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium mt-1 block">
+                  <span className="text-[11.5px] text-slate-500 dark:text-slate-400 font-medium mt-1 block">
                     Worked: {selectedRecord.workedHours} hrs
                   </span>
                 )}
@@ -334,7 +334,7 @@ export const MyAttendance: React.FC = () => {
             </div>
 
             {selectedRecord.inLat && (
-              <div className="p-2.5 rounded bg-slate-50 dark:bg-slate-800/60 text-[11px] text-slate-600 dark:text-slate-300 flex items-center gap-1.5 border border-slate-200 dark:border-slate-700">
+              <div className="p-2.5 rounded bg-slate-50 dark:bg-slate-800/60 text-[12.5px] text-slate-600 dark:text-slate-300 flex items-center gap-1.5 border border-slate-200 dark:border-slate-700">
                 <MapPin className="w-3.5 h-3.5 text-teal-700 dark:text-teal-400" />
                 <span>
                   Geotagged Lat: {selectedRecord.inLat}, Lng: {selectedRecord.inLng}
@@ -351,7 +351,7 @@ export const MyAttendance: React.FC = () => {
 
             {/* Action to regularize */}
             <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-3">
-              <span className="text-[11px] text-slate-500 dark:text-slate-400">
+              <span className="text-[12.5px] text-slate-500 dark:text-slate-400">
                 Missed a punch or network issue?
               </span>
               <button
@@ -420,7 +420,7 @@ export const MyAttendance: React.FC = () => {
               />
             </div>
 
-            <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 text-[11px] text-amber-800 dark:text-amber-300 flex items-start gap-2">
+            <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 text-[12.5px] text-amber-800 dark:text-amber-300 flex items-start gap-2">
               <HelpCircle className="w-4 h-4 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
               <span>
                 Regularization requests are audited and sent directly to your Reporting Authority ({currentUser?.managerName || 'Manager'}). Approved requests adjust your payable days for payroll.

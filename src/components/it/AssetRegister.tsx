@@ -243,7 +243,7 @@ export const AssetRegister: React.FC = () => {
   const showsImei = form.category === 'MOBILE' || form.category === 'TABLET';
 
   return (
-    <div className="p-4 sm:p-6 max-w-7xl mx-auto space-y-6">
+    <div className="px-4 sm:px-8 py-6 sm:py-8 max-w-7xl mx-auto space-y-6">
       <PageHeader
         title="IT Asset Register"
         subtitle="Laptops, mobile handsets, company SIMs/numbers and accessories — who holds what, since when, and in what condition"
@@ -335,14 +335,14 @@ export const AssetRegister: React.FC = () => {
                           </div>
                           <div>
                             <div className="font-bold text-slate-900 dark:text-slate-100 font-mono">{a.assetTag}</div>
-                            <div className="text-[11px] text-slate-500">
+                            <div className="text-[12.5px] text-slate-500">
                               {meta.label}
                               {(a.brand || a.model) && ` · ${[a.brand, a.model].filter(Boolean).join(' ')}`}
                             </div>
                           </div>
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-[11px] space-y-0.5">
+                      <td className="px-4 py-3 text-[12.5px] space-y-0.5">
                         {a.phoneNumber && (
                           <div className="font-semibold text-slate-800 dark:text-slate-200">
                             📱 {a.phoneNumber}
@@ -355,28 +355,28 @@ export const AssetRegister: React.FC = () => {
                       </td>
                       <td className="px-4 py-3">
                         <StatusPill status={a.status} />
-                        <div className="text-[10px] text-slate-500 mt-1">Condition: {a.condition.toLowerCase()}</div>
+                        <div className="text-[11.5px] text-slate-500 mt-1">Condition: {a.condition.toLowerCase()}</div>
                       </td>
                       <td className="px-4 py-3">
                         {a.assignedToName ? (
                           <div>
                             <div className="font-semibold text-slate-900 dark:text-slate-100">{a.assignedToName}</div>
-                            <div className="text-[11px] text-slate-500">
+                            <div className="text-[12.5px] text-slate-500">
                               {a.assignedToCode} · since {formatDate(a.assignedAt)}
                             </div>
                             {a.acknowledgedAt ? (
-                              <span className="inline-flex items-center gap-1 text-[10px] text-emerald-700 dark:text-emerald-400 font-semibold mt-0.5">
+                              <span className="inline-flex items-center gap-1 text-[11.5px] text-emerald-700 dark:text-emerald-400 font-semibold mt-0.5">
                                 <CheckCircle2 className="w-3 h-3" /> Acknowledged
                               </span>
                             ) : (
-                              <span className="text-[10px] text-amber-700 dark:text-amber-400 font-semibold">Awaiting acknowledgement</span>
+                              <span className="text-[11.5px] text-amber-700 dark:text-amber-400 font-semibold">Awaiting acknowledgement</span>
                             )}
                           </div>
                         ) : (
                           <span className="text-slate-400">—</span>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-[11px]">
+                      <td className="px-4 py-3 text-[12.5px]">
                         {a.warrantyUntil ? (
                           <span
                             className={

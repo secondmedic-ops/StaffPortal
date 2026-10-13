@@ -12,7 +12,7 @@ export const SecurityCompliance: React.FC = () => {
   ];
 
   return (
-    <div className="p-6 space-y-6 max-w-7xl mx-auto">
+    <div className="px-4 sm:px-8 py-6 sm:py-8 max-w-7xl mx-auto space-y-6">
       <div>
         <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
           <ShieldCheck className="w-6 h-6 text-teal-600 dark:text-teal-400" />
@@ -27,22 +27,22 @@ export const SecurityCompliance: React.FC = () => {
         <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs">
           <div className="text-xs text-slate-500">Security Score</div>
           <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-1">99.8%</div>
-          <div className="text-[11px] text-slate-500 mt-1">Zero vulnerabilities detected</div>
+          <div className="text-[12.5px] text-slate-500 mt-1">Zero vulnerabilities detected</div>
         </div>
         <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs">
           <div className="text-xs text-slate-500">Encryption Standard</div>
           <div className="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-1">AES-256</div>
-          <div className="text-[11px] text-teal-600 dark:text-teal-400 mt-1">At rest & in transit</div>
+          <div className="text-[12.5px] text-teal-600 dark:text-teal-400 mt-1">At rest & in transit</div>
         </div>
         <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs">
           <div className="text-xs text-slate-500">Access Isolation</div>
           <div className="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-1">Strict RBAC</div>
-          <div className="text-[11px] text-blue-600 dark:text-blue-400 mt-1">Payroll restricted to Finance/Admin</div>
+          <div className="text-[12.5px] text-blue-600 dark:text-blue-400 mt-1">Payroll restricted to Finance/Admin</div>
         </div>
         <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs">
           <div className="text-xs text-slate-500">Uptime SLA</div>
           <div className="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-1">99.99%</div>
-          <div className="text-[11px] text-emerald-600 dark:text-emerald-400 mt-1">Multi-region redundancy</div>
+          <div className="text-[12.5px] text-emerald-600 dark:text-emerald-400 mt-1">Multi-region redundancy</div>
         </div>
       </div>
 
@@ -55,13 +55,13 @@ export const SecurityCompliance: React.FC = () => {
                   <Lock className="w-4 h-4 text-teal-600 dark:text-teal-400" />
                   {item.title}
                 </h3>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 flex items-center gap-1">
+                <span className="px-2 py-0.5 rounded-full text-[11.5px] font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 flex items-center gap-1">
                   <CheckCircle2 className="w-3 h-3" /> {item.status}
                 </span>
               </div>
               <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed mt-2">{item.desc}</p>
             </div>
-            <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px] text-slate-500">
+            <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[12.5px] text-slate-500">
               <span>Verified by ISO / SOC Auditor</span>
               <span className="text-teal-600 dark:text-teal-400 font-medium">Passed Audit Sept 2026</span>
             </div>

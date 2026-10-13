@@ -89,7 +89,7 @@ export const HolidayWorkClaims: React.FC = () => {
                       <div className="font-semibold text-slate-900 dark:text-slate-100">
                         {formatDate(d.date)} · {d.reason}
                       </div>
-                      <div className="text-[11px] text-slate-500">
+                      <div className="text-[12.5px] text-slate-500">
                         Worked {d.workedHours}h → {d.days === 1 ? 'full day' : 'half day'}
                       </div>
                     </div>
@@ -134,7 +134,7 @@ export const HolidayWorkClaims: React.FC = () => {
                         <td className="px-4 py-2.5">
                           <StatusPill status={c.status} />
                         </td>
-                        <td className="px-4 py-2.5 text-[11px] text-slate-500">
+                        <td className="px-4 py-2.5 text-[12.5px] text-slate-500">
                           {c.approverName ?? '—'}
                           {c.approverRemarks && ` · ${c.approverRemarks}`}
                         </td>
@@ -181,7 +181,7 @@ export const HolidayWorkClaims: React.FC = () => {
               >
                 <Icon className="w-5 h-5 text-teal-700 dark:text-teal-400 mb-1" />
                 <div className="text-xs font-bold text-slate-900 dark:text-slate-100">{title}</div>
-                <div className="text-[11px] text-slate-500 mt-0.5">{hint}</div>
+                <div className="text-[12.5px] text-slate-500 mt-0.5">{hint}</div>
               </button>
             ))}
           </div>

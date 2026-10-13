@@ -109,22 +109,22 @@ export const PayslipGenerator: React.FC = () => {
   );
 
   return (
-    <div className="p-4 sm:p-6 max-w-7xl mx-auto space-y-6">
+    <div className="px-4 sm:px-8 py-6 sm:py-8 max-w-7xl mx-auto space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-xl border border-slate-200 shadow-xs">
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-1">
         <div>
-          <h1 className="text-xl font-bold text-slate-900">Payslip Operations & Bulk Ingestion</h1>
-          <p className="text-xs text-slate-500 mt-1">
+          <h1 className="text-[22px] sm:text-2xl font-semibold text-slate-900 dark:text-slate-50">Payslip Operations & Bulk Ingestion</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-[70ch]">
             Generate system-computed payslips or upload CA-verified signed PDFs
           </p>
         </div>
 
         {/* Tab Switcher */}
-        <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg">
+        <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
           <button
             onClick={() => setActiveTab('REGISTER')}
             className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
-              activeTab === 'REGISTER' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+              activeTab === 'REGISTER' ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-xs' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
             }`}
           >
             Disbursement Ledger
@@ -132,7 +132,7 @@ export const PayslipGenerator: React.FC = () => {
           <button
             onClick={() => setActiveTab('BULK_UPLOAD')}
             className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all flex items-center gap-1.5 ${
-              activeTab === 'BULK_UPLOAD' ? 'bg-white text-teal-800 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+              activeTab === 'BULK_UPLOAD' ? 'bg-white dark:bg-slate-900 text-teal-800 dark:text-teal-300 shadow-xs' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
             }`}
           >
             <UploadCloud className="w-3.5 h-3.5" /> Bulk PDF Upload
@@ -143,21 +143,21 @@ export const PayslipGenerator: React.FC = () => {
       {activeTab === 'REGISTER' ? (
         <div className="space-y-4">
           {/* Controls */}
-          <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-3">
             <div className="relative w-full sm:w-80">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+              <Search className="w-4 h-4 text-slate-400 dark:text-slate-500 absolute left-3 top-2.5" />
               <input
                 type="text"
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 placeholder="Search by name or emp code..."
-                className="w-full pl-9 pr-4 py-2 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-1 focus:ring-teal-700"
+                className="w-full pl-9 pr-4 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 focus:outline-none focus:ring-1 focus:ring-teal-700"
               />
             </div>
 
             <div className="flex items-center gap-2">
-              <span className="text-xs text-slate-500 font-medium">Month:</span>
-              <span className="text-xs font-bold px-3 py-1.5 rounded-lg bg-slate-100 text-slate-800">
+              <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">Month:</span>
+              <span className="text-xs font-bold px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200">
                 {getMonthName(month)} {year}
               </span>
             </div>
@@ -167,10 +167,10 @@ export const PayslipGenerator: React.FC = () => {
           {loading ? (
             <SkeletonLoader type="table" rows={5} />
           ) : (
-            <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-xs">
+            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-xs">
               <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs text-slate-700">
-                  <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 uppercase tracking-wider text-[11px] font-bold">
+                <table className="w-full text-left text-xs text-slate-700 dark:text-slate-300">
+                  <thead className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 text-[12.5px] font-bold">
                     <tr>
                       <th className="px-5 py-3.5">Employee</th>
                       <th className="px-5 py-3.5">Source</th>
@@ -183,34 +183,34 @@ export const PayslipGenerator: React.FC = () => {
                       <th className="px-5 py-3.5 text-right">Voucher</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100">
+                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                     {filtered.map(p => (
-                      <tr key={p.id} className="hover:bg-slate-50/80 transition-colors">
+                      <tr key={p.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors">
                         <td className="px-5 py-4">
-                          <div className="font-bold text-slate-900">{p.employeeName}</div>
-                          <div className="text-[11px] text-slate-500 font-mono">{p.employeeCode}</div>
+                          <div className="font-bold text-slate-900 dark:text-slate-100">{p.employeeName}</div>
+                          <div className="text-[12.5px] text-slate-500 dark:text-slate-400 font-mono">{p.employeeCode}</div>
                         </td>
                         <td className="px-5 py-4">
-                          <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-100 text-slate-700">
+                          <span className="text-[11.5px] font-mono px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
                             {p.source}
                           </span>
                         </td>
                         <td className="px-5 py-4 text-center font-mono">
-                          <span className="font-bold text-slate-800">{p.paidDays}d</span>
+                          <span className="font-bold text-slate-800 dark:text-slate-200">{p.paidDays}d</span>
                           {p.lopDays > 0 && (
-                            <span className="text-rose-600 ml-1 font-bold">({p.lopDays}d LOP)</span>
+                            <span className="text-rose-600 dark:text-rose-400 ml-1 font-bold">({p.lopDays}d LOP)</span>
                           )}
                         </td>
-                        <td className="px-5 py-4 text-right font-mono text-slate-800 font-medium">
+                        <td className="px-5 py-4 text-right font-mono text-slate-800 dark:text-slate-200 font-medium">
                           ₹{p.grossAmount.toLocaleString('en-IN')}
                         </td>
-                        <td className="px-5 py-4 text-right font-mono text-rose-700">
+                        <td className="px-5 py-4 text-right font-mono text-rose-700 dark:text-rose-300">
                           {p.components.lopDeduction > 0 ? `₹${p.components.lopDeduction.toLocaleString('en-IN')}` : '₹0'}
                         </td>
-                        <td className="px-5 py-4 text-right font-mono text-rose-700">
+                        <td className="px-5 py-4 text-right font-mono text-rose-700 dark:text-rose-300">
                           ₹{p.totalDeductions.toLocaleString('en-IN')}
                         </td>
-                        <td className="px-5 py-4 text-right font-mono font-extrabold text-teal-800">
+                        <td className="px-5 py-4 text-right font-mono font-extrabold text-teal-800 dark:text-teal-300">
                           ₹{p.netAmount.toLocaleString('en-IN')}
                         </td>
                         <td className="px-5 py-4">
@@ -219,7 +219,7 @@ export const PayslipGenerator: React.FC = () => {
                         <td className="px-5 py-4 text-right">
                           <button
                             onClick={() => setPreviewSlip(p)}
-                            className="p-1.5 text-slate-500 hover:text-teal-700 hover:bg-teal-50 rounded transition-colors"
+                            className="p-1.5 text-slate-500 dark:text-slate-400 hover:text-teal-700 dark:hover:text-teal-300 hover:bg-teal-50 dark:hover:bg-teal-950/40 rounded transition-colors"
                             title="Preview Payslip"
                           >
                             <Eye className="w-4 h-4" />
@@ -235,11 +235,11 @@ export const PayslipGenerator: React.FC = () => {
         </div>
       ) : (
         /* Bulk PDF Upload Tab */
-        <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-xs space-y-6">
+        <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-6">
           <div>
-            <h3 className="text-sm font-bold text-slate-900">Bulk Ingest Chartered Accountant Payslips</h3>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Upload multiple encrypted PDF files naming format: <code className="bg-slate-100 px-1 py-0.5 rounded font-mono text-teal-800">[EMPCODE]_[YYYYMM].pdf</code> (e.g. SM001_202608.pdf)
+            <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">Bulk Ingest Chartered Accountant Payslips</h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              Upload multiple encrypted PDF files naming format: <code className="bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded font-mono text-teal-800 dark:text-teal-300">[EMPCODE]_[YYYYMM].pdf</code> (e.g. SM001_202608.pdf)
             </p>
           </div>
 
@@ -250,13 +250,13 @@ export const PayslipGenerator: React.FC = () => {
             onDragOver={handleDrag}
             onDrop={handleDrop}
             className={`border-2 border-dashed rounded-xl p-8 text-center transition-colors ${
-              dragActive ? 'border-teal-600 bg-teal-50/30' : 'border-slate-300 hover:border-slate-400 bg-slate-50/50'
+              dragActive ? 'border-teal-600 bg-teal-50/30 dark:bg-teal-950/40' : 'border-slate-300 dark:border-slate-700 hover:border-slate-400 bg-slate-50/50 dark:bg-slate-800/50'
             }`}
           >
-            <UploadCloud className="w-10 h-10 text-slate-400 mx-auto mb-2" />
-            <p className="text-xs font-semibold text-slate-700">
+            <UploadCloud className="w-10 h-10 text-slate-400 dark:text-slate-500 mx-auto mb-2" />
+            <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">
               Drag and drop bulk PDF files here, or{' '}
-              <label className="text-teal-700 hover:underline cursor-pointer">
+              <label className="text-teal-700 dark:text-teal-300 hover:underline cursor-pointer">
                 browse files
                 <input
                   type="file"
@@ -267,29 +267,29 @@ export const PayslipGenerator: React.FC = () => {
                 />
               </label>
             </p>
-            <p className="text-[11px] text-slate-400 mt-1">Supports batch upload up to 100 employee slips</p>
+            <p className="text-[12.5px] text-slate-400 dark:text-slate-500 mt-1">Supports batch upload up to 100 employee slips</p>
           </div>
 
           {/* Queued files */}
           {uploadedFiles.length > 0 && (
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-slate-800">
+                <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
                   Ready for Ingestion ({uploadedFiles.length} files)
                 </span>
                 <button
                   onClick={() => setUploadedFiles([])}
-                  className="text-xs text-rose-600 hover:underline"
+                  className="text-xs text-rose-600 dark:text-rose-400 hover:underline"
                 >
                   Clear All
                 </button>
               </div>
 
-              <div className="max-h-48 overflow-y-auto divide-y divide-slate-100 border border-slate-200 rounded-lg bg-white">
+              <div className="max-h-48 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800 border border-slate-200 dark:border-slate-800 rounded-lg bg-white dark:bg-slate-900">
                 {uploadedFiles.map((file, idx) => (
                   <div key={idx} className="p-2.5 flex items-center justify-between text-xs">
-                    <span className="font-mono text-slate-700 truncate">{file.name}</span>
-                    <span className="text-[10px] text-slate-400">{(file.size / 1024).toFixed(1)} KB</span>
+                    <span className="font-mono text-slate-700 dark:text-slate-300 truncate">{file.name}</span>
+                    <span className="text-[11.5px] text-slate-400 dark:text-slate-500">{(file.size / 1024).toFixed(1)} KB</span>
                   </div>
                 ))}
               </div>
@@ -319,7 +319,7 @@ export const PayslipGenerator: React.FC = () => {
           maxWidth="lg"
         >
           <div className="space-y-4 text-xs">
-            <div className="grid grid-cols-2 gap-2 bg-slate-50 p-3 rounded-lg border border-slate-200 font-mono">
+            <div className="grid grid-cols-2 gap-2 bg-slate-50 dark:bg-slate-800/50 p-3 rounded-lg border border-slate-200 dark:border-slate-800 font-mono">
               <div>Basic: ₹{previewSlip.components.basic.toLocaleString('en-IN')}</div>
               <div>HRA: ₹{previewSlip.components.hra.toLocaleString('en-IN')}</div>
               <div>Special: ₹{previewSlip.components.specialAllowance.toLocaleString('en-IN')}</div>

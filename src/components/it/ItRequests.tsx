@@ -76,7 +76,7 @@ export const ItRequests: React.FC = () => {
   const activeCount = requests.filter(r => r.status === 'OPEN' || r.status === 'IN_PROGRESS').length;
 
   return (
-    <div className="p-4 sm:p-6 max-w-7xl mx-auto space-y-6">
+    <div className="px-4 sm:px-8 py-6 sm:py-8 max-w-7xl mx-auto space-y-6">
       <PageHeader
         title="IT Service Desk"
         subtitle="New-joiner provisioning, exit clearances, repairs and access requests raised by HR and staff"
@@ -124,17 +124,17 @@ export const ItRequests: React.FC = () => {
                     </div>
                     <div>
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-[11px] font-mono text-slate-400">#{r.id}</span>
+                        <span className="text-[12.5px] font-mono text-slate-400">#{r.id}</span>
                         <span className="font-bold text-sm text-slate-900 dark:text-slate-100">{r.title}</span>
                       </div>
-                      <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                      <div className="text-[12.5px] text-slate-500 dark:text-slate-400 mt-0.5">
                         {meta.label} · For <strong>{r.employeeName}</strong> ({r.employeeCode}) · Raised by {r.raisedByName ?? '—'} ·{' '}
                         {formatDateTime(r.createdAt)}
                       </div>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${PRIORITY_CLASS[r.priority]}`}>{r.priority}</span>
+                    <span className={`text-[11.5px] font-bold px-2 py-0.5 rounded-full border ${PRIORITY_CLASS[r.priority]}`}>{r.priority}</span>
                     <StatusPill status={r.status} />
                   </div>
                 </div>

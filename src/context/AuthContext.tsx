@@ -2,9 +2,10 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import type { Session, User } from '@supabase/supabase-js';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { mapEmployee } from '../api/mappers';
-import { ThemeToggle } from '../components/common/ThemeToggle';
+import { LoginScreen } from '../components/auth/LoginScreen';
+import { BrandMark } from '../components/common/BrandMark';
 import type { Employee, RoleType } from '../types';
-import { Stethoscope, AlertTriangle, LogIn, Lock, Mail, Shield, ArrowRight } from 'lucide-react';
+import { AlertTriangle } from 'lucide-react';
 
 export const DEMO_PERSONAS: Record<string, { employee: Employee; roles: RoleType[] }> = {
   'admin@secondmedic.com': {
@@ -156,6 +157,15 @@ export interface AuthContextType {
   loginAsDemoAdmin?: () => void;
   loginAsPersona?: (email: string) => void;
 }
+
+const DEMO_ACCOUNTS = [
+  { email: 'admin@secondmedic.com', name: 'Master Administrator', role: 'All roles' },
+  { email: 'rahul.sharma@secondmedic.com', name: 'Dr. Rahul Sharma', role: 'Staff doctor' },
+  { email: 'anita.roy@secondmedic.com', name: 'Anita Roy', role: 'HR head' },
+  { email: 'vikram.malhotra@secondmedic.com', name: 'Vikram Malhotra', role: 'Accounts lead' },
+  { email: 'sunita.patil@secondmedic.com', name: 'Dr. Sunita Patil', role: 'CEO' },
+  { email: 'amit.verma@secondmedic.com', name: 'Amit Verma', role: 'System admin' }
+];
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -436,20 +446,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // While loading, render a full-page skeleton — never render children against a null employee
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col items-center justify-center p-6 text-slate-800 dark:text-slate-200">
-        <div className="w-full max-w-sm space-y-6">
-          <div className="flex items-center justify-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-teal-600/30 animate-pulse" />
-            <div className="h-6 w-36 bg-slate-200 dark:bg-slate-800 rounded-md animate-pulse" />
-          </div>
-          <div className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
-            <div className="h-4 w-3/4 bg-slate-200 dark:bg-slate-800 rounded animate-pulse" />
-            <div className="h-10 w-full bg-slate-100 dark:bg-slate-800/60 rounded-xl animate-pulse" />
-            <div className="h-10 w-full bg-slate-100 dark:bg-slate-800/60 rounded-xl animate-pulse" />
-            <div className="h-10 w-full bg-teal-600/30 rounded-xl animate-pulse" />
-          </div>
-          <p className="text-xs text-center text-slate-400">Loading staff session...</p>
+      <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-slate-50 dark:bg-slate-950" role="status">
+        <div className="rounded-xl bg-ink px-3 py-2">
+          <BrandMark />
         </div>
+        <div className="h-1 w-40 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
+          <div className="h-full w-1/3 rounded-full bg-teal-500 animate-[loadbar_1.1s_ease-in-out_infinite]" />
+        </div>
+        <span className="sr-only">Loading your account</span>
       </div>
     );
   }
@@ -457,25 +461,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // If session exists but no employee row matches: clear error state
   if (session && error) {
     return (
-      <div className="min-h-screen bg-slate-900 text-white flex flex-col items-center justify-center p-6 text-center">
-        <div className="max-w-md w-full bg-slate-800 p-8 rounded-2xl border border-slate-700 shadow-2xl space-y-6">
-          <div className="w-14 h-14 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center mx-auto ring-1 ring-amber-500/40">
-            <AlertTriangle className="w-7 h-7" />
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950 p-5">
+        <div className="w-full max-w-md rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-8">
+          <div className="w-11 h-11 rounded-full bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 flex items-center justify-center">
+            <AlertTriangle className="w-5 h-5" aria-hidden />
           </div>
-          <div className="space-y-2">
-            <h1 className="text-lg font-bold text-slate-100">Access Restricted</h1>
-            <p className="text-xs text-rose-300 font-medium bg-rose-950/50 p-3 rounded-xl border border-rose-800/60 leading-relaxed">
-              {error}
-            </p>
-          </div>
-          <p className="text-xs text-slate-400 leading-relaxed">
-            Signed in as <span className="text-slate-200 font-mono">{session.user.email}</span>. Your authentication credentials are valid, but no matching employee profile was located in the staff directory.
+          <h1 className="mt-4 text-xl font-semibold text-slate-900 dark:text-slate-50">We couldn't open your staff profile</h1>
+          <p className="mt-2 text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+            You're signed in as <span className="font-semibold">{session.user.email}</span>, but no staff record is linked to this
+            email. Ask HR to check that your official email matches this address.
+          </p>
+          <p className="mt-4 rounded-lg bg-slate-50 dark:bg-slate-800/60 px-3 py-2 text-[12.5px] text-slate-500 dark:text-slate-400">
+            Details: {error}
           </p>
           <button
+            type="button"
             onClick={signOut}
-            className="w-full py-2.5 px-4 rounded-xl bg-slate-700 hover:bg-slate-600 text-xs font-semibold text-slate-200 transition-colors"
+            className="mt-6 w-full h-10 rounded-lg border border-slate-300 dark:border-slate-700 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800"
           >
-            Sign Out
+            Sign out
           </button>
         </div>
       </div>
@@ -498,147 +502,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     };
 
+    const handleForgotPassword = async () => {
+      if (!loginEmail.trim()) {
+        setLoginError('Enter your work email first, then choose "Forgot or new password?"');
+        return;
+      }
+      const { error: resetError } = await supabase.auth.resetPasswordForEmail(loginEmail.trim(), {
+        redirectTo: window.location.origin
+      });
+      setLoginError(resetError ? resetError.message : null);
+      setResetSent(resetError ? null : loginEmail.trim());
+    };
+
     return (
-      <div className="min-h-screen bg-slate-900 text-white flex flex-col items-center justify-center p-4 relative font-sans">
-        <div className="absolute top-4 right-4">
-          <ThemeToggle />
-        </div>
-        <div className="max-w-md w-full bg-slate-800 p-8 rounded-2xl border border-slate-700 shadow-2xl space-y-6">
-          <div className="text-center space-y-2">
-            <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-teal-600 text-white font-bold text-xl shadow-lg shadow-teal-900/40">
-              <Stethoscope className="w-6 h-6" />
-            </div>
-            <h1 className="text-xl font-bold text-slate-100">SecondMedic Staff Portal</h1>
-            <p className="text-xs text-slate-400">
-              Sign in with your clinical or corporate email credentials
-            </p>
-          </div>
-
-          <div className="pt-1">
-            <button
-              type="button"
-              onClick={loginAsDemoAdmin}
-              className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-500 hover:to-emerald-500 text-xs font-bold text-white flex items-center justify-center gap-2 shadow-lg shadow-teal-900/40 transition-all cursor-pointer"
-            >
-              <Shield className="w-4 h-4" />
-              <span>🚀 Launch Demo Master Admin View</span>
-            </button>
-          </div>
-
-          <div className="relative flex py-1 items-center">
-            <div className="flex-grow border-t border-slate-700"></div>
-            <span className="flex-shrink mx-3 text-[10px] uppercase tracking-wider text-slate-500 font-semibold">or sign in with credentials</span>
-            <div className="flex-grow border-t border-slate-700"></div>
-          </div>
-
-          {(loginError || error) && (
-            <div className="p-3 rounded-xl bg-rose-950/60 border border-rose-800 text-rose-300 text-xs flex items-center gap-2">
-              <AlertTriangle className="w-4 h-4 shrink-0 text-rose-400" />
-              <span>{loginError || error}</span>
-            </div>
-          )}
-
-          <form onSubmit={handleFormSubmit} className="space-y-4">
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium text-slate-300 block">Work Email</label>
-              <div className="relative">
-                <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
-                <input
-                  type="email"
-                  required
-                  value={loginEmail}
-                  onChange={e => setLoginEmail(e.target.value)}
-                  placeholder="name@secondmedic.com"
-                  className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-slate-900/80 border border-slate-700 text-xs text-slate-100 placeholder:text-slate-500 focus:outline-none focus:border-teal-500"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium text-slate-300 block">Password</label>
-              <div className="relative">
-                <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
-                <input
-                  type="password"
-                  value={loginPassword}
-                  onChange={e => setLoginPassword(e.target.value)}
-                  placeholder="••••••••••••"
-                  className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-slate-900/80 border border-slate-700 text-xs text-slate-100 placeholder:text-slate-500 focus:outline-none focus:border-teal-500"
-                />
-              </div>
-            </div>
-
-            <button
-              type="submit"
-              disabled={loginSubmitting}
-              className="w-full py-2.5 px-4 rounded-xl bg-teal-600 hover:bg-teal-500 disabled:opacity-50 text-xs font-semibold text-white flex items-center justify-center gap-2 transition-all shadow-lg shadow-teal-900/40 cursor-pointer"
-            >
-              {loginSubmitting ? (
-                <span>Authenticating...</span>
-              ) : (
-                <>
-                  <LogIn className="w-4 h-4" />
-                  <span>Sign In to Portal</span>
-                </>
-              )}
-            </button>
-          </form>
-
-          <div className="pt-2 border-t border-slate-700/60">
-            <div className="text-[11px] text-slate-400 font-medium mb-2.5">
-              Quick select staff account:
-            </div>
-            <div className="space-y-1.5">
-              {[
-                { email: 'rahul.sharma@secondmedic.com', name: 'Dr. Rahul Sharma', role: 'Staff Doctor' },
-                { email: 'anita.roy@secondmedic.com', name: 'Anita Roy', role: 'HR Head' },
-                { email: 'vikram.malhotra@secondmedic.com', name: 'Vikram Malhotra', role: 'Accounts Lead' },
-                { email: 'sunita.patil@secondmedic.com', name: 'Dr. Sunita Patil', role: 'CEO' },
-                { email: 'amit.verma@secondmedic.com', name: 'Amit Verma', role: 'System Admin' }
-              ].map(s => (
-                <button
-                  key={s.email}
-                  type="button"
-                  onClick={() => loginAsPersona(s.email)}
-                  className="w-full py-1.5 px-2.5 rounded-lg bg-slate-700/50 hover:bg-slate-700 border border-slate-600/60 hover:border-slate-500 text-left flex items-center justify-between text-[11px] transition-colors cursor-pointer"
-                >
-                  <span className="font-medium text-slate-200">{s.name}</span>
-                  <span className="text-[10px] text-teal-400 font-medium flex items-center gap-1">
-                    {s.role}
-                    <ArrowRight className="w-2.5 h-2.5 text-slate-400" />
-                  </span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="pt-1 text-center">
-            <button
-              type="button"
-              onClick={async () => {
-                if (!loginEmail.trim()) {
-                  setLoginError('Enter your work email above, then click "Forgot password?"');
-                  return;
-                }
-                const { error: resetError } = await supabase.auth.resetPasswordForEmail(loginEmail.trim(), {
-                  redirectTo: window.location.origin
-                });
-                setLoginError(null);
-                setResetSent(resetError ? null : loginEmail.trim());
-                if (resetError) setLoginError(resetError.message);
-              }}
-              className="text-[11px] text-teal-400 hover:text-teal-300 font-medium cursor-pointer"
-            >
-              Forgot password? / Set up my password
-            </button>
-            {resetSent && (
-              <p className="mt-2 text-[11px] text-emerald-300">
-                If {resetSent} is registered, a link to set your password has been emailed.
-              </p>
-            )}
-          </div>
-        </div>
-      </div>
+      <LoginScreen
+        email={loginEmail}
+        password={loginPassword}
+        onEmailChange={setLoginEmail}
+        onPasswordChange={setLoginPassword}
+        submitting={loginSubmitting}
+        error={loginError || error}
+        resetSent={resetSent}
+        onSubmit={handleFormSubmit}
+        onForgotPassword={handleForgotPassword}
+        demoAccounts={DEMO_ACCOUNTS}
+        onDemoAccount={loginAsPersona}
+      />
     );
   }
 

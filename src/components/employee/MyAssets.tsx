@@ -106,12 +106,12 @@ export const MyAssets: React.FC = () => {
                           <div className="font-bold text-sm text-slate-900 dark:text-slate-100">
                             {[a.brand, a.model].filter(Boolean).join(' ') || meta.label}
                           </div>
-                          <div className="text-[11px] font-mono text-slate-500">{a.assetTag}</div>
+                          <div className="text-[12.5px] font-mono text-slate-500">{a.assetTag}</div>
                         </div>
                       </div>
                       <StatusPill status={a.status} />
                     </div>
-                    <dl className="grid grid-cols-2 gap-x-3 gap-y-1 text-[11px]">
+                    <dl className="grid grid-cols-2 gap-x-3 gap-y-1 text-[12.5px]">
                       {a.phoneNumber && (
                         <>
                           <dt className="text-slate-500">Mobile no.</dt>
@@ -134,7 +134,7 @@ export const MyAssets: React.FC = () => {
                       <dd className="text-slate-800 dark:text-slate-200">{formatDate(a.assignedAt)}</dd>
                     </dl>
                     {a.acknowledgedAt ? (
-                      <div className="text-[11px] text-emerald-700 dark:text-emerald-400 font-semibold flex items-center gap-1">
+                      <div className="text-[12.5px] text-emerald-700 dark:text-emerald-400 font-semibold flex items-center gap-1">
                         <CheckCircle2 className="w-3.5 h-3.5" /> Acknowledged {formatDateTime(a.acknowledgedAt)}
                       </div>
                     ) : (
@@ -161,7 +161,7 @@ export const MyAssets: React.FC = () => {
                   <li key={r.id} className="py-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
                     <div>
                       <div className="font-semibold text-slate-800 dark:text-slate-200">{r.title}</div>
-                      <div className="text-[11px] text-slate-500">
+                      <div className="text-[12.5px] text-slate-500">
                         {REQUEST_TYPE_META[r.requestType].label} · {formatDateTime(r.createdAt)}
                         {r.resolution && ` · ${r.resolution}`}
                       </div>

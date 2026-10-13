@@ -163,7 +163,7 @@ export const HolidayCalendar: React.FC = () => {
   const onWeekOff = mandatory.filter(h => isWeekOff(h.holidayDate)).length;
 
   return (
-    <div className="p-4 sm:p-6 max-w-7xl mx-auto space-y-6">
+    <div className="px-4 sm:px-8 py-6 sm:py-8 max-w-7xl mx-auto space-y-6">
       <PageHeader
         title="Holiday Calendar"
         subtitle="Mandatory holidays are paid non-working days in leave counting and payroll; restricted holidays are optional for staff"
@@ -232,17 +232,17 @@ export const HolidayCalendar: React.FC = () => {
                         <span className="flex items-center gap-2">
                           <CalendarCheck className="w-4 h-4 text-purple-600" />
                           {h.name}
-                          {h === nextHoliday && <span className="text-[10px] font-bold text-teal-700 dark:text-teal-400">NEXT</span>}
+                          {h === nextHoliday && <span className="text-[11.5px] font-bold text-teal-700 dark:text-teal-400">NEXT</span>}
                         </span>
                       </td>
                       <td className="px-5 py-3 font-medium">{formatDate(h.holidayDate)}</td>
                       <td className="px-5 py-3">
                         {weekdayName(h.holidayDate)}
-                        {isWeekOff(h.holidayDate) && <span className="ml-2 text-[10px] font-semibold text-rose-600">week-off</span>}
+                        {isWeekOff(h.holidayDate) && <span className="ml-2 text-[11.5px] font-semibold text-rose-600">week-off</span>}
                       </td>
                       <td className="px-5 py-3">
                         <span
-                          className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                          className={`text-[11.5px] font-bold px-2 py-0.5 rounded-full border ${
                             isOptionalHoliday(h)
                               ? 'bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-950/50 dark:text-amber-300 dark:border-amber-800'
                               : 'bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-950/50 dark:text-purple-300 dark:border-purple-800'
@@ -282,7 +282,7 @@ export const HolidayCalendar: React.FC = () => {
           <div>
             <label className={labelClass}>Date *</label>
             <input type="date" value={date} onChange={e => setDate(e.target.value)} className={inputClass} required />
-            {date && <p className="text-[11px] text-slate-500 mt-1">{weekdayName(date)}{isWeekOff(date) && ' — falls on a week-off'}</p>}
+            {date && <p className="text-[12.5px] text-slate-500 mt-1">{weekdayName(date)}{isWeekOff(date) && ' — falls on a week-off'}</p>}
           </div>
           <label className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300 cursor-pointer">
             <input type="checkbox" checked={optional} onChange={e => setOptional(e.target.checked)} />
@@ -325,15 +325,15 @@ export const HolidayCalendar: React.FC = () => {
                 />
                 <span className="w-20 text-slate-500">{weekdayName(r.date).slice(0, 3)}</span>
                 <span className="flex-1 font-semibold text-slate-800 dark:text-slate-200">{r.name}</span>
-                {r.tentative && <span className="text-[10px] font-bold text-amber-700 dark:text-amber-400">verify date</span>}
-                <span className={`text-[10px] font-bold ${r.optional ? 'text-amber-700 dark:text-amber-400' : 'text-purple-700 dark:text-purple-400'}`}>
+                {r.tentative && <span className="text-[11.5px] font-bold text-amber-700 dark:text-amber-400">verify date</span>}
+                <span className={`text-[11.5px] font-bold ${r.optional ? 'text-amber-700 dark:text-amber-400' : 'text-purple-700 dark:text-purple-400'}`}>
                   {r.exists ? 'Already added' : r.optional ? 'Optional' : 'Mandatory'}
                 </span>
               </label>
             ))}
           </div>
           <div className="flex justify-between items-center">
-            <span className="text-[11px] text-slate-500">{importRows.filter(r => r.selected && !r.exists).length} selected</span>
+            <span className="text-[12.5px] text-slate-500">{importRows.filter(r => r.selected && !r.exists).length} selected</span>
             <div className="flex gap-2">
               <button onClick={() => setShowImport(false)} className={secondaryBtn}>
                 Cancel

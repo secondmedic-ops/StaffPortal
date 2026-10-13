@@ -97,23 +97,23 @@ export const AttendanceRegister: React.FC = () => {
   };
 
   return (
-    <div className="p-4 sm:p-6 max-w-7xl mx-auto space-y-6">
+    <div className="px-4 sm:px-8 py-6 sm:py-8 max-w-7xl mx-auto space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-xl border border-slate-200 shadow-xs">
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-1">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-xl font-bold text-slate-900">Monthly Attendance Register & Payroll Lock</h1>
+            <h1 className="text-[22px] sm:text-2xl font-semibold text-slate-900 dark:text-slate-50">Monthly Attendance Register & Payroll Lock</h1>
             {isMonthLocked ? (
-              <span className="text-xs px-2.5 py-0.5 rounded-full font-bold bg-teal-50 text-teal-800 border border-teal-300 flex items-center gap-1">
+              <span className="text-xs px-2.5 py-0.5 rounded-full font-bold bg-teal-50 dark:bg-teal-950/40 text-teal-800 dark:text-teal-300 border border-teal-300 dark:border-teal-700 flex items-center gap-1">
                 <Lock className="w-3 h-3" /> Frozen & Locked for Payroll
               </span>
             ) : (
-              <span className="text-xs px-2.5 py-0.5 rounded-full font-bold bg-amber-50 text-amber-800 border border-amber-300 flex items-center gap-1">
+              <span className="text-xs px-2.5 py-0.5 rounded-full font-bold bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700 flex items-center gap-1">
                 <Unlock className="w-3 h-3" /> Open / Unlocked (HR Review Active)
               </span>
             )}
           </div>
-          <p className="text-xs text-slate-500 mt-1">
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-[70ch]">
             Sole transactional contract between HR and Accounts for payable days and LOP deductions
           </p>
         </div>
@@ -122,16 +122,16 @@ export const AttendanceRegister: React.FC = () => {
         <div className="flex items-center gap-2">
           <button
             onClick={() => setMonth(m => (m === 1 ? 12 : m - 1))}
-            className="p-2 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-600 transition-colors"
+            className="p-2 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 text-slate-600 dark:text-slate-400 transition-colors"
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
-          <div className="px-4 py-2 rounded-lg bg-slate-100 font-bold text-xs text-slate-800 min-w-36 text-center">
+          <div className="px-4 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 font-bold text-xs text-slate-800 dark:text-slate-200 min-w-36 text-center">
             {getMonthName(month)} {year}
           </div>
           <button
             onClick={() => setMonth(m => (m === 12 ? 1 : m + 1))}
-            className="p-2 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-600 transition-colors"
+            className="p-2 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 text-slate-600 dark:text-slate-400 transition-colors"
           >
             <ChevronRight className="w-4 h-4" />
           </button>
@@ -174,21 +174,21 @@ export const AttendanceRegister: React.FC = () => {
 
       {/* Summary KPI Badges */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
-          <span className="text-xs text-slate-500 font-medium">Headcount in Register</span>
-          <div className="text-2xl font-bold text-slate-900 mt-1">{summaries.length}</div>
+        <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs">
+          <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">Headcount in Register</span>
+          <div className="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-1">{summaries.length}</div>
         </div>
-        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
-          <span className="text-xs text-slate-500 font-medium">Total Payable Days</span>
-          <div className="text-2xl font-bold text-emerald-700 mt-1">{totalPayable}</div>
+        <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs">
+          <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">Total Payable Days</span>
+          <div className="text-2xl font-bold text-emerald-700 dark:text-emerald-300 mt-1">{totalPayable}</div>
         </div>
-        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
-          <span className="text-xs text-slate-500 font-medium">Total Loss of Pay (LOP)</span>
-          <div className="text-2xl font-bold text-rose-700 mt-1">{totalLopDays} Days</div>
+        <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs">
+          <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">Total Loss of Pay (LOP)</span>
+          <div className="text-2xl font-bold text-rose-700 dark:text-rose-300 mt-1">{totalLopDays} Days</div>
         </div>
-        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
-          <span className="text-xs text-slate-500 font-medium">Lock Status</span>
-          <div className="text-sm font-bold text-slate-800 mt-2">
+        <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs">
+          <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">Lock Status</span>
+          <div className="text-sm font-bold text-slate-800 dark:text-slate-200 mt-2">
             {isMonthLocked ? `Locked by ${summaries[0]?.lockedBy || 'HR'}` : 'Unlocked / Editable'}
           </div>
         </div>
@@ -198,10 +198,10 @@ export const AttendanceRegister: React.FC = () => {
       {loading ? (
         <SkeletonLoader type="table" rows={5} />
       ) : (
-        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-xs">
+        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-xs">
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs text-slate-700">
-              <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 uppercase tracking-wider text-[11px] font-bold">
+            <table className="w-full text-left text-xs text-slate-700 dark:text-slate-300">
+              <thead className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 text-[12.5px] font-bold">
                 <tr>
                   <th className="px-5 py-3.5">Employee</th>
                   <th className="px-5 py-3.5">Department</th>
@@ -210,31 +210,31 @@ export const AttendanceRegister: React.FC = () => {
                   <th className="px-5 py-3.5 text-center">Approved Leaves</th>
                   <th className="px-5 py-3.5 text-center">Week-Offs & Holidays</th>
                   <th className="px-5 py-3.5 text-center">LOP Days</th>
-                  <th className="px-5 py-3.5 text-center font-bold text-slate-900">Payable Days</th>
+                  <th className="px-5 py-3.5 text-center font-bold text-slate-900 dark:text-slate-100">Payable Days</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                 {summaries.map(s => (
-                  <tr key={s.id} className="hover:bg-slate-50/80 transition-colors">
+                  <tr key={s.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors">
                     <td className="px-5 py-4">
-                      <div className="font-bold text-slate-900">{s.employeeName}</div>
-                      <div className="text-[11px] text-slate-500 font-mono">{s.employeeCode}</div>
+                      <div className="font-bold text-slate-900 dark:text-slate-100">{s.employeeName}</div>
+                      <div className="text-[12.5px] text-slate-500 dark:text-slate-400 font-mono">{s.employeeCode}</div>
                     </td>
-                    <td className="px-5 py-4 text-slate-700">{s.departmentName}</td>
+                    <td className="px-5 py-4 text-slate-700 dark:text-slate-300">{s.departmentName}</td>
                     <td className="px-5 py-4 text-center font-mono">{s.totalDays}</td>
-                    <td className="px-5 py-4 text-center font-mono text-emerald-700 font-medium">
+                    <td className="px-5 py-4 text-center font-mono text-emerald-700 dark:text-emerald-300 font-medium">
                       {s.presentDays}
                     </td>
-                    <td className="px-5 py-4 text-center font-mono text-sky-700 font-medium">
+                    <td className="px-5 py-4 text-center font-mono text-sky-700 dark:text-sky-300 font-medium">
                       {s.leaveDays}
                     </td>
-                    <td className="px-5 py-4 text-center font-mono text-slate-600">
+                    <td className="px-5 py-4 text-center font-mono text-slate-600 dark:text-slate-400">
                       {s.weekOffDays + s.holidayDays}
                     </td>
-                    <td className="px-5 py-4 text-center font-mono font-bold text-rose-700">
+                    <td className="px-5 py-4 text-center font-mono font-bold text-rose-700 dark:text-rose-300">
                       {s.lopDays > 0 ? `${s.lopDays}d LOP` : '0'}
                     </td>
-                    <td className="px-5 py-4 text-center font-mono font-extrabold text-teal-800 text-sm bg-teal-50/30">
+                    <td className="px-5 py-4 text-center font-mono font-extrabold text-teal-800 dark:text-teal-300 text-sm bg-teal-50/30 dark:bg-teal-950/40">
                       {s.payableDays}
                     </td>
                   </tr>
@@ -254,23 +254,23 @@ export const AttendanceRegister: React.FC = () => {
           subtitle="Unfreezing locked attendance invalidates downstream payroll drafts"
         >
           <form onSubmit={handleUnlockRequest} className="space-y-4">
-            <div className="p-3 rounded-lg bg-amber-50 border border-amber-200 text-xs text-amber-800 flex items-start gap-2">
-              <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
+            <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/70 text-xs text-amber-800 dark:text-amber-300 flex items-start gap-2">
+              <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
               <span>
                 <strong>Warning:</strong> Reopening attendance allows attendance modifications but will require Accounts to re-verify LOP and re-run draft payslips. This action is logged in the system audit trail.
               </span>
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">
-                Audit Reason for Unlock <span className="text-rose-600">*</span>
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                Audit Reason for Unlock <span className="text-rose-600 dark:text-rose-400">*</span>
               </label>
               <textarea
                 rows={3}
                 value={unlockReason}
                 onChange={e => setUnlockReason(e.target.value)}
                 placeholder="e.g. Retroactive regularization approved for phlebotomist Dr. Rajesh Kumar due to verified hospital duty..."
-                className="w-full text-xs p-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-1 focus:ring-teal-700"
+                className="w-full text-xs p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 focus:outline-none focus:ring-1 focus:ring-teal-700"
                 required
               />
             </div>
@@ -279,7 +279,7 @@ export const AttendanceRegister: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setShowUnlockModal(false)}
-                className="px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-100 rounded"
+                className="px-3 py-1.5 text-xs text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded"
               >
                 Cancel
               </button>

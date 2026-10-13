@@ -159,10 +159,10 @@ export const StaffLifecycle: React.FC = () => {
                 <div className="flex items-center justify-between gap-3 mb-3">
                   <div>
                     <div className="font-bold text-sm text-slate-900 dark:text-slate-100">{g.name}</div>
-                    <div className="text-[11px] text-slate-500 font-mono">{g.code}</div>
+                    <div className="text-[12.5px] text-slate-500 font-mono">{g.code}</div>
                   </div>
                   <div className="w-40">
-                    <div className="flex justify-between text-[10px] text-slate-500 mb-1">
+                    <div className="flex justify-between text-[11.5px] text-slate-500 mb-1">
                       <span>
                         {g.done}/{g.tasks.length} done
                       </span>
@@ -188,8 +188,8 @@ export const StaffLifecycle: React.FC = () => {
                           {t.done ? <CheckCircle2 className="w-5 h-5 text-emerald-600" /> : <Circle className="w-5 h-5 text-slate-300 dark:text-slate-600" />}
                         </button>
                         <span className={`flex-1 ${t.done ? 'line-through text-slate-400' : 'text-slate-800 dark:text-slate-200'}`}>{t.title}</span>
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${OWNER_CLASS[t.ownerRole]}`}>{t.ownerRole}</span>
-                        <span className={`w-24 text-right text-[11px] ${overdue ? 'text-rose-600 font-semibold' : 'text-slate-500'}`}>
+                        <span className={`text-[11.5px] font-bold px-2 py-0.5 rounded-full border ${OWNER_CLASS[t.ownerRole]}`}>{t.ownerRole}</span>
+                        <span className={`w-24 text-right text-[12.5px] ${overdue ? 'text-rose-600 font-semibold' : 'text-slate-500'}`}>
                           {overdue && <AlertTriangle className="w-3 h-3 inline mr-0.5" />}
                           {t.done ? (t.doneByName ? `✓ ${t.doneByName.split(' ')[0]}` : '✓') : formatDate(t.dueDate)}
                         </span>

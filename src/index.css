@@ -2,13 +2,133 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* Smooth transition for background and border color shifts */
-html {
-  transition: background-color 0.2s ease, color 0.2s ease;
+/*
+ * SecondMedic design tokens.
+ *
+ * Components use Tailwind's `teal-*` for the brand and `slate-*` for neutrals,
+ * so the palette is redefined here rather than in 50 screens:
+ *   teal  → SecondMedic clinical teal (deeper and bluer than stock teal)
+ *   slate → "ink" neutrals tinted toward the sidebar navy
+ * Type: Lexend for headings and figures, Source Sans 3 for reading text.
+ */
+@theme {
+  --font-sans: "Source Sans 3", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: "Lexend", "Source Sans 3", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+
+  /* Readable floor: dense UI text was 12px, now 13px */
+  --text-xs: 0.8125rem;
+  --text-xs--line-height: 1.15rem;
+  --text-sm: 0.9rem;
+  --text-sm--line-height: 1.3rem;
+
+  --color-ink: #12233a;
+  --color-ink-soft: #1b3150;
+  --color-ink-line: #2a4263;
+
+  --color-teal-50: #eef8f7;
+  --color-teal-100: #d4eeeb;
+  --color-teal-200: #a9dcd7;
+  --color-teal-300: #73c2bb;
+  --color-teal-400: #3fa49d;
+  --color-teal-500: #1d8882;
+  --color-teal-600: #0f726d;
+  --color-teal-700: #0c5f5b;
+  --color-teal-800: #0d4c4a;
+  --color-teal-900: #0e3f3e;
+  --color-teal-950: #052626;
+
+  --color-slate-50: #f4f6f8;
+  --color-slate-100: #eaeef2;
+  --color-slate-200: #dbe1e8;
+  --color-slate-300: #c2cbd5;
+  --color-slate-400: #758293;
+  --color-slate-500: #5a6677;
+  --color-slate-600: #445062;
+  --color-slate-700: #333e4f;
+  --color-slate-800: #1f2a3a;
+  --color-slate-850: #18222f;
+  --color-slate-900: #121b27;
+  --color-slate-950: #0b121b;
+
+  --shadow-xs: 0 1px 2px 0 rgb(18 35 58 / 0.05);
+  --shadow-sm: 0 1px 3px 0 rgb(18 35 58 / 0.07), 0 1px 2px -1px rgb(18 35 58 / 0.05);
+  --shadow-lift: 0 10px 30px -12px rgb(18 35 58 / 0.25);
 }
 
-html.dark {
-  color-scheme: dark;
+@keyframes loadbar {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(300%); }
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    font-feature-settings: "kern", "liga";
+  }
+
+  html.dark {
+    color-scheme: dark;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+    letter-spacing: -0.01em;
+  }
+
+  /* Figures line up in tables, payslips and counters */
+  table,
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+
+  button,
+  [role="button"],
+  a,
+  select,
+  summary,
+  label[for] {
+    cursor: pointer;
+  }
+
+  button:disabled {
+    cursor: not-allowed;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-teal-500);
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+
+  ::selection {
+    background: var(--color-teal-100);
+    color: var(--color-teal-900);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@utility font-display {
+  font-family: var(--font-display);
+}
+
+/* Thin, quiet scrollbars for the sidebar and wide tables */
+@utility scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(117 130 147 / 0.35) transparent;
 }
 
 /* Print only the payslip (or any .print-area) when the user prints */

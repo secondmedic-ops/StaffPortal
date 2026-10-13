@@ -33,7 +33,7 @@ export const DocumentManagement: React.FC = () => {
   });
 
   return (
-    <div className="p-6 space-y-6 max-w-7xl mx-auto">
+    <div className="px-4 sm:px-8 py-6 sm:py-8 max-w-7xl mx-auto space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
@@ -86,7 +86,7 @@ export const DocumentManagement: React.FC = () => {
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
-              <tr className="border-b border-slate-200 dark:border-slate-800 text-slate-400 uppercase tracking-wider text-[10px]">
+              <tr className="border-b border-slate-200 dark:border-slate-800 text-slate-400 text-[11.5px]">
                 <th className="py-3 px-4">Document Name</th>
                 <th className="py-3 px-4">Category</th>
                 <th className="py-3 px-4">Employee / Owner</th>
@@ -104,7 +104,7 @@ export const DocumentManagement: React.FC = () => {
                     <span>{d.name}</span>
                   </td>
                   <td className="py-3 px-4">
-                    <span className="px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[11px] font-medium">
+                    <span className="px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[12.5px] font-medium">
                       {d.category}
                     </span>
                   </td>
@@ -112,7 +112,7 @@ export const DocumentManagement: React.FC = () => {
                   <td className="py-3 px-4 text-slate-500">{d.uploadDate}</td>
                   <td className="py-3 px-4 font-mono text-slate-500">{d.size}</td>
                   <td className="py-3 px-4">
-                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${
+                    <span className={`px-2 py-0.5 rounded-full text-[11.5px] font-semibold ${
                       d.status === 'Verified' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300' : 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300'
                     }`}>
                       {d.status}

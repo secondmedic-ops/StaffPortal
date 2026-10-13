@@ -66,26 +66,26 @@ export const MyKpis: React.FC = () => {
   const totalWeight = kpis.reduce((acc, k) => acc + k.weightPct, 0);
 
   return (
-    <div className="p-4 sm:p-6 max-w-7xl mx-auto space-y-6">
+    <div className="px-4 sm:px-8 py-6 sm:py-8 max-w-7xl mx-auto space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-xl border border-slate-200 shadow-xs">
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-1">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-xl font-bold text-slate-900">Performance Key Result Areas (KPIs)</h1>
+            <h1 className="text-[22px] sm:text-2xl font-semibold text-slate-900 dark:text-slate-50">Performance Key Result Areas (KPIs)</h1>
             {cycle && (
-              <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-teal-50 text-teal-800 border border-teal-200">
+              <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-teal-50 dark:bg-teal-950/40 text-teal-800 dark:text-teal-300 border border-teal-200 dark:border-teal-800/70">
                 {cycle.cycleName}
               </span>
             )}
           </div>
-          <p className="text-xs text-slate-500 mt-1">
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-[70ch]">
             Official scorecard evaluated for quarterly incentive & appraisal cycles
           </p>
         </div>
 
         <div className="text-right">
-          <span className="text-xs text-slate-500 block">Total Allocated Weight</span>
-          <span className="text-lg font-bold text-teal-800">{totalWeight}% / 100%</span>
+          <span className="text-xs text-slate-500 dark:text-slate-400 block">Total Allocated Weight</span>
+          <span className="text-lg font-bold text-teal-800 dark:text-teal-300">{totalWeight}% / 100%</span>
         </div>
       </div>
 
@@ -93,10 +93,10 @@ export const MyKpis: React.FC = () => {
       {loading ? (
         <SkeletonLoader rows={4} />
       ) : kpis.length === 0 ? (
-        <div className="bg-white p-12 text-center rounded-xl border border-slate-200 shadow-xs">
+        <div className="bg-white dark:bg-slate-900 p-12 text-center rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs">
           <Award className="w-10 h-10 text-slate-300 mx-auto mb-2" />
-          <h3 className="text-sm font-bold text-slate-800">No KPIs Assigned</h3>
-          <p className="text-xs text-slate-500 mt-1">
+          <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200">No KPIs Assigned</h3>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
             Your manager has not defined goals for this cycle yet.
           </p>
         </div>
@@ -109,33 +109,33 @@ export const MyKpis: React.FC = () => {
             return (
               <div
                 key={kpi.id}
-                className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs hover:border-slate-300 transition-all"
+                className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs hover:border-slate-300 dark:hover:border-slate-700 transition-all"
               >
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-700">
+                      <span className="text-xs font-bold px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
                         Weight: {kpi.weightPct}%
                       </span>
-                      <h3 className="text-sm font-bold text-slate-900">{kpi.title}</h3>
+                      <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">{kpi.title}</h3>
                     </div>
 
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mt-3 text-xs">
                       <div>
-                        <span className="text-slate-400 block text-[11px]">Target Objective</span>
-                        <span className="font-bold text-slate-800">
+                        <span className="text-slate-400 dark:text-slate-500 block text-[12.5px]">Target Objective</span>
+                        <span className="font-bold text-slate-800 dark:text-slate-200">
                           {kpi.targetValue} {kpi.metricUnit}
                         </span>
                       </div>
                       <div>
-                        <span className="text-slate-400 block text-[11px]">Self Actual</span>
-                        <span className="font-bold text-teal-700">
+                        <span className="text-slate-400 dark:text-slate-500 block text-[12.5px]">Self Actual</span>
+                        <span className="font-bold text-teal-700 dark:text-teal-300">
                           {kpi.score?.actualValue !== undefined ? `${kpi.score.actualValue} ${kpi.metricUnit}` : 'Pending Input'}
                         </span>
                       </div>
                       <div>
-                        <span className="text-slate-400 block text-[11px]">Final Rating</span>
-                        <span className="font-bold text-indigo-700">
+                        <span className="text-slate-400 dark:text-slate-500 block text-[12.5px]">Final Rating</span>
+                        <span className="font-bold text-indigo-700 dark:text-indigo-300">
                           {kpi.score?.finalRating !== undefined ? `${kpi.score.finalRating} / 5.0` : 'Under Review'}
                         </span>
                       </div>
@@ -145,7 +145,7 @@ export const MyKpis: React.FC = () => {
                   <div className="flex items-center gap-3">
                     <button
                       onClick={() => openReviewModal(kpi)}
-                      className="px-3.5 py-2 text-xs font-semibold rounded-lg bg-teal-50 text-teal-800 hover:bg-teal-100 border border-teal-200 transition-colors flex items-center gap-1.5"
+                      className="px-3.5 py-2 text-xs font-semibold rounded-lg bg-teal-50 dark:bg-teal-950/40 text-teal-800 dark:text-teal-300 hover:bg-teal-100 dark:hover:bg-teal-950/60 border border-teal-200 dark:border-teal-800/70 transition-colors flex items-center gap-1.5"
                     >
                       <Edit3 className="w-3.5 h-3.5" />
                       {hasSelfScore ? 'Edit Self-Review' : 'Submit Review'}
@@ -155,34 +155,34 @@ export const MyKpis: React.FC = () => {
 
                 {/* Reviews & Feedback comparison bar */}
                 {(hasSelfScore || hasMgrScore) && (
-                  <div className="mt-4 pt-3 border-t border-slate-100 grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                  <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
                     {/* Self Review */}
-                    <div className="bg-slate-50/70 p-3 rounded-lg border border-slate-100">
+                    <div className="bg-slate-50/70 dark:bg-slate-800/50 p-3 rounded-lg border border-slate-100 dark:border-slate-800">
                       <div className="flex items-center justify-between">
-                        <span className="font-semibold text-slate-700">My Self-Assessment</span>
-                        <span className="font-bold text-teal-800">{kpi.score?.selfRating} / 5</span>
+                        <span className="font-semibold text-slate-700 dark:text-slate-300">My Self-Assessment</span>
+                        <span className="font-bold text-teal-800 dark:text-teal-300">{kpi.score?.selfRating} / 5</span>
                       </div>
                       {kpi.score?.selfComment && (
-                        <p className="text-slate-600 mt-1.5 italic text-[11px]">
+                        <p className="text-slate-600 dark:text-slate-400 mt-1.5 italic text-[12.5px]">
                           "{kpi.score.selfComment}"
                         </p>
                       )}
                     </div>
 
                     {/* Manager Feedback */}
-                    <div className="bg-slate-50/70 p-3 rounded-lg border border-slate-100">
+                    <div className="bg-slate-50/70 dark:bg-slate-800/50 p-3 rounded-lg border border-slate-100 dark:border-slate-800">
                       <div className="flex items-center justify-between">
-                        <span className="font-semibold text-slate-700">Manager Evaluation</span>
-                        <span className="font-bold text-indigo-800">
+                        <span className="font-semibold text-slate-700 dark:text-slate-300">Manager Evaluation</span>
+                        <span className="font-bold text-indigo-800 dark:text-indigo-300">
                           {kpi.score?.managerRating ? `${kpi.score.managerRating} / 5` : 'Pending'}
                         </span>
                       </div>
                       {kpi.score?.managerComment ? (
-                        <p className="text-slate-600 mt-1.5 italic text-[11px]">
+                        <p className="text-slate-600 dark:text-slate-400 mt-1.5 italic text-[12.5px]">
                           "{kpi.score.managerComment}"
                         </p>
                       ) : (
-                        <p className="text-slate-400 mt-1.5 text-[11px]">Awaiting supervisor appraisal.</p>
+                        <p className="text-slate-400 dark:text-slate-500 mt-1.5 text-[12.5px]">Awaiting supervisor appraisal.</p>
                       )}
                     </div>
                   </div>
@@ -203,7 +203,7 @@ export const MyKpis: React.FC = () => {
         >
           <form onSubmit={handleSubmitSelfReview} className="space-y-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                 Actual Value Delivered ({editingKpi.metricUnit})
               </label>
               <input
@@ -211,13 +211,13 @@ export const MyKpis: React.FC = () => {
                 step="any"
                 value={actualValue}
                 onChange={e => setActualValue(Number(e.target.value))}
-                className="w-full text-xs p-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-1 focus:ring-teal-700 font-mono"
+                className="w-full text-xs p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 focus:outline-none focus:ring-1 focus:ring-teal-700 font-mono"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                 Self Rating (1 = Unsatisfactory, 5 = Exceptional)
               </label>
               <div className="flex items-center gap-2">
@@ -229,7 +229,7 @@ export const MyKpis: React.FC = () => {
                     className={`flex-1 py-2 rounded-lg text-xs font-bold border transition-colors flex items-center justify-center gap-1 ${
                       selfRating === val
                         ? 'bg-teal-700 text-white border-teal-700'
-                        : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                        : 'bg-slate-50 dark:bg-slate-800/50 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800'
                     }`}
                   >
                     <Star className={`w-3 h-3 ${selfRating >= val ? 'fill-current' : ''}`} />
@@ -240,7 +240,7 @@ export const MyKpis: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                 Self-Review Comments & Achievement Evidence
               </label>
               <textarea
@@ -248,7 +248,7 @@ export const MyKpis: React.FC = () => {
                 value={selfComment}
                 onChange={e => setSelfComment(e.target.value)}
                 placeholder="Explain the deliverables, process improvements, or challenges faced during this quarter..."
-                className="w-full text-xs p-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-1 focus:ring-teal-700"
+                className="w-full text-xs p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 focus:outline-none focus:ring-1 focus:ring-teal-700"
                 required
               />
             </div>
@@ -257,7 +257,7 @@ export const MyKpis: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setEditingKpi(null)}
-                className="px-3.5 py-2 text-xs font-medium rounded-lg text-slate-600 hover:bg-slate-100"
+                className="px-3.5 py-2 text-xs font-medium rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
               >
                 Cancel
               </button>

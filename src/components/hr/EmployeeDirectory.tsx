@@ -131,12 +131,12 @@ export const EmployeeDirectory: React.FC = () => {
   });
 
   return (
-    <div className="p-4 sm:p-6 max-w-7xl mx-auto space-y-6">
+    <div className="px-4 sm:px-8 py-6 sm:py-8 max-w-7xl mx-auto space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-xl border border-slate-200 shadow-xs">
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-1">
         <div>
-          <h1 className="text-xl font-bold text-slate-900">Employee Master Directory</h1>
-          <p className="text-xs text-slate-500 mt-1">
+          <h1 className="text-[22px] sm:text-2xl font-semibold text-slate-900 dark:text-slate-50">Employee Master Directory</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-[70ch]">
             Central workforce registry (HR scope: Profiles, reporting authority, shifts & leave masters. No salary access)
           </p>
         </div>
@@ -150,15 +150,15 @@ export const EmployeeDirectory: React.FC = () => {
       </div>
 
       {/* Filter & Search Bar */}
-      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex flex-col md:flex-row items-center gap-3">
+      <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col md:flex-row items-center gap-3">
         <div className="relative flex-1 w-full">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+          <Search className="w-4 h-4 text-slate-400 dark:text-slate-500 absolute left-3 top-2.5" />
           <input
             type="text"
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
             placeholder="Search by staff name, code, designation..."
-            className="w-full pl-9 pr-4 py-2 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-1 focus:ring-teal-700"
+            className="w-full pl-9 pr-4 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 focus:outline-none focus:ring-1 focus:ring-teal-700"
           />
         </div>
 
@@ -166,7 +166,7 @@ export const EmployeeDirectory: React.FC = () => {
           <select
             value={deptFilter}
             onChange={e => setDeptFilter(e.target.value)}
-            className="text-xs p-2 rounded-lg border border-slate-300 font-medium bg-white text-slate-700"
+            className="text-xs p-2 rounded-lg border border-slate-300 dark:border-slate-700 font-medium bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300"
           >
             <option value="ALL">All Departments</option>
             {departments.map(d => (
@@ -177,7 +177,7 @@ export const EmployeeDirectory: React.FC = () => {
           <select
             value={typeFilter}
             onChange={e => setTypeFilter(e.target.value)}
-            className="text-xs p-2 rounded-lg border border-slate-300 font-medium bg-white text-slate-700"
+            className="text-xs p-2 rounded-lg border border-slate-300 dark:border-slate-700 font-medium bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300"
           >
             <option value="ALL">All Types</option>
             <option value="FULL_TIME">Full Time</option>
@@ -192,10 +192,10 @@ export const EmployeeDirectory: React.FC = () => {
       {loading ? (
         <SkeletonLoader type="table" rows={6} />
       ) : (
-        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-xs">
+        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-xs">
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs text-slate-700">
-              <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 uppercase tracking-wider text-[11px] font-bold">
+            <table className="w-full text-left text-xs text-slate-700 dark:text-slate-300">
+              <thead className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 text-[12.5px] font-bold">
                 <tr>
                   <th className="px-5 py-3">Code & Name</th>
                   <th className="px-5 py-3">Department</th>
@@ -206,25 +206,25 @@ export const EmployeeDirectory: React.FC = () => {
                   <th className="px-5 py-3 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                 {filtered.map(emp => (
-                  <tr key={emp.id} className="hover:bg-slate-50/80 transition-colors">
+                  <tr key={emp.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors">
                     <td className="px-5 py-3.5">
-                      <div className="font-bold text-slate-900">{emp.fullName}</div>
-                      <div className="text-[11px] text-slate-500 font-mono">{emp.empCode} • {emp.officialEmail}</div>
+                      <div className="font-bold text-slate-900 dark:text-slate-100">{emp.fullName}</div>
+                      <div className="text-[12.5px] text-slate-500 dark:text-slate-400 font-mono">{emp.empCode} • {emp.officialEmail}</div>
                     </td>
-                    <td className="px-5 py-3.5 font-medium text-slate-800">
+                    <td className="px-5 py-3.5 font-medium text-slate-800 dark:text-slate-200">
                       {emp.departmentName}
                     </td>
-                    <td className="px-5 py-3.5 text-slate-700">
+                    <td className="px-5 py-3.5 text-slate-700 dark:text-slate-300">
                       {emp.designation}
                     </td>
-                    <td className="px-5 py-3.5 text-slate-600">
+                    <td className="px-5 py-3.5 text-slate-600 dark:text-slate-400">
                       {emp.managerName || 'None (Direct to Board)'}
                     </td>
                     <td className="px-5 py-3.5">
-                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
-                        emp.employmentType === 'FIELD' ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-700'
+                      <span className={`text-[11.5px] font-bold px-1.5 py-0.5 rounded ${
+                        emp.employmentType === 'FIELD' ? 'bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
                       }`}>
                         {emp.employmentType}
                       </span>
@@ -235,7 +235,7 @@ export const EmployeeDirectory: React.FC = () => {
                     <td className="px-5 py-3.5 text-right">
                       <button
                         onClick={() => openEditModal(emp)}
-                        className="p-1.5 rounded-lg text-slate-400 hover:text-teal-700 hover:bg-teal-50 transition-colors"
+                        className="p-1.5 rounded-lg text-slate-400 dark:text-slate-500 hover:text-teal-700 dark:hover:text-teal-300 hover:bg-teal-50 dark:hover:bg-teal-950/40 transition-colors"
                         title="Edit Details & Manager"
                       >
                         <Edit2 className="w-4 h-4" />
@@ -260,24 +260,24 @@ export const EmployeeDirectory: React.FC = () => {
           <form onSubmit={handleSaveEmployee} className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Employee Code</label>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Employee Code</label>
                 <input
                   type="text"
                   value={empCode}
                   onChange={e => setEmpCode(e.target.value)}
                   disabled={!!editingEmp}
-                  className="w-full text-xs p-2.5 rounded-lg border border-slate-300 font-mono disabled:bg-slate-100"
+                  className="w-full text-xs p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 font-mono disabled:bg-slate-100"
                   required
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Full Name</label>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Full Name</label>
                 <input
                   type="text"
                   value={fullName}
                   onChange={e => setFullName(e.target.value)}
                   placeholder="e.g. Dr. Ananya Sen"
-                  className="w-full text-xs p-2.5 rounded-lg border border-slate-300"
+                  className="w-full text-xs p-2.5 rounded-lg border border-slate-300 dark:border-slate-700"
                   required
                 />
               </div>
@@ -285,25 +285,25 @@ export const EmployeeDirectory: React.FC = () => {
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Official Email</label>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Official Email</label>
                 <input
                   type="email"
                   value={officialEmail}
                   onChange={e => setOfficialEmail(e.target.value)}
                   disabled={!!editingEmp}
                   placeholder="ananya.sen@secondmedic.com"
-                  className="w-full text-xs p-2.5 rounded-lg border border-slate-300 disabled:bg-slate-100"
+                  className="w-full text-xs p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 disabled:bg-slate-100"
                   required
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Contact Phone</label>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Contact Phone</label>
                 <input
                   type="tel"
                   value={phone}
                   onChange={e => setPhone(e.target.value)}
                   placeholder="+91 98765 00000"
-                  className="w-full text-xs p-2.5 rounded-lg border border-slate-300"
+                  className="w-full text-xs p-2.5 rounded-lg border border-slate-300 dark:border-slate-700"
                   required
                 />
               </div>
@@ -311,11 +311,11 @@ export const EmployeeDirectory: React.FC = () => {
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Department</label>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Department</label>
                 <select
                   value={departmentId}
                   onChange={e => setDepartmentId(Number(e.target.value))}
-                  className="w-full text-xs p-2.5 rounded-lg border border-slate-300 font-medium"
+                  className="w-full text-xs p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 font-medium"
                 >
                   {departments.map(d => (
                     <option key={d.id} value={d.id}>{d.name}</option>
@@ -323,13 +323,13 @@ export const EmployeeDirectory: React.FC = () => {
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Designation</label>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Designation</label>
                 <input
                   type="text"
                   value={designation}
                   onChange={e => setDesignation(e.target.value)}
                   placeholder="e.g. Lead Pathologist"
-                  className="w-full text-xs p-2.5 rounded-lg border border-slate-300"
+                  className="w-full text-xs p-2.5 rounded-lg border border-slate-300 dark:border-slate-700"
                   required
                 />
               </div>
@@ -337,11 +337,11 @@ export const EmployeeDirectory: React.FC = () => {
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Employment Type</label>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Employment Type</label>
                 <select
                   value={employmentType}
                   onChange={e => setEmploymentType(e.target.value as any)}
-                  className="w-full text-xs p-2.5 rounded-lg border border-slate-300 font-medium"
+                  className="w-full text-xs p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 font-medium"
                 >
                   <option value="FULL_TIME">Full Time (HQ Office)</option>
                   <option value="FIELD">Field (Mobile Geotagged)</option>
@@ -351,11 +351,11 @@ export const EmployeeDirectory: React.FC = () => {
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Reporting Manager</label>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Reporting Manager</label>
                 <select
                   value={managerId || ''}
                   onChange={e => setManagerId(e.target.value ? Number(e.target.value) : undefined)}
-                  className="w-full text-xs p-2.5 rounded-lg border border-slate-300 font-medium"
+                  className="w-full text-xs p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 font-medium"
                 >
                   <option value="">None (Top-Level Executive)</option>
                   {employees
@@ -369,11 +369,11 @@ export const EmployeeDirectory: React.FC = () => {
               </div>
             </div>
 
-            <div className="pt-2 flex justify-end gap-2 border-t border-slate-100">
+            <div className="pt-2 flex justify-end gap-2 border-t border-slate-100 dark:border-slate-800">
               <button
                 type="button"
                 onClick={() => setShowAddModal(false)}
-                className="px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-100 rounded"
+                className="px-3 py-1.5 text-xs text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded"
               >
                 Cancel
               </button>

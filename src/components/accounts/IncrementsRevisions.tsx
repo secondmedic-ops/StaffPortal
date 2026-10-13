@@ -228,7 +228,7 @@ export const IncrementsRevisions: React.FC = () => {
   const withoutSalary = employees.filter(e => !current.has(e.id)).length;
 
   return (
-    <div className="p-4 sm:p-6 max-w-7xl mx-auto space-y-6">
+    <div className="px-4 sm:px-8 py-6 sm:py-8 max-w-7xl mx-auto space-y-6">
       <PageHeader
         title="Increments & Salary Revisions"
         subtitle="Joining salary, annual increments and promotions with full history and maker-checker approval"
@@ -293,29 +293,29 @@ export const IncrementsRevisions: React.FC = () => {
                       <div>
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="font-bold text-sm text-slate-900 dark:text-slate-100">{r.employeeName}</span>
-                          <span className="text-[11px] font-mono text-slate-500">{r.employeeCode}</span>
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-teal-50 dark:bg-teal-950/60 text-teal-800 dark:text-teal-300 border border-teal-200 dark:border-teal-800">
+                          <span className="text-[12.5px] font-mono text-slate-500">{r.employeeCode}</span>
+                          <span className="text-[11.5px] font-bold px-2 py-0.5 rounded-full bg-teal-50 dark:bg-teal-950/60 text-teal-800 dark:text-teal-300 border border-teal-200 dark:border-teal-800">
                             {r.revisionType}
                           </span>
                         </div>
-                        <div className="text-[11px] text-slate-500 mt-0.5">
+                        <div className="text-[12.5px] text-slate-500 mt-0.5">
                           {r.designation}
                           {r.newDesignation && ` → ${r.newDesignation}`} · effective {formatDate(r.effectiveFrom)} · proposed by {r.proposedByName ?? '—'}
                         </div>
                         {r.reason && <div className="text-xs text-slate-600 dark:text-slate-400 mt-1 italic">“{r.reason}”</div>}
                       </div>
                       <div className="text-right">
-                        <div className="text-[11px] text-slate-500">{prev ? `${formatInr(prev.ctcAnnual)} →` : 'New CTC'}</div>
+                        <div className="text-[12.5px] text-slate-500">{prev ? `${formatInr(prev.ctcAnnual)} →` : 'New CTC'}</div>
                         <div className="text-lg font-bold text-slate-900 dark:text-slate-100">{formatInr(r.ctcAnnual)}</div>
                         {r.incrementPct != null && (
-                          <div className={`text-[11px] font-bold ${r.incrementPct >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                          <div className={`text-[12.5px] font-bold ${r.incrementPct >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
                             {r.incrementPct >= 0 ? '+' : ''}
                             {r.incrementPct}%
                           </div>
                         )}
                       </div>
                     </div>
-                    <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 mt-3 text-[11px]">
+                    <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 mt-3 text-[12.5px]">
                       {[
                         ['Basic', r.basicMonthly],
                         ['HRA', r.hraMonthly],
@@ -331,7 +331,7 @@ export const IncrementsRevisions: React.FC = () => {
                     </div>
                     <div className="flex justify-end gap-2 mt-3 pt-3 border-t border-slate-100 dark:border-slate-800">
                       {isMine ? (
-                        <span className="text-[11px] text-slate-500 italic">You proposed this — another approver must act (maker-checker).</span>
+                        <span className="text-[12.5px] text-slate-500 italic">You proposed this — another approver must act (maker-checker).</span>
                       ) : (
                         <>
                           <button onClick={() => action(r, 'REJECT')} disabled={actioning === r.id} className={secondaryBtn}>
@@ -371,7 +371,7 @@ export const IncrementsRevisions: React.FC = () => {
                       <tr key={e.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40">
                         <td className="px-4 py-2.5">
                           <div className="font-semibold text-slate-900 dark:text-slate-100">{e.fullName}</div>
-                          <div className="text-[11px] text-slate-500">
+                          <div className="text-[12.5px] text-slate-500">
                             {e.empCode} · {e.designation}
                           </div>
                         </td>
@@ -415,7 +415,7 @@ export const IncrementsRevisions: React.FC = () => {
                     <tr key={r.id}>
                       <td className="px-4 py-2.5">
                         <div className="font-semibold text-slate-900 dark:text-slate-100">{r.employeeName}</div>
-                        <div className="text-[11px] text-slate-500">{r.employeeCode}</div>
+                        <div className="text-[12.5px] text-slate-500">{r.employeeCode}</div>
                       </td>
                       <td className="px-3 py-2.5">{r.revisionType}</td>
                       <td className="px-3 py-2.5">{formatDate(r.effectiveFrom)}</td>
@@ -424,7 +424,7 @@ export const IncrementsRevisions: React.FC = () => {
                       <td className="px-3 py-2.5">
                         <StatusPill status={r.status} />
                       </td>
-                      <td className="px-3 py-2.5 text-[11px] text-slate-500">
+                      <td className="px-3 py-2.5 text-[12.5px] text-slate-500">
                         {r.proposedByName ?? '—'}
                         {r.approvedByName && ` / ${r.approvedByName}`}
                       </td>
@@ -457,7 +457,7 @@ export const IncrementsRevisions: React.FC = () => {
                   ))}
               </select>
               {form.employeeId && (
-                <p className="text-[11px] text-slate-500 mt-1">
+                <p className="text-[12.5px] text-slate-500 mt-1">
                   Current: {selectedCurrent ? `${formatInr(selectedCurrent.ctcAnnual)} p.a. since ${formatDate(selectedCurrent.effectiveFrom)}` : 'no approved salary yet'}
                 </p>
               )}
@@ -496,7 +496,7 @@ export const IncrementsRevisions: React.FC = () => {
           <div className="p-3 rounded-lg border border-slate-200 dark:border-slate-800 space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-slate-800 dark:text-slate-200">Monthly components</span>
-              <div className="flex gap-3 text-[11px] text-slate-600 dark:text-slate-300">
+              <div className="flex gap-3 text-[12.5px] text-slate-600 dark:text-slate-300">
                 <label className="flex items-center gap-1">
                   <input type="checkbox" checked={form.autoSplit} onChange={e => setForm(prev => applyCtc(prev.ctcAnnual, prev.pfApplicable, e.target.checked, prev))} />
                   Auto-split ({SALARY_SPLIT_POLICY.basicPctOfGross * 100}% basic, HRA {SALARY_SPLIT_POLICY.hraPctOfBasic * 100}% of basic)
@@ -518,7 +518,7 @@ export const IncrementsRevisions: React.FC = () => {
                 ] as Array<[keyof ProposalForm, string]>
               ).map(([key, label]) => (
                 <div key={key}>
-                  <label className="block text-[10px] font-semibold text-slate-500 mb-0.5">{label}</label>
+                  <label className="block text-[11.5px] font-semibold text-slate-500 mb-0.5">{label}</label>
                   <input
                     type="number"
                     min={0}
@@ -530,7 +530,7 @@ export const IncrementsRevisions: React.FC = () => {
                 </div>
               ))}
             </div>
-            <div className="text-[11px] text-slate-500">
+            <div className="text-[12.5px] text-slate-500">
               Gross / month: <strong className="text-slate-800 dark:text-slate-200">{formatInr(formGross)}</strong>
             </div>
           </div>

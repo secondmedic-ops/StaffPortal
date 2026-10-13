@@ -65,12 +65,12 @@ export const LeavePolicyConfig: React.FC = () => {
   };
 
   return (
-    <div className="p-4 sm:p-6 max-w-7xl mx-auto space-y-6">
+    <div className="px-4 sm:px-8 py-6 sm:py-8 max-w-7xl mx-auto space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-xl border border-slate-200 shadow-xs">
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-1">
         <div>
-          <h1 className="text-xl font-bold text-slate-900">Leave Policies & Quota Configuration</h1>
-          <p className="text-xs text-slate-500 mt-1">
+          <h1 className="text-[22px] sm:text-2xl font-semibold text-slate-900 dark:text-slate-50">Leave Policies & Quota Configuration</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-[70ch]">
             Rules engine controlling accruals, medical certificate requirements, and sandwich policies
           </p>
         </div>
@@ -86,10 +86,10 @@ export const LeavePolicyConfig: React.FC = () => {
       {loading ? (
         <SkeletonLoader rows={4} />
       ) : (
-        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-xs">
+        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-xs">
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs text-slate-700">
-              <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 uppercase tracking-wider text-[11px] font-bold">
+            <table className="w-full text-left text-xs text-slate-700 dark:text-slate-300">
+              <thead className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 text-[12.5px] font-bold">
                 <tr>
                   <th className="px-5 py-3">Code</th>
                   <th className="px-5 py-3">Category Name</th>
@@ -101,13 +101,13 @@ export const LeavePolicyConfig: React.FC = () => {
                   <th className="px-5 py-3">Status</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                 {leaveTypes.map(lt => (
-                  <tr key={lt.id} className="hover:bg-slate-50/80 transition-colors">
-                    <td className="px-5 py-4 font-bold text-teal-800 font-mono">
+                  <tr key={lt.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors">
+                    <td className="px-5 py-4 font-bold text-teal-800 dark:text-teal-300 font-mono">
                       {lt.code}
                     </td>
-                    <td className="px-5 py-4 font-medium text-slate-900">
+                    <td className="px-5 py-4 font-medium text-slate-900 dark:text-slate-100">
                       {lt.name}
                     </td>
                     <td className="px-5 py-4 text-center font-semibold">
@@ -118,31 +118,31 @@ export const LeavePolicyConfig: React.FC = () => {
                     </td>
                     <td className="px-5 py-4 text-center">
                       {lt.requiresDocumentAfterDays > 0 ? (
-                        <span className="text-amber-700 font-semibold">
+                        <span className="text-amber-700 dark:text-amber-300 font-semibold">
                           After {lt.requiresDocumentAfterDays} days
                         </span>
                       ) : (
-                        <span className="text-slate-400">Not required</span>
+                        <span className="text-slate-400 dark:text-slate-500">Not required</span>
                       )}
                     </td>
                     <td className="px-5 py-4 text-center">
                       {lt.allowHalfDay ? (
-                        <Check className="w-4 h-4 text-emerald-600 mx-auto" />
+                        <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400 mx-auto" />
                       ) : (
                         <X className="w-4 h-4 text-slate-300 mx-auto" />
                       )}
                     </td>
                     <td className="px-5 py-4 text-center">
                       {lt.sandwichRule ? (
-                        <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800">
+                        <span className="px-1.5 py-0.5 rounded text-[11.5px] font-bold bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300">
                           Active
                         </span>
                       ) : (
-                        <span className="text-slate-400">Disabled</span>
+                        <span className="text-slate-400 dark:text-slate-500">Disabled</span>
                       )}
                     </td>
                     <td className="px-5 py-4">
-                      <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                      <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/70">
                         Active
                       </span>
                     </td>
@@ -165,25 +165,25 @@ export const LeavePolicyConfig: React.FC = () => {
           <form onSubmit={handleCreate} className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Code</label>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Code</label>
                 <input
                   type="text"
                   value={code}
                   onChange={e => setCode(e.target.value)}
                   placeholder="e.g. ML"
                   maxLength={5}
-                  className="w-full text-xs p-2.5 rounded-lg border border-slate-300 font-mono uppercase"
+                  className="w-full text-xs p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 font-mono uppercase"
                   required
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Category Name</label>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Category Name</label>
                 <input
                   type="text"
                   value={name}
                   onChange={e => setName(e.target.value)}
                   placeholder="e.g. Maternity Leave"
-                  className="w-full text-xs p-2.5 rounded-lg border border-slate-300"
+                  className="w-full text-xs p-2.5 rounded-lg border border-slate-300 dark:border-slate-700"
                   required
                 />
               </div>
@@ -191,57 +191,57 @@ export const LeavePolicyConfig: React.FC = () => {
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Annual Quota (Days)</label>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Annual Quota (Days)</label>
                 <input
                   type="number"
                   value={annualQuota}
                   onChange={e => setAnnualQuota(Number(e.target.value))}
-                  className="w-full text-xs p-2.5 rounded-lg border border-slate-300"
+                  className="w-full text-xs p-2.5 rounded-lg border border-slate-300 dark:border-slate-700"
                   required
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Max Carry Forward</label>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Max Carry Forward</label>
                 <input
                   type="number"
                   value={carryForwardMax}
                   onChange={e => setCarryForwardMax(Number(e.target.value))}
-                  className="w-full text-xs p-2.5 rounded-lg border border-slate-300"
+                  className="w-full text-xs p-2.5 rounded-lg border border-slate-300 dark:border-slate-700"
                   required
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                 Require Doctor Certificate After Days (0 = never)
               </label>
               <input
                 type="number"
                 value={requiresDocDays}
                 onChange={e => setRequiresDocDays(Number(e.target.value))}
-                className="w-full text-xs p-2.5 rounded-lg border border-slate-300"
+                className="w-full text-xs p-2.5 rounded-lg border border-slate-300 dark:border-slate-700"
                 required
               />
             </div>
 
-            <div className="space-y-2 pt-2 border-t border-slate-100 text-xs">
-              <label className="flex items-center gap-2 text-slate-700 cursor-pointer">
+            <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-800 text-xs">
+              <label className="flex items-center gap-2 text-slate-700 dark:text-slate-300 cursor-pointer">
                 <input
                   type="checkbox"
                   checked={allowHalfDay}
                   onChange={e => setAllowHalfDay(e.target.checked)}
-                  className="rounded text-teal-700 focus:ring-teal-700"
+                  className="rounded text-teal-700 dark:text-teal-300 focus:ring-teal-700"
                 />
                 Allow Half-Day Applications (Morning / Afternoon)
               </label>
 
-              <label className="flex items-center gap-2 text-slate-700 cursor-pointer">
+              <label className="flex items-center gap-2 text-slate-700 dark:text-slate-300 cursor-pointer">
                 <input
                   type="checkbox"
                   checked={sandwichRule}
                   onChange={e => setSandwichRule(e.target.checked)}
-                  className="rounded text-teal-700 focus:ring-teal-700"
+                  className="rounded text-teal-700 dark:text-teal-300 focus:ring-teal-700"
                 />
                 Enforce Sandwich Rule (Count intervening weekends/holidays)
               </label>
@@ -251,7 +251,7 @@ export const LeavePolicyConfig: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setShowModal(false)}
-                className="px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-100 rounded"
+                className="px-3 py-1.5 text-xs text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded"
               >
                 Cancel
               </button>

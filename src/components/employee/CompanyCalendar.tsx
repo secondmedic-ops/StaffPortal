@@ -55,12 +55,12 @@ export const CompanyCalendar: React.FC = () => {
   const firstDayOfWeek = new Date(year, month - 1, 1).getDay();
 
   return (
-    <div className="p-4 sm:p-6 max-w-7xl mx-auto space-y-6">
+    <div className="px-4 sm:px-8 py-6 sm:py-8 max-w-7xl mx-auto space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-xl border border-slate-200 shadow-xs">
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-1">
         <div>
-          <h1 className="text-xl font-bold text-slate-900">Organization & Team Calendar</h1>
-          <p className="text-xs text-slate-500 mt-1">
+          <h1 className="text-[22px] sm:text-2xl font-semibold text-slate-900 dark:text-slate-50">Organization & Team Calendar</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-[70ch]">
             Official gazetted holidays and team availability schedule
           </p>
         </div>
@@ -69,16 +69,16 @@ export const CompanyCalendar: React.FC = () => {
         <div className="flex items-center gap-2">
           <button
             onClick={handlePrevMonth}
-            className="p-2 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-600 transition-colors"
+            className="p-2 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 text-slate-600 dark:text-slate-400 transition-colors"
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
-          <div className="px-4 py-2 rounded-lg bg-slate-100 font-bold text-xs text-slate-800 min-w-36 text-center">
+          <div className="px-4 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 font-bold text-xs text-slate-800 dark:text-slate-200 min-w-36 text-center">
             {getMonthName(month)} {year}
           </div>
           <button
             onClick={handleNextMonth}
-            className="p-2 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-600 transition-colors"
+            className="p-2 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 text-slate-600 dark:text-slate-400 transition-colors"
           >
             <ChevronRight className="w-4 h-4" />
           </button>
@@ -86,14 +86,14 @@ export const CompanyCalendar: React.FC = () => {
       </div>
 
       {/* Privacy Notice Banner */}
-      <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-600 flex items-center justify-between">
+      <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 text-xs text-slate-600 dark:text-slate-400 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Lock className="w-4 h-4 text-teal-700 flex-shrink-0" />
+          <Lock className="w-4 h-4 text-teal-700 dark:text-teal-300 flex-shrink-0" />
           <span>
             <strong>Peer Privacy Policy:</strong> Teammate availability displays names only. Medical and personal leave reasons are strictly confidential to reporting managers.
           </span>
         </div>
-        <div className="flex items-center gap-3 text-[11px] font-medium">
+        <div className="flex items-center gap-3 text-[12.5px] font-medium">
           <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-purple-500" /> Holiday</span>
           <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-teal-600" /> My Leave</span>
           <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-sky-500" /> Team Out</span>
@@ -104,9 +104,9 @@ export const CompanyCalendar: React.FC = () => {
       {loading ? (
         <SkeletonLoader rows={5} />
       ) : (
-        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-xs">
-          <div className="grid grid-cols-7 border-b border-slate-200 bg-slate-50 text-center text-xs font-bold text-slate-600 py-2.5">
-            <span className="text-rose-600">Sun</span>
+        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-xs">
+          <div className="grid grid-cols-7 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 text-center text-xs font-bold text-slate-600 dark:text-slate-400 py-2.5">
+            <span className="text-rose-600 dark:text-rose-400">Sun</span>
             <span>Mon</span>
             <span>Tue</span>
             <span>Wed</span>
@@ -115,10 +115,10 @@ export const CompanyCalendar: React.FC = () => {
             <span>Sat</span>
           </div>
 
-          <div className="grid grid-cols-7 divide-x divide-y divide-slate-100">
+          <div className="grid grid-cols-7 divide-x divide-y divide-slate-100 dark:divide-slate-800">
             {/* Empty prefix days */}
             {Array.from({ length: firstDayOfWeek }).map((_, i) => (
-              <div key={`cal-empty-${i}`} className="min-h-28 bg-slate-50/40 p-2" />
+              <div key={`cal-empty-${i}`} className="min-h-28 bg-slate-50/40 dark:bg-slate-800/50 p-2" />
             ))}
 
             {/* Current month days */}
@@ -134,8 +134,8 @@ export const CompanyCalendar: React.FC = () => {
               return (
                 <div
                   key={dateStr}
-                  className={`min-h-28 p-2 flex flex-col justify-between transition-colors hover:bg-slate-50/60 ${
-                    isToday ? 'bg-teal-50/20 ring-1 ring-teal-600 ring-inset' : ''
+                  className={`min-h-28 p-2 flex flex-col justify-between transition-colors hover:bg-slate-50/60 dark:hover:bg-slate-800/50 ${
+                    isToday ? 'bg-teal-50/20 dark:bg-teal-950/40 ring-1 ring-teal-600 ring-inset' : ''
                   }`}
                 >
                   <div className="flex items-center justify-between">
@@ -143,7 +143,7 @@ export const CompanyCalendar: React.FC = () => {
                       className={`text-xs font-semibold ${
                         isToday
                           ? 'h-6 w-6 rounded-full bg-teal-700 text-white flex items-center justify-center font-bold'
-                          : 'text-slate-800'
+                          : 'text-slate-800 dark:text-slate-200'
                       }`}
                     >
                       {day}
@@ -154,7 +154,7 @@ export const CompanyCalendar: React.FC = () => {
                     {/* Holiday badge */}
                     {holiday && (
                       <div
-                        className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-purple-100 text-purple-800 border border-purple-200 truncate"
+                        className="text-[11.5px] font-bold px-1.5 py-0.5 rounded bg-purple-100 dark:bg-purple-950/60 text-purple-800 dark:text-purple-300 border border-purple-200 dark:border-purple-800/70 truncate"
                         title={holiday.name}
                       >
                         🎉 {holiday.name}
@@ -164,7 +164,7 @@ export const CompanyCalendar: React.FC = () => {
                     {/* My Leave */}
                     {myLeaveToday && (
                       <div
-                        className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-teal-100 text-teal-800 border border-teal-200 truncate"
+                        className="text-[11.5px] font-medium px-1.5 py-0.5 rounded bg-teal-100 dark:bg-teal-950/60 text-teal-800 dark:text-teal-300 border border-teal-200 dark:border-teal-800/70 truncate"
                         title={`My Leave: ${myLeaveToday.leaveTypeCode}`}
                       >
                         Me: {myLeaveToday.leaveTypeCode} ({myLeaveToday.status})
@@ -175,7 +175,7 @@ export const CompanyCalendar: React.FC = () => {
                     {teammatesOut.map((t, idx) => (
                       <div
                         key={idx}
-                        className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-sky-100 text-sky-800 border border-sky-200 truncate flex items-center gap-1"
+                        className="text-[11.5px] font-medium px-1.5 py-0.5 rounded bg-sky-100 dark:bg-sky-950/60 text-sky-800 dark:text-sky-300 border border-sky-200 dark:border-sky-800/70 truncate flex items-center gap-1"
                         title={`${t.employeeName} on approved leave`}
                       >
                         <Users className="w-2.5 h-2.5 flex-shrink-0" />
