@@ -4,7 +4,7 @@ import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { mapEmployee } from '../api/mappers';
 import { ThemeToggle } from '../components/common/ThemeToggle';
 import type { Employee, RoleType } from '../types';
-import { Stethoscope, AlertTriangle, LogIn, Lock, Mail, ArrowRight, Shield } from 'lucide-react';
+import { Stethoscope, AlertTriangle, LogIn, Lock, Mail } from 'lucide-react';
 
 export interface ToastMessage {
   id: string;
@@ -25,7 +25,6 @@ export interface AuthContextType {
   login: (email: string, password?: string) => Promise<void>; // backward-compatible alias
   signOut: () => Promise<void>;
   logout: () => Promise<void>; // backward-compatible alias
-  loginAsDemoAdmin: () => void;
   activeNav: string;
   setActiveNav: (nav: string) => void;
   toasts: ToastMessage[];
@@ -102,6 +101,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loginPassword, setLoginPassword] = useState('');
   const [loginSubmitting, setLoginSubmitting] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
+  const [resetSent, setResetSent] = useState<string | null>(null);
 
   const showToast = (title: string, message?: string, type: ToastMessage['type'] = 'success') => {
     const id = Math.random().toString(36).substring(2, 9);
@@ -189,13 +189,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const signIn = async (email: string, password?: string) => {
+    if (!password) throw new Error('Enter your password');
     setLoading(true);
     setError(null);
     setLoginError(null);
     try {
       const { error: authError } = await supabase.auth.signInWithPassword({
         email,
-        password: password || 'SecondMedic@2026'
+        password
       });
       if (authError) throw authError;
     } catch (err: any) {
@@ -217,42 +218,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } finally {
       setLoading(false);
     }
-  };
-
-  const loginAsDemoAdmin = () => {
-    setLoading(true);
-    const demoEmployee: Employee = {
-      id: 999,
-      empCode: 'ADM-001',
-      fullName: 'Master Administrator',
-      officialEmail: 'Admin@secondmedic',
-      departmentId: 1,
-      departmentName: 'Executive & Systems',
-      designation: 'System Administrator & Master Controller',
-      employmentType: 'FULL_TIME',
-      status: 'ACTIVE',
-      workLocation: 'Headquarters',
-      avatarUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150',
-    };
-    setEmployee(demoEmployee);
-    setRoles(['SYSTEM_ADMIN', 'CEO', 'HR', 'ACCOUNTS', 'IT', 'MANAGER']);
-    setSession({
-      access_token: 'demo-admin-token',
-      refresh_token: 'demo-refresh',
-      expires_in: 3600,
-      token_type: 'bearer',
-      user: {
-        id: 'demo-admin-id',
-        aud: 'authenticated',
-        role: 'authenticated',
-        email: 'Admin@secondmedic',
-        app_metadata: {},
-        user_metadata: {},
-        created_at: new Date().toISOString()
-      }
-    } as Session);
-    setLoading(false);
-    showToast('Master Admin Session Active', 'Logged in as Admin@secondmedic with full SYSTEM_ADMIN, CEO, HR, ACCOUNTS and IT access.', 'success');
   };
 
   const isManager = roles.includes('MANAGER') || directReportCount > 0;
@@ -319,7 +284,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setLoginSubmitting(true);
       setLoginError(null);
       try {
-        await signIn(loginEmail.trim(), loginPassword.trim() || undefined);
+        await signIn(loginEmail.trim(), loginPassword);
       } catch (err: any) {
         setLoginError(err.message || 'Authentication failed');
       } finally {
@@ -341,23 +306,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             <p className="text-xs text-slate-400">
               Sign in with your clinical or corporate email credentials
             </p>
-          </div>
-
-          <div className="pt-1">
-            <button
-              type="button"
-              onClick={loginAsDemoAdmin}
-              className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-500 hover:to-emerald-500 text-xs font-bold text-white flex items-center justify-center gap-2 shadow-lg shadow-teal-900/40 transition-all"
-            >
-              <Shield className="w-4 h-4" />
-              <span>🚀 Launch Demo Master Admin View</span>
-            </button>
-          </div>
-
-          <div className="relative flex py-1 items-center">
-            <div className="flex-grow border-t border-slate-700"></div>
-            <span className="flex-shrink mx-3 text-[10px] uppercase tracking-wider text-slate-500 font-semibold">or sign in</span>
-            <div className="flex-grow border-t border-slate-700"></div>
           </div>
 
           {(loginError || error) && (
@@ -389,6 +337,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
                 <input
                   type="password"
+                  required
                   value={loginPassword}
                   onChange={e => setLoginPassword(e.target.value)}
                   placeholder="••••••••••••"
@@ -413,35 +362,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             </button>
           </form>
 
-          <div className="pt-2 border-t border-slate-700/60">
-            <div className="text-[11px] text-slate-400 font-medium mb-2.5">
-              Quick select staff account:
-            </div>
-            <div className="space-y-1.5">
-              {[
-                { email: 'rahul.sharma@secondmedic.com', name: 'Dr. Rahul Sharma', role: 'Staff Doctor' },
-                { email: 'anita.roy@secondmedic.com', name: 'Anita Roy', role: 'HR Head' },
-                { email: 'vikram.malhotra@secondmedic.com', name: 'Vikram Malhotra', role: 'Accounts Lead' },
-                { email: 'sunita.patil@secondmedic.com', name: 'Dr. Sunita Patil', role: 'CEO' },
-                { email: 'amit.verma@secondmedic.com', name: 'Amit Verma', role: 'System Admin' }
-              ].map(s => (
-                <button
-                  key={s.email}
-                  type="button"
-                  onClick={() => {
-                    setLoginEmail(s.email);
-                    setLoginPassword('SecondMedic@2026');
-                  }}
-                  className="w-full py-1.5 px-2.5 rounded-lg bg-slate-700/50 hover:bg-slate-700 border border-slate-600/60 hover:border-slate-500 text-left flex items-center justify-between text-[11px] transition-colors"
-                >
-                  <span className="font-medium text-slate-200">{s.name}</span>
-                  <span className="text-[10px] text-teal-400 font-medium flex items-center gap-1">
-                    {s.role}
-                    <ArrowRight className="w-2.5 h-2.5 text-slate-400" />
-                  </span>
-                </button>
-              ))}
-            </div>
+          <div className="pt-2 border-t border-slate-700/60 text-center">
+            <button
+              type="button"
+              onClick={async () => {
+                if (!loginEmail.trim()) {
+                  setLoginError('Enter your work email above, then click "Forgot password?"');
+                  return;
+                }
+                const { error: resetError } = await supabase.auth.resetPasswordForEmail(loginEmail.trim(), {
+                  redirectTo: window.location.origin
+                });
+                setLoginError(null);
+                setResetSent(resetError ? null : loginEmail.trim());
+                if (resetError) setLoginError(resetError.message);
+              }}
+              className="text-[11px] text-teal-400 hover:text-teal-300 font-medium"
+            >
+              Forgot password? / Set up my password
+            </button>
+            {resetSent && (
+              <p className="mt-2 text-[11px] text-emerald-300">
+                If {resetSent} is registered, a link to set your password has been emailed.
+              </p>
+            )}
           </div>
         </div>
       </div>
@@ -474,7 +418,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isCeo,
         directReportCount,
         isAdmin,
-        loginAsDemoAdmin
       }}
     >
       {children}
