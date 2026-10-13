@@ -579,7 +579,27 @@ export interface PayrollEntry {
   netPay: number;
   status: PayrollEntryStatus;
   revisionId?: number;
+  computedById?: number;
   computedByName?: string;
   computedAt?: string;
   publishedAt?: string;
+}
+
+export type HolidayWorkCompensation = 'COMP_OFF' | 'OVERTIME';
+
+export interface HolidayWorkClaim {
+  id: number;
+  employeeId: number;
+  employeeName?: string;
+  employeeCode?: string;
+  workDate: string;
+  workedHours?: number;
+  days: number;
+  compensation: HolidayWorkCompensation;
+  reason?: string;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  approverName?: string;
+  approverRemarks?: string;
+  actedAt?: string;
+  createdAt: string;
 }

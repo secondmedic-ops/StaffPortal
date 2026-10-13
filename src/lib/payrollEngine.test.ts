@@ -110,3 +110,10 @@ assert(r.lopDays === 0.5, `time update for 4.5h → half day (got lop ${r.lopDay
 // 19. Working on a Sunday / holiday is counted (for comp-off or overtime)
 r = computePayroll({ year: 2026, month: 9, salary, attendance: [...workdays.map(d => punch(d, '09:20', 9)), punch(6, '09:30', 8), punch(14, '09:30', 8)], leaves: [], holidays: [iso(14)], today });
 assert(r.holidayWorkedDays === 2 && r.payableDays === 30, `Sunday + holiday worked counted, pay unchanged (got ${r.holidayWorkedDays})`);
+
+// 20. Approved overtime: 1.5 days × (monthly gross ÷ 30) added to earnings
+r = computePayroll({ year: 2026, month: 9, salary, attendance: workdays.map(d => punch(d, '09:20', 9)), leaves: [], holidays: [], overtimeDays: 1.5, today });
+const ot = r.earnings.find(e => e.code === 'OVERTIME');
+assert(ot?.amount === Math.round((40000 / 30) * 1.5), `overtime 1.5 days = ${Math.round((40000 / 30) * 1.5)} (got ${ot?.amount})`);
+assert(r.grossEarnings === 42000 && r.deductions.find(d => d.code === 'PF')!.amount === 1800, 'overtime raises gross but not PF');
+assert(!r.warnings.some(w => w.includes('Loss of pay')), 'overtime does not trigger a false LOP warning');

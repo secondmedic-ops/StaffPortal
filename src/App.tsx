@@ -18,6 +18,8 @@ import { CompanyCalendar } from './components/employee/CompanyCalendar';
 import { MyKpis } from './components/employee/MyKpis';
 import { MyPayslips } from './components/employee/MyPayslips';
 import { MyAssets } from './components/employee/MyAssets';
+import { HolidayWorkClaims } from './components/employee/HolidayWorkClaims';
+import { TeamHolidayWork } from './components/manager/TeamHolidayWork';
 
 // Manager Components
 import { TeamDashboard } from './components/manager/TeamDashboard';
@@ -47,6 +49,7 @@ import { PayslipGenerator } from './components/accounts/PayslipGenerator';
 import { SalaryAccessLogs } from './components/accounts/SalaryAccessLogs';
 import { AttendancePayroll } from './components/accounts/AttendancePayroll';
 import { IncrementsRevisions } from './components/accounts/IncrementsRevisions';
+import { PayrollApproval } from './components/accounts/PayrollApproval';
 
 // IT Components
 import { ItDashboard } from './components/it/ItDashboard';
@@ -104,6 +107,12 @@ const MainPortal: React.FC = () => {
         return <MyPayslips />;
       case 'my-assets':
         return <MyAssets />;
+      case 'holiday-work':
+        return <HolidayWorkClaims />;
+      case 'team-holiday-work':
+        return isManager || isHr ? <TeamHolidayWork /> : <UnauthorizedView role="MANAGER" />;
+      case 'payroll-approval':
+        return isManager || isAccounts || isCeo ? <PayrollApproval /> : <UnauthorizedView role="MANAGER" />;
 
       // Manager views
       case 'team-dashboard':

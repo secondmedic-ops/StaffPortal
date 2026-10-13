@@ -6,6 +6,7 @@ import {
   mapPayrollEntry,
   mapSalaryRevision
 } from './mappers';
+import { overtimeApi } from './overtime';
 import { computePayroll, type PayrollComputation, type PayrollLeave } from '../lib/payrollEngine';
 import type {
   AttendanceRecord,
@@ -219,6 +220,13 @@ export const compensationApi = {
       .filter(e => (!e.dateOfJoining || e.dateOfJoining <= end) && (!e.dateOfExit || e.dateOfExit >= start))
       .filter(e => e.status !== 'EXITED' || (e.dateOfExit && e.dateOfExit >= start));
 
+    let overtimeByEmp = new Map<number, number>();
+    try {
+      overtimeByEmp = await overtimeApi.getApprovedOvertimeDays(start, end);
+    } catch (err: any) {
+      warnings.push(`Approved overtime could not be loaded, so no overtime is included: ${err.message}`);
+    }
+
     const pastMonth = end < new Date().toISOString().split('T')[0];
     if (pastMonth && employees.length > 0 && (attRes.data ?? []).length === 0) {
       warnings.push(
@@ -236,7 +244,8 @@ export const compensationApi = {
         salary: revision,
         attendance: attendanceByEmp.get(employee.id) ?? [],
         leaves: leavesByEmp.get(employee.id) ?? [],
-        holidays
+        holidays,
+        overtimeDays: overtimeByEmp.get(employee.id) ?? 0
       });
       return { employee, revision, computation, existing: existingMap.get(employee.id) };
     });
@@ -280,18 +289,52 @@ export const compensationApi = {
     return payload.length;
   },
 
-  async setEntriesStatus(year: number, month: number, from: 'DRAFT' | 'APPROVED', to: 'APPROVED' | 'PUBLISHED'): Promise<number> {
+  async setEntriesStatus(year: number, month: number, from: 'DRAFT' | 'APPROVED', to: 'DRAFT' | 'APPROVED' | 'PUBLISHED'): Promise<number> {
     const me = await getSessionEmployee();
-    const { data, error } = await supabase
+    let query = supabase
       .from('payroll_entries')
       .update({ status: to, published_at: to === 'PUBLISHED' ? new Date().toISOString() : null })
       .eq('year', year)
       .eq('month', month)
-      .eq('status', from)
-      .select('id');
+      .eq('status', from);
+    // Approvers never act on payroll they computed themselves.
+    if (to === 'APPROVED') query = query.neq('computed_by', me.id);
+    const { data, error } = await query.select('id');
     if (error) throw new Error(`Failed to update payroll status: ${error.message}`);
     await logAudit(me, 'PAYROLL', `PAYROLL_${to}`, `${data?.length ?? 0} entries for ${month}/${year}`);
     return data?.length ?? 0;
+  },
+
+  // ---- Payroll approval (reporting manager of the Accounts person) ----------
+
+  /** Months that have drafts visible to me (RLS limits approvers to their reporting line). */
+  async getMonthsAwaitingApproval(): Promise<Array<{ year: number; month: number; count: number }>> {
+    const me = await getSessionEmployee();
+    const { data, error } = await supabase
+      .from('payroll_entries')
+      .select('year, month, computed_by')
+      .eq('status', 'DRAFT')
+      .neq('computed_by', me.id);
+    if (error) throw new Error(`Failed to load payroll awaiting approval: ${error.message}`);
+    const map = new Map<string, { year: number; month: number; count: number }>();
+    (data ?? []).forEach(r => {
+      const key = `${r.year}-${r.month}`;
+      const cur = map.get(key) ?? { year: r.year, month: r.month, count: 0 };
+      cur.count++;
+      map.set(key, cur);
+    });
+    return Array.from(map.values()).sort((a, b) => b.year - a.year || b.month - a.month);
+  },
+
+  async getEntries(year: number, month: number): Promise<PayrollEntry[]> {
+    const { data, error } = await supabase
+      .from('payroll_entries')
+      .select(ENTRY_SELECT)
+      .eq('year', year)
+      .eq('month', month)
+      .order('employee_id');
+    if (error) throw new Error(`Failed to load payroll: ${error.message}`);
+    return (data ?? []).map(mapPayrollEntry);
   },
 
   // ---- Employee self-service -------------------------------------------------

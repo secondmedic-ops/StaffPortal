@@ -11,7 +11,9 @@ psql "$ADMIN" -qc "drop database if exists $TEST_DB" -c "create database $TEST_D
 DB_URL="$(echo "$ADMIN" | sed -E "s#/[^/?]*(\?|$)#/$TEST_DB\1#")"
 psql "$DB_URL" -v ON_ERROR_STOP=1 -q -f "$HERE/stub_schema.sql" || exit 1
 for i in 1 2; do  # applied twice to prove idempotency
-  psql "$DB_URL" -v ON_ERROR_STOP=1 -q -f "$HERE/../migrations/20261013000000_staff_lifecycle.sql" 2>&1 | grep -i error && exit 1
+  for m in "$HERE"/../migrations/*.sql; do
+    psql "$DB_URL" -v ON_ERROR_STOP=1 -q -f "$m" 2>&1 | grep -i error && exit 1
+  done
 done
 psql "$DB_URL" -qc "insert into employee_roles(employee_id, role) values (7,'IT')"   -c "insert into leave_balances(employee_id, leave_type_id, fy_year, opening) values (3,1,'2025-2026',5),(3,1,'2026-2027',12)"
 P="psql $DB_URL -qtA -v ON_ERROR_STOP=1"
@@ -72,13 +74,33 @@ expect_val  3 "select count(*) from salary_revisions where status='APPROVED'" "1
 expect_val  2 "select count(*) from salary_revisions" "0" "Manager cannot see report's salary"
 $P -c "select 'approved_by='||approved_by from salary_revisions where id=1"
 
-echo "== Payroll entries =="
-expect_ok   5 "insert into payroll_entries(id, employee_id, year, month, net_pay) values (1,3,2026,9,37000)" "Accounts saves draft"
+echo "== Payroll entries: reporting manager of the Accounts person approves =="
+expect_ok   5 "insert into payroll_entries(id, employee_id, year, month, net_pay, computed_by) values (1,3,2026,9,37000,5)" "Accounts A saves draft"
 expect_val  3 "select count(*) from payroll_entries" "0" "Employee cannot see draft payslip"
-expect_ok   5 "update payroll_entries set status='PUBLISHED', published_at=now() where id=1" "Accounts publishes"
+expect_fail 5 "update payroll_entries set status='PUBLISHED' where id=1" "Cannot publish before approval"
+expect_fail 5 "update payroll_entries set status='APPROVED' where id=1" "Accounts A cannot approve own payroll"
+expect_blocked 2 "update payroll_entries set status='APPROVED' where id=1" "Unrelated manager cannot approve"
+expect_val  2 "select count(*) from payroll_entries" "0" "Unrelated manager cannot see payroll"
+expect_fail 1 "update payroll_entries set net_pay=1 where id=1" "Approver cannot change amounts"
+expect_ok   1 "update payroll_entries set status='APPROVED' where id=1" "Accounts A's reporting manager (CEO) approves"
+expect_fail 1 "update payroll_entries set status='PUBLISHED' where id=1" "Approver cannot publish (Accounts does)"
+expect_ok   5 "update payroll_entries set status='PUBLISHED', published_at=now() where id=1" "Accounts publishes approved payroll"
 expect_val  3 "select net_pay from payroll_entries" "37000.00" "Employee sees published payslip"
 expect_fail 5 "update payroll_entries set net_pay=1 where id=1" "Published payslip is immutable"
-expect_val  2 "select count(*) from payroll_entries" "0" "Manager cannot see report's payslip"
+
+echo "== Comp-off / overtime claims =="
+$P -c "insert into leave_types(id, code, name, is_paid) values (9,'COMP_OFF','Comp Off',true)"
+expect_ok   3 "insert into holiday_work_claims(id, employee_id, work_date, worked_hours, days, compensation) values (1,3,'2026-09-06',8.5,1,'COMP_OFF'),(2,3,'2026-09-13',5,0.5,'OVERTIME'),(3,3,'2026-09-20',9,1,'OVERTIME')" "Nurse claims 3 Sundays"
+expect_fail 3 "insert into holiday_work_claims(employee_id, work_date, days, compensation) values (2,'2026-09-06',1,'OVERTIME')" "Cannot claim for someone else"
+expect_fail 3 "insert into holiday_work_claims(id, employee_id, work_date, days, compensation) values (10,3,'2026-09-06',1,'OVERTIME')" "Same date cannot be claimed twice"
+expect_blocked 3 "update holiday_work_claims set status='APPROVED' where id=1" "Nurse cannot approve own claim"
+expect_blocked 7 "update holiday_work_claims set status='APPROVED' where id=1" "IT cannot approve"
+expect_ok   2 "update holiday_work_claims set status='APPROVED' where id=1" "Manager approves comp-off"
+expect_val  3 "select accrued::float from leave_balances where leave_type_id=9" "1" "Comp-off day credited to leave balance"
+expect_ok   1 "update holiday_work_claims set status='APPROVED' where id=2" "Skip-level manager approves overtime"
+expect_ok   4 "update holiday_work_claims set status='REJECTED', approver_remarks='Not rostered' where id=3" "HR rejects a claim"
+expect_val  5 "select sum(days) from holiday_work_claims where status='APPROVED' and compensation='OVERTIME'" "0.5" "Accounts sees approved overtime for payroll"
+expect_val  2 "select count(*) from leave_balances where leave_type_id=9" "1" "Overtime claim does not credit comp-off"
 
 echo "== Onboarding / exit tasks =="
 expect_ok   4 "insert into lifecycle_tasks(id, employee_id, kind, owner_role, title) values (1,3,'ONBOARDING','IT','Laptop'),(2,3,'ONBOARDING','HR','Docs'),(3,3,'ONBOARDING','MANAGER','Welcome')" "HR creates checklist"
@@ -96,7 +118,7 @@ expect_val  2 "select count(*) from employee_profiles" "0" "Manager cannot see r
 expect_fail 4 "insert into employee_profiles(employee_id, aadhaar_last4) values (2,'12345678')" "Full Aadhaar rejected"
 
 echo "== Leave balance trigger =="
-expect_val 5 "select reserved||'/'||used from leave_balances where fy_year='2026-2027'" "0/5" "Approved 5 days used, withdrawn day released (latest FY row)"
+expect_val 5 "select reserved||'/'||used from leave_balances where fy_year='2026-2027' and leave_type_id=1" "0/5" "Approved 5 days used, withdrawn day released (latest FY row)"
 
 psql "$ADMIN" -qc "drop database if exists $TEST_DB" >/dev/null
 [ "$FAILED" -eq 0 ] && echo "All policy checks passed" || echo "Some policy checks FAILED"

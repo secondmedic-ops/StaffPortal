@@ -56,6 +56,16 @@ export const SALARY_SPLIT_POLICY = {
   hraPctOfBasic: 0.4,
 } as const;
 
+export const OVERTIME_POLICY = {
+  /**
+   * For each Sunday/holiday worked the employee chooses comp-off or overtime pay.
+   * Overtime = (monthly gross ÷ days in month) × days worked × multiplier.
+   */
+  payMultiplier: 1,
+  /** Claims must be raised within this many days of the date worked. */
+  claimWindowDays: 60,
+} as const;
+
 export const LEAVE_APPROVAL_POLICY = {
   /**
    * Leave longer than this many days needs a second approval from the

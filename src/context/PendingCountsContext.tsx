@@ -9,6 +9,8 @@ export interface PendingCounts {
   salaryRevisions: number;
   myUnacknowledgedAssets: number;
   myLifecycleTasks: number;
+  holidayWorkClaims: number;
+  payrollApprovals: number;
 }
 
 const EMPTY: PendingCounts = {
@@ -17,7 +19,9 @@ const EMPTY: PendingCounts = {
   itRequests: 0,
   salaryRevisions: 0,
   myUnacknowledgedAssets: 0,
-  myLifecycleTasks: 0
+  myLifecycleTasks: 0,
+  holidayWorkClaims: 0,
+  payrollApprovals: 0
 };
 
 interface PendingCountsContextType {
@@ -47,7 +51,7 @@ export const PendingCountsProvider: React.FC<{ children: React.ReactNode }> = ({
     const head = { count: 'exact' as const, head: true };
 
     const ownerRoles = roles.filter(r => ['HR', 'IT', 'ACCOUNTS'].includes(r));
-    const [leaveMine, leaveHr, regs, it, revisions, assets, tasks] = await Promise.all([
+    const [leaveMine, leaveHr, regs, it, revisions, assets, tasks, claims, payroll] = await Promise.all([
       isManager || isHr
         ? safeCount(supabase.from('leave_requests').select('id', head).eq('status', 'PENDING').eq('current_approver_id', me))
         : 0,
@@ -58,6 +62,14 @@ export const PendingCountsProvider: React.FC<{ children: React.ReactNode }> = ({
       safeCount(supabase.from('assets').select('id', head).eq('assigned_to', me).is('acknowledged_at', null)),
       ownerRoles.length > 0
         ? safeCount(supabase.from('lifecycle_tasks').select('id', head).eq('done', false).in('owner_role', ownerRoles as any))
+        : 0,
+      // RLS limits managers to their reporting line; HR sees all.
+      isManager || isHr
+        ? safeCount(supabase.from('holiday_work_claims').select('id', head).eq('status', 'PENDING').neq('employee_id', me))
+        : 0,
+      // Drafts visible to a manager are ones computed by someone in their reporting line.
+      isManager || isCeo
+        ? safeCount(supabase.from('payroll_entries').select('id', head).eq('status', 'DRAFT').neq('computed_by', me))
         : 0
     ]);
 
@@ -67,7 +79,9 @@ export const PendingCountsProvider: React.FC<{ children: React.ReactNode }> = ({
       itRequests: it,
       salaryRevisions: revisions,
       myUnacknowledgedAssets: assets,
-      myLifecycleTasks: tasks
+      myLifecycleTasks: tasks,
+      holidayWorkClaims: claims,
+      payrollApprovals: payroll
     });
   }, [currentUser, isManager, isHr, isIt, isAccounts, isCeo, roles]);
 
