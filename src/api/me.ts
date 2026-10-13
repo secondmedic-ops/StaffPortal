@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase';
+import { monthBounds } from './session';
 import {
   mapAttendanceRecord,
   mapAttendanceRegularization,
@@ -40,7 +41,7 @@ export const meApi = {
     const emp = await getCurrentEmployee();
     const monthStr = String(month).padStart(2, '0');
     const startDate = `${year}-${monthStr}-01`;
-    const endDate = `${year}-${monthStr}-31`;
+    const endDate = monthBounds(year, month).end;
 
     const { data, error } = await supabase
       .from('attendance_records')
@@ -174,9 +175,10 @@ export const meApi = {
         requested_in: data.requestedIn,
         requested_out: data.requestedOut,
         reason: data.reason,
-        status: 'PENDING'
+        status: 'PENDING',
+        approver_id: emp.manager_id ?? null
       })
-      .select('*, employee:employees(emp_code, full_name)')
+      .select('*, employee:employees!attendance_regularizations_employee_id_fkey(emp_code, full_name)')
       .single();
 
     if (error) throw new Error(`Failed to request attendance regularization: ${error.message}`);
@@ -199,7 +201,7 @@ export const meApi = {
     const emp = await getCurrentEmployee();
     const { data, error } = await supabase
       .from('leave_requests')
-      .select('*, employee:employees(emp_code, full_name, department:departments(name)), leave_type:leave_types(code, name), current_approver:employees!leave_requests_current_approver_id_fkey(full_name)')
+      .select('*, employee:employees!leave_requests_employee_id_fkey(emp_code, full_name, department:departments(name)), leave_type:leave_types(code, name), current_approver:employees!leave_requests_current_approver_id_fkey(full_name)')
       .eq('employee_id', emp.id)
       .order('applied_at', { ascending: false });
 
@@ -220,6 +222,24 @@ export const meApi = {
   }): Promise<LeaveRequest> {
     const emp = await getCurrentEmployee();
 
+    // Block overlapping requests (pending or approved)
+    const { data: overlapping, error: overlapError } = await supabase
+      .from('leave_requests')
+      .select('id, from_date, to_date, status')
+      .eq('employee_id', emp.id)
+      .in('status', ['PENDING', 'APPROVED'])
+      .lte('from_date', data.toDate)
+      .gte('to_date', data.fromDate);
+    if (overlapError) throw new Error(`Failed to validate leave dates: ${overlapError.message}`);
+    if (overlapping && overlapping.length > 0) {
+      const o = overlapping[0];
+      throw new Error(`You already have a ${o.status.toLowerCase()} leave from ${o.from_date} to ${o.to_date} overlapping these dates.`);
+    }
+
+    // Route to the reporting manager; with no manager the request goes to the HR queue.
+    const approverId = emp.manager_id ?? null;
+    const approverName = (emp.manager as any)?.full_name ?? undefined;
+
     const { data: created, error } = await supabase
       .from('leave_requests')
       .insert({
@@ -235,22 +255,23 @@ export const meApi = {
         document_url: data.documentUrl ?? null,
         status: 'PENDING',
         current_level: 1,
-        current_approver_id: emp.manager_id ?? null,
+        current_approver_id: approverId,
         applied_at: new Date().toISOString(),
         timeline: [
           {
             level: 1,
-            approverId: emp.manager_id,
-            approverName: (emp.manager as any)?.full_name ?? undefined,
-            approverRole: 'Primary Reporting Authority',
+            approverId,
+            approverName: approverName ?? 'HR Desk',
+            approverRole: approverId ? 'Reporting Manager' : 'HR (no reporting manager)',
             action: 'PENDING'
           }
         ]
       })
-      .select('*, employee:employees(emp_code, full_name, department:departments(name)), leave_type:leave_types(code, name), current_approver:employees!leave_requests_current_approver_id_fkey(full_name)')
+      .select('*, employee:employees!leave_requests_employee_id_fkey(emp_code, full_name, department:departments(name)), leave_type:leave_types(code, name), current_approver:employees!leave_requests_current_approver_id_fkey(full_name)')
       .single();
 
     if (error) throw new Error(`Failed to apply for leave: ${error.message}`);
+    // Balance reservation is handled by the leave_requests_sync_balance trigger.
     return mapLeaveRequest(created);
   },
 
@@ -277,7 +298,7 @@ export const meApi = {
     const emp = await getCurrentEmployee();
     const monthStr = String(month).padStart(2, '0');
     const startMonth = `${year}-${monthStr}-01`;
-    const endMonth = `${year}-${monthStr}-31`;
+    const endMonth = monthBounds(year, month).end;
 
     const { data: holidaysData, error: holidaysError } = await supabase
       .from('holidays')
@@ -288,7 +309,7 @@ export const meApi = {
 
     const { data: myLeavesData, error: myLeavesError } = await supabase
       .from('leave_requests')
-      .select('*, employee:employees(emp_code, full_name, department:departments(name)), leave_type:leave_types(code, name), current_approver:employees!leave_requests_current_approver_id_fkey(full_name)')
+      .select('*, employee:employees!leave_requests_employee_id_fkey(emp_code, full_name, department:departments(name)), leave_type:leave_types(code, name), current_approver:employees!leave_requests_current_approver_id_fkey(full_name)')
       .eq('employee_id', emp.id)
       .in('status', ['APPROVED', 'PENDING']);
 
@@ -296,7 +317,7 @@ export const meApi = {
 
     const { data: teamLeavesData, error: teamLeavesError } = await supabase
       .from('leave_requests')
-      .select('from_date, to_date, total_days, employee:employees(full_name)')
+      .select('from_date, to_date, total_days, employee:employees!leave_requests_employee_id_fkey(full_name)')
       .neq('employee_id', emp.id)
       .eq('status', 'APPROVED')
       .lte('from_date', endMonth)

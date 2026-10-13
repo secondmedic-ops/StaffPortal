@@ -8,7 +8,7 @@ import { StatusPill } from '../common/StatusPill';
 import { SkeletonLoader } from '../common/SkeletonLoader';
 
 export const TeamRegularization: React.FC = () => {
-  const { currentUser, showToast } = useAuth();
+  const { currentUser, showToast, isHr } = useAuth();
   const [loading, setLoading] = useState(true);
   const [regList, setRegList] = useState<AttendanceRegularization[]>([]);
   const [actingId, setActingId] = useState<number | null>(null);
@@ -32,7 +32,7 @@ export const TeamRegularization: React.FC = () => {
   const handleAction = async (id: number, action: 'APPROVE' | 'REJECT') => {
     setActingId(id);
     try {
-      await teamApi.actionRegularization(id, action);
+      await teamApi.actionRegularization(id, action, { asHr: isHr });
       showToast(
         `Regularization ${action === 'APPROVE' ? 'Approved' : 'Rejected'}`,
         `Attendance record updated for reporting employee.`,

@@ -1,0 +1,81 @@
+/**
+ * Company-wide HR & payroll policy.
+ *
+ * Every rule that drives attendance → salary and leave routing lives here so
+ * HR/Accounts can review it in one place. Change values here (or move them to
+ * an `org_settings` table later) rather than hard-coding them in components.
+ */
+
+export const SHIFT_POLICY = {
+  /** Default shift start, local time (HH:MM). */
+  startTime: '09:30',
+  endTime: '18:30',
+  /** Punch-in after start + grace counts as a late mark. */
+  graceMinutes: 15,
+  /** Minimum worked hours for a full paid day. */
+  fullDayHours: 8,
+  /** Minimum worked hours for a half paid day. Below this the day is LOP. */
+  halfDayHours: 4,
+  /** 0 = Sunday … 6 = Saturday. */
+  weekOffDays: [0] as number[],
+} as const;
+
+export const ATTENDANCE_POLICY = {
+  /** Every N late marks in a month deducts half a day of pay. */
+  lateMarksPerHalfDayLop: 3,
+  /**
+   * A punch-in without a punch-out (and no approved regularization)
+   * is paid as a half day.
+   */
+  missingPunchOutAsHalfDay: true,
+} as const;
+
+export const PAYROLL_POLICY = {
+  /**
+   * CALENDAR: monthly salary ÷ days in month × payable days (most common in India).
+   * FIXED_26: monthly salary ÷ 26 × payable working days.
+   */
+  payBasis: 'CALENDAR' as 'CALENDAR' | 'FIXED_26',
+  /** Employee PF = 12% of basic, capped at the statutory wage ceiling. */
+  pfRate: 0.12,
+  pfWageCeiling: 15000,
+  /** Employer PF share (shown as CTC component, not deducted). */
+  employerPfRate: 0.12,
+  /** ESI applies when full monthly gross is at or below this threshold. */
+  esiGrossThreshold: 21000,
+  esiEmployeeRate: 0.0075,
+  esiEmployerRate: 0.0325,
+  /**
+   * Professional Tax monthly slabs on gross (first matching slab wins,
+   * ordered high → low). Default: Maharashtra. Adjust for your state.
+   */
+  professionalTaxSlabs: [
+    { minGross: 10001, amount: 200 },
+    { minGross: 7501, amount: 175 },
+    { minGross: 0, amount: 0 },
+  ],
+  /** February PT override for Maharashtra (₹300 in Feb to total ₹2,500/yr). */
+  professionalTaxFebruaryAmount: 300,
+} as const;
+
+export const SALARY_SPLIT_POLICY = {
+  /** Basic as % of monthly gross when auto-splitting a CTC. */
+  basicPctOfGross: 0.5,
+  /** HRA as % of basic (50% metro / 40% non-metro). */
+  hraPctOfBasic: 0.4,
+} as const;
+
+export const LEAVE_APPROVAL_POLICY = {
+  /**
+   * Leave longer than this many days needs a second approval from the
+   * reporting manager's own manager (skip-level).
+   */
+  skipLevelThresholdDays: 3,
+  /** If an employee has no reporting manager, HR approves. */
+  fallbackToHr: true,
+} as const;
+
+export const ASSET_POLICY = {
+  /** Warn IT when warranty ends within this many days. */
+  warrantyAlertDays: 60,
+} as const;

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { getTodayIsoString } from '../../utils/dateUtils';
 import { teamApi } from '../../api';
 import { Employee, AttendanceRecord } from '../../types';
 import { formatTime } from '../../utils/dateUtils';
@@ -15,7 +16,7 @@ export const TeamDashboard: React.FC = () => {
   const fetchTeamData = async () => {
     try {
       setLoading(true);
-      const data = await teamApi.getTeamAttendance('2026-09-12');
+      const data = await teamApi.getTeamAttendance(getTodayIsoString());
       setTeamMembers(data);
     } catch (err: any) {
       showToast('Error', err.message || 'Failed to load team data', 'error');

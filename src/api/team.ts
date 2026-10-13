@@ -1,4 +1,6 @@
 import { supabase } from '../lib/supabase';
+import { monthBounds } from './session';
+import { LEAVE_APPROVAL_POLICY } from '../config/policy';
 import {
   mapEmployee,
   mapAttendanceRecord,
@@ -15,6 +17,20 @@ import type {
   KpiCycle,
   KpiDefinition
 } from '../types';
+
+/** Hours between two "HH:MM" (or ISO) times, rounded to 0.1h. */
+function hoursBetween(from: string, to: string): number | null {
+  const toMinutes = (v: string) => {
+    if (v.includes('T')) {
+      const d = new Date(v);
+      return d.getHours() * 60 + d.getMinutes();
+    }
+    const [h, m] = v.split(':').map(Number);
+    return h * 60 + (m || 0);
+  };
+  const diff = toMinutes(to) - toMinutes(from);
+  return Number.isFinite(diff) && diff > 0 ? Number((diff / 60).toFixed(1)) : null;
+}
 
 async function getCurrentEmployee() {
   const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
@@ -79,33 +95,67 @@ export const teamApi = {
     });
   },
 
-  async getPendingLeaves(): Promise<LeaveRequest[]> {
+  /**
+   * Leave requests waiting on the signed-in user.
+   * MINE      — requests where I am the current approver in the reporting line.
+   * HR_QUEUE  — requests with no approver (employee has no reporting manager).
+   * ALL       — every pending request (HR override view).
+   */
+  async getPendingLeaves(scope: 'MINE' | 'HR_QUEUE' | 'ALL' = 'MINE'): Promise<LeaveRequest[]> {
     const emp = await getCurrentEmployee();
-    const { data: members } = await supabase
-      .from('employees')
-      .select('id')
-      .eq('manager_id', emp.id);
-
-    const directReportIds = (members ?? []).map(m => m.id);
 
     let query = supabase
       .from('leave_requests')
-      .select('*, employee:employees(emp_code, full_name, department:departments(name)), leave_type:leave_types(code, name), current_approver:employees!leave_requests_current_approver_id_fkey(full_name)')
+      .select('*, employee:employees!leave_requests_employee_id_fkey(emp_code, full_name, department:departments(name)), leave_type:leave_types(code, name), current_approver:employees!leave_requests_current_approver_id_fkey(full_name)')
       .eq('status', 'PENDING');
 
-    if (directReportIds.length > 0) {
-      query = query.or(`current_approver_id.eq.${emp.id},employee_id.in.(${directReportIds.join(',')})`);
-    } else {
-      query = query.eq('current_approver_id', emp.id);
-    }
+    if (scope === 'MINE') query = query.eq('current_approver_id', emp.id);
+    else if (scope === 'HR_QUEUE') query = query.is('current_approver_id', null);
 
     const { data, error } = await query.order('applied_at', { ascending: false });
-
     if (error) throw new Error(`Failed to load pending team leaves: ${error.message}`);
-    return (data ?? []).map(mapLeaveRequest);
+
+    const requests = (data ?? []).map(mapLeaveRequest).filter(r => r.employeeId !== emp.id);
+    if (requests.length === 0) return requests;
+
+    // Flag overlapping approved leave among the same manager's team for coverage.
+    const { data: overlaps } = await supabase
+      .from('leave_requests')
+      .select('employee_id, from_date, to_date, employee:employees!leave_requests_employee_id_fkey(full_name, manager_id)')
+      .eq('status', 'APPROVED')
+      .lte('from_date', requests.reduce((m, r) => (r.toDate > m ? r.toDate : m), requests[0].toDate))
+      .gte('to_date', requests.reduce((m, r) => (r.fromDate < m ? r.fromDate : m), requests[0].fromDate));
+
+    const managerOf = new Map<number, number | null>();
+    if (overlaps && overlaps.length > 0) {
+      const { data: mgrRows } = await supabase
+        .from('employees')
+        .select('id, manager_id')
+        .in('id', requests.map(r => r.employeeId));
+      (mgrRows ?? []).forEach(m => managerOf.set(m.id, m.manager_id));
+    }
+
+    return requests.map(r => {
+      const mgr = managerOf.get(r.employeeId);
+      const conflicts = (overlaps ?? [])
+        .filter((o: any) => o.employee_id !== r.employeeId && mgr != null && o.employee?.manager_id === mgr)
+        .filter((o: any) => o.from_date <= r.toDate && o.to_date >= r.fromDate)
+        .map((o: any) => ({ employeeName: o.employee?.full_name ?? '', leaveDates: `${o.from_date} → ${o.to_date}` }));
+      return conflicts.length > 0 ? { ...r, conflicts } : r;
+    });
   },
 
-  async actionLeave(requestId: number, action: 'APPROVE' | 'REJECT', remarks?: string): Promise<void> {
+  /**
+   * Approve or reject following the reporting hierarchy:
+   *  L1 — reporting manager. Leave longer than the skip-level threshold is then
+   *  forwarded to L2 — the manager's own manager. HR may act as an override.
+   */
+  async actionLeave(
+    requestId: number,
+    action: 'APPROVE' | 'REJECT',
+    remarks?: string,
+    opts: { asHr?: boolean } = {}
+  ): Promise<{ forwardedTo?: string }> {
     if (action === 'REJECT' && (!remarks || !remarks.trim())) {
       throw new Error('Mandatory remarks are required when rejecting a leave request.');
     }
@@ -113,61 +163,83 @@ export const teamApi = {
     const emp = await getCurrentEmployee();
     const { data: req, error: reqError } = await supabase
       .from('leave_requests')
-      .select('*')
+      .select('*, current_approver:employees!leave_requests_current_approver_id_fkey(full_name)')
       .eq('id', requestId)
       .single();
 
     if (reqError || !req) throw new Error(`Leave request not found: ${reqError?.message}`);
+    if (req.status !== 'PENDING') throw new Error(`This request is already ${req.status.toLowerCase()}.`);
+    if (req.employee_id === emp.id) throw new Error('You cannot approve or reject your own leave request.');
 
-    const existingTimeline = Array.isArray(req.timeline) ? req.timeline : [];
-    const newTimeline = [
-      ...existingTimeline,
-      {
-        level: 1,
-        approverId: emp.id,
-        approverName: emp.full_name,
-        approverRole: 'Manager',
-        action: action === 'APPROVE' ? 'APPROVED' : 'REJECTED',
-        remarks: remarks || (action === 'APPROVE' ? 'Approved by reporting authority.' : 'Rejected'),
-        actedAt: new Date().toISOString()
+    const isCurrentApprover = req.current_approver_id === emp.id;
+    if (!isCurrentApprover && !opts.asHr) {
+      const waitingOn = (req as any).current_approver?.full_name;
+      throw new Error(waitingOn ? `This request is waiting on ${waitingOn}.` : 'This request is in the HR queue.');
+    }
+
+    const level = req.current_level ?? 1;
+    const nowIso = new Date().toISOString();
+    const priorTimeline = (Array.isArray(req.timeline) ? (req.timeline as any[]) : []).filter(
+      step => !(step?.action === 'PENDING' && (step?.level ?? 1) === level)
+    );
+    const actedStep = {
+      level,
+      approverId: emp.id,
+      approverName: emp.full_name,
+      approverRole: isCurrentApprover ? (level === 1 ? 'Reporting Manager' : 'Skip-level Manager') : 'HR Override',
+      action: action === 'APPROVE' ? 'APPROVED' : 'REJECTED',
+      remarks: remarks || (action === 'APPROVE' ? 'Approved' : 'Rejected'),
+      actedAt: nowIso
+    };
+
+    const needsSkipLevel =
+      action === 'APPROVE' &&
+      isCurrentApprover &&
+      level === 1 &&
+      Number(req.total_days ?? 0) > LEAVE_APPROVAL_POLICY.skipLevelThresholdDays &&
+      emp.manager_id != null &&
+      emp.manager_id !== req.employee_id;
+
+    if (needsSkipLevel) {
+      const { data: nextApprover } = await supabase
+        .from('employees')
+        .select('id, full_name')
+        .eq('id', emp.manager_id as number)
+        .maybeSingle();
+
+      if (nextApprover) {
+        const { error } = await supabase
+          .from('leave_requests')
+          .update({
+            current_level: 2,
+            current_approver_id: nextApprover.id,
+            timeline: [
+              ...priorTimeline,
+              actedStep,
+              { level: 2, approverId: nextApprover.id, approverName: nextApprover.full_name, approverRole: 'Skip-level Manager', action: 'PENDING' }
+            ] as any
+          })
+          .eq('id', requestId)
+          .eq('status', 'PENDING');
+        if (error) throw new Error(`Failed to forward leave request: ${error.message}`);
+        return { forwardedTo: nextApprover.full_name };
       }
-    ];
+    }
 
     const { error: updateError } = await supabase
       .from('leave_requests')
       .update({
         status: action === 'APPROVE' ? 'APPROVED' : 'REJECTED',
-        closed_at: new Date().toISOString(),
-        timeline: newTimeline as any
+        closed_at: nowIso,
+        timeline: [...priorTimeline, actedStep] as any
       })
-      .eq('id', requestId);
+      .eq('id', requestId)
+      .eq('status', 'PENDING');
 
     if (updateError) throw new Error(`Failed to action leave request: ${updateError.message}`);
 
-    // Reconcile balance in leave_balances
-    const { data: balance } = await supabase
-      .from('leave_balances')
-      .select('*')
-      .eq('employee_id', req.employee_id)
-      .eq('leave_type_id', req.leave_type_id)
-      .maybeSingle();
-
-    if (balance) {
-      if (action === 'APPROVE') {
-        const reserved = Math.max(0, Number(balance.reserved ?? 0) - Number(req.total_days ?? 0));
-        const used = Number(balance.used ?? 0) + Number(req.total_days ?? 0);
-        await supabase
-          .from('leave_balances')
-          .update({ reserved, used })
-          .eq('id', balance.id);
-      } else {
-        const reserved = Math.max(0, Number(balance.reserved ?? 0) - Number(req.total_days ?? 0));
-        await supabase
-          .from('leave_balances')
-          .update({ reserved })
-          .eq('id', balance.id);
-      }
-    }
+    // Leave balance (reserved → used / released) is updated by the leave_requests_sync_balance trigger.
+    return {};
   },
 
   async getPendingRegularizations(): Promise<AttendanceRegularization[]> {
@@ -181,7 +253,7 @@ export const teamApi = {
 
     let query = supabase
       .from('attendance_regularizations')
-      .select('*, employee:employees(emp_code, full_name), approver:employees!attendance_regularizations_approver_id_fkey(full_name)')
+      .select('*, employee:employees!attendance_regularizations_employee_id_fkey(emp_code, full_name), approver:employees!attendance_regularizations_approver_id_fkey(full_name)')
       .eq('status', 'PENDING');
 
     if (directReportIds.length > 0) {
@@ -195,8 +267,21 @@ export const teamApi = {
     return (data ?? []).map(mapAttendanceRegularization);
   },
 
-  async actionRegularization(regId: number, action: 'APPROVE' | 'REJECT'): Promise<void> {
+  async actionRegularization(regId: number, action: 'APPROVE' | 'REJECT', opts: { asHr?: boolean } = {}): Promise<void> {
     const emp = await getCurrentEmployee();
+
+    const { data: pending, error: pendingError } = await supabase
+      .from('attendance_regularizations')
+      .select('employee_id, approver_id, employee:employees!attendance_regularizations_employee_id_fkey(manager_id)')
+      .eq('id', regId)
+      .single();
+    if (pendingError || !pending) throw new Error(`Regularization not found: ${pendingError?.message}`);
+    if (pending.employee_id === emp.id) throw new Error('You cannot approve your own attendance regularization.');
+    const isReportingManager =
+      pending.approver_id === emp.id || (pending as any).employee?.manager_id === emp.id;
+    if (!isReportingManager && !opts.asHr) {
+      throw new Error('Only the reporting manager (or HR) can action this regularization.');
+    }
 
     const { data: reg, error: regError } = await supabase
       .from('attendance_regularizations')
@@ -217,7 +302,7 @@ export const teamApi = {
         .update({
           is_regularized: true,
           status: 'PRESENT',
-          worked_hours: 8.5,
+          worked_hours: hoursBetween(reg.requested_in, reg.requested_out),
           remarks: `Regularized by ${emp.full_name}: ${reg.reason}`
         })
         .eq('id', reg.attendance_id);
@@ -241,11 +326,11 @@ export const teamApi = {
 
     const monthStr = String(month).padStart(2, '0');
     const startMonth = `${year}-${monthStr}-01`;
-    const endMonth = `${year}-${monthStr}-31`;
+    const endMonth = monthBounds(year, month).end;
 
     const { data: leavesData, error: leavesError } = await supabase
       .from('leave_requests')
-      .select('*, employee:employees(emp_code, full_name, department:departments(name)), leave_type:leave_types(code, name), current_approver:employees!leave_requests_current_approver_id_fkey(full_name)')
+      .select('*, employee:employees!leave_requests_employee_id_fkey(emp_code, full_name, department:departments(name)), leave_type:leave_types(code, name), current_approver:employees!leave_requests_current_approver_id_fkey(full_name)')
       .in('employee_id', reportIds)
       .in('status', ['APPROVED', 'PENDING'])
       .lte('from_date', endMonth)

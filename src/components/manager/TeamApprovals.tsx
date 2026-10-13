@@ -5,10 +5,14 @@ import { LeaveRequest } from '../../types';
 import { formatDate } from '../../utils/dateUtils';
 import { CheckCircle2, XCircle, AlertTriangle, Clock, FileText, UserCheck, MessageSquare } from 'lucide-react';
 import { Modal } from '../common/Modal';
+import { LEAVE_APPROVAL_POLICY } from '../../config/policy';
 import { SkeletonLoader } from '../common/SkeletonLoader';
 
+type Scope = 'MINE' | 'HR_QUEUE' | 'ALL';
+
 export const TeamApprovals: React.FC = () => {
-  const { currentUser, showToast } = useAuth();
+  const { currentUser, showToast, isHr } = useAuth();
+  const [scope, setScope] = useState<Scope>('MINE');
   const [loading, setLoading] = useState(true);
   const [pendingList, setPendingList] = useState<LeaveRequest[]>([]);
   const [actioningId, setActioningId] = useState<number | null>(null);
@@ -20,7 +24,7 @@ export const TeamApprovals: React.FC = () => {
   const fetchPendingLeaves = async () => {
     try {
       setLoading(true);
-      const data = await teamApi.getPendingLeaves();
+      const data = await teamApi.getPendingLeaves(scope);
       setPendingList(data);
     } catch (err: any) {
       showToast('Error', err.message || 'Failed to load pending team leaves', 'error');
@@ -31,13 +35,22 @@ export const TeamApprovals: React.FC = () => {
 
   useEffect(() => {
     fetchPendingLeaves();
-  }, [currentUser]);
+  }, [currentUser, scope]);
+
+  const asHr = (req: LeaveRequest) => isHr && req.currentApproverId !== currentUser?.id;
 
   const handleApprove = async (id: number) => {
     setActioningId(id);
     try {
-      await teamApi.actionLeave(id, 'APPROVE');
-      showToast('Leave Approved', 'Request approved. Balances deducted & notification triggered to applicant.', 'success');
+      const req = pendingList.find(r => r.id === id);
+      const { forwardedTo } = await teamApi.actionLeave(id, 'APPROVE', undefined, { asHr: req ? asHr(req) : false });
+      showToast(
+        forwardedTo ? 'Approved — forwarded' : 'Leave Approved',
+        forwardedTo
+          ? `Leave over ${LEAVE_APPROVAL_POLICY.skipLevelThresholdDays} days also needs ${forwardedTo}'s approval (skip-level).`
+          : 'Request approved and leave balance updated.',
+        'success'
+      );
       fetchPendingLeaves();
     } catch (err: any) {
       showToast('Action Failed', err.message || 'Could not approve leave', 'error');
@@ -56,7 +69,7 @@ export const TeamApprovals: React.FC = () => {
 
     setActioningId(rejectingReq.id);
     try {
-      await teamApi.actionLeave(rejectingReq.id, 'REJECT', rejectRemarks);
+      await teamApi.actionLeave(rejectingReq.id, 'REJECT', rejectRemarks, { asHr: asHr(rejectingReq) });
       showToast('Leave Rejected', 'Request rejected and reserved days released back.', 'info');
       setRejectingReq(null);
       setRejectRemarks('');
@@ -74,14 +87,36 @@ export const TeamApprovals: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-xl border border-slate-200 shadow-xs">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-xl font-bold text-slate-900">Direct Reports Leave Approvals</h1>
+            <h1 className="text-xl font-bold text-slate-900">Leave Approvals</h1>
             <span className="text-xs px-2 py-0.5 rounded-full font-bold bg-amber-50 text-amber-800 border border-amber-200">
               {pendingList.length} Action Required
             </span>
           </div>
           <p className="text-xs text-slate-500 mt-1">
-            Evaluate team leave requests against operational clinical coverage & SLA guidelines
+            Requests route up your reporting line: reporting manager first, then skip-level for leave over{' '}
+            {LEAVE_APPROVAL_POLICY.skipLevelThresholdDays} days
           </p>
+          {isHr && (
+            <div className="flex gap-1.5 mt-3">
+              {(
+                [
+                  ['MINE', 'Waiting on me'],
+                  ['HR_QUEUE', 'HR queue (no manager)'],
+                  ['ALL', 'All pending (HR override)']
+                ] as Array<[Scope, string]>
+              ).map(([id, label]) => (
+                <button
+                  key={id}
+                  onClick={() => setScope(id)}
+                  className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold ${
+                    scope === id ? 'bg-teal-700 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         <button
@@ -100,7 +135,7 @@ export const TeamApprovals: React.FC = () => {
           <CheckCircle2 className="w-10 h-10 text-emerald-500 mx-auto mb-2" />
           <h3 className="text-sm font-bold text-slate-800">Inbox Zero: No Pending Approvals</h3>
           <p className="text-xs text-slate-500 mt-1">
-            All direct report leave requests have been acted on.
+            {scope === 'MINE' ? 'Nothing is waiting on you in your reporting line.' : 'No pending requests in this queue.'}
           </p>
         </div>
       ) : (
@@ -153,6 +188,34 @@ export const TeamApprovals: React.FC = () => {
                 </div>
               )}
 
+              {/* Approval chain */}
+              <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
+                <UserCheck className="w-3.5 h-3.5 text-slate-400" />
+                {req.timeline.length === 0 ? (
+                  <span className="text-slate-500">Awaiting {req.currentApproverName ?? 'HR'}</span>
+                ) : (
+                  req.timeline.map((step, i) => (
+                    <span
+                      key={i}
+                      className={`px-2 py-0.5 rounded-full border ${
+                        step.action === 'APPROVED'
+                          ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                          : step.action === 'REJECTED'
+                          ? 'bg-rose-50 text-rose-800 border-rose-200'
+                          : 'bg-amber-50 text-amber-800 border-amber-200'
+                      }`}
+                    >
+                      L{step.level} · {step.approverName ?? 'HR'} · {step.action.toLowerCase()}
+                    </span>
+                  ))
+                )}
+                {asHr(req) && (
+                  <span className="px-2 py-0.5 rounded-full bg-purple-50 text-purple-800 border border-purple-200 font-semibold">
+                    You are acting as HR override
+                  </span>
+                )}
+              </div>
+
               {/* Details & Reason */}
               <div className="bg-slate-50 p-3.5 rounded-lg border border-slate-100 text-xs text-slate-700 space-y-1">
                 <span className="font-semibold text-slate-800 block text-[11px] uppercase tracking-wider">
@@ -189,7 +252,11 @@ export const TeamApprovals: React.FC = () => {
                   className="px-4 py-2 text-xs font-semibold rounded-lg bg-teal-700 text-white hover:bg-teal-800 transition-colors shadow-xs flex items-center gap-1.5"
                 >
                   <CheckCircle2 className="w-4 h-4" />
-                  {actioningId === req.id ? 'Approving...' : 'Approve Leave'}
+                  {actioningId === req.id
+                    ? 'Approving...'
+                    : !asHr(req) && req.currentLevel === 1 && req.totalDays > LEAVE_APPROVAL_POLICY.skipLevelThresholdDays
+                    ? 'Approve & Forward'
+                    : 'Approve Leave'}
                 </button>
               </div>
             </div>

@@ -1,0 +1,88 @@
+/**
+ * Payroll engine checks — run with `npm test`.
+ * Each case is hand-calculated so a policy change that alters pay shows up here.
+ */
+import { computePayroll, splitCtc } from './payrollEngine';
+const assert = (c: boolean, m: string) => { if (!c) { console.error('FAIL', m); process.exitCode = 1; } else console.log('ok  ', m); };
+const salary = { basicMonthly: 20000, hraMonthly: 8000, specialMonthly: 12000, otherAllowanceMonthly: 0, tdsMonthly: 1000, pfApplicable: true };
+// Sept 2026: 30 days, Sundays 6,13,20,27 (4). 26 working days.
+const iso = (d: number) => `2026-09-${String(d).padStart(2, '0')}`;
+const punch = (d: number, inH: string, hours: number) => {
+  const pin = new Date(`${iso(d)}T${inH}:00`);
+  const pout = new Date(pin.getTime() + hours * 3600000);
+  return { id: d, employeeId: 1, workDate: iso(d), shiftId: 1, punchIn: pin.toISOString(), punchOut: pout.toISOString(), workedHours: hours, status: 'PRESENT' as const, isRegularized: false };
+};
+const workdays = Array.from({ length: 30 }, (_, i) => i + 1).filter(d => new Date(2026, 8, d).getDay() !== 0);
+const today = '2026-10-13';
+
+// 1. Perfect attendance → full pay
+let r = computePayroll({ year: 2026, month: 9, salary, attendance: workdays.map(d => punch(d, '09:20', 9)), leaves: [], holidays: [], today });
+assert(r.payableDays === 30 && r.lopDays === 0, `full month payable=30 (got ${r.payableDays})`);
+assert(r.grossEarnings === 40000, `gross 40000 (got ${r.grossEarnings})`);
+assert(r.deductions.find(d => d.code === 'PF')!.amount === 1800, 'PF capped at 15000*12% = 1800');
+assert(r.deductions.find(d => d.code === 'PT')!.amount === 200, 'PT 200');
+assert(!r.deductions.find(d => d.code === 'ESI'), 'no ESI above 21000');
+assert(r.netPay === 40000 - 1800 - 200 - 1000, `net ${r.netPay}`);
+
+// 2. Two absent days with no leave → 2 LOP, prorated
+const att2 = workdays.filter(d => d !== 8 && d !== 9).map(d => punch(d, '09:20', 9));
+r = computePayroll({ year: 2026, month: 9, salary, attendance: att2, leaves: [], holidays: [], today });
+assert(r.lopDays === 2 && r.absentDays === 2, `2 absent → 2 LOP (got ${r.lopDays})`);
+assert(r.grossEarnings === Math.round(20000*28/30)+Math.round(8000*28/30)+Math.round(12000*28/30), `prorated gross ${r.grossEarnings}`);
+
+// 3. Same two days covered by approved paid leave → no LOP
+r = computePayroll({ year: 2026, month: 9, salary, attendance: att2, leaves: [{ fromDate: iso(8), toDate: iso(9), isPaid: true }], holidays: [], today });
+assert(r.lopDays === 0 && r.paidLeaveDays === 2, 'paid leave covers absence');
+
+// 4. Unpaid (LOP) leave → LOP
+r = computePayroll({ year: 2026, month: 9, salary, attendance: att2, leaves: [{ fromDate: iso(8), toDate: iso(9), isPaid: false }], holidays: [], today });
+assert(r.lopDays === 2 && r.unpaidLeaveDays === 2, 'LOP leave deducts');
+
+// 5. Late marks: 7 late days → floor(7/3)=2 → 1 day LOP
+const att5 = workdays.map((d, i) => punch(d, i < 7 ? '10:05' : '09:20', 9));
+r = computePayroll({ year: 2026, month: 9, salary, attendance: att5, leaves: [], holidays: [], today });
+assert(r.lateMarks === 7 && r.lateLopDays === 1 && r.payableDays === 29, `7 late → 1 day LOP (got late=${r.lateMarks}, lop=${r.lateLopDays})`);
+
+// 6. Holiday with no punch is paid
+const att6 = workdays.filter(d => d !== 14).map(d => punch(d, '09:20', 9));
+r = computePayroll({ year: 2026, month: 9, salary, attendance: att6, leaves: [], holidays: [iso(14)], today });
+assert(r.lopDays === 0 && r.holidayDays === 1, 'holiday paid');
+
+// 7. Short day (5h) = half; 2h = zero
+const att7 = workdays.map(d => (d === 1 ? punch(d, '09:20', 5) : d === 2 ? punch(d, '09:20', 2) : punch(d, '09:20', 9)));
+r = computePayroll({ year: 2026, month: 9, salary, attendance: att7, leaves: [], holidays: [], today });
+assert(r.lopDays === 1.5, `5h half + 2h zero → 1.5 LOP (got ${r.lopDays})`);
+
+// 8. Missing punch-out in past = half day
+const att8 = workdays.map(d => (d === 3 ? { ...punch(d, '09:20', 9), punchOut: undefined, workedHours: undefined } : punch(d, '09:20', 9)));
+r = computePayroll({ year: 2026, month: 9, salary, attendance: att8, leaves: [], holidays: [], today });
+assert(r.lopDays === 0.5, `missing punch-out → 0.5 LOP (got ${r.lopDays})`);
+
+// 9. Joined mid-month (16th) → only employed days paid, not counted as LOP
+r = computePayroll({ year: 2026, month: 9, salary, dateOfJoining: iso(16), attendance: workdays.filter(d => d >= 16).map(d => punch(d, '09:20', 9)), leaves: [], holidays: [], today });
+assert(r.payableDays === 15 && r.lopDays === 0, `mid-month joiner payable=15 lop=0 (got ${r.payableDays}/${r.lopDays})`);
+
+// 10. Half-day paid leave + half-day punch
+const att10 = workdays.map(d => (d === 4 ? punch(d, '13:30', 4.5) : punch(d, '09:20', 9)));
+r = computePayroll({ year: 2026, month: 9, salary, attendance: att10, leaves: [{ fromDate: iso(4), toDate: iso(4), fromHalf: 'FIRST_HALF', isPaid: true }], holidays: [], today });
+assert(r.lopDays === 0, `half leave + half work = full day (got lop ${r.lopDays})`);
+
+// 11. Future days in current month are projected, not LOP
+r = computePayroll({ year: 2026, month: 10, salary, attendance: [], leaves: [], holidays: [], today: '2026-10-13' });
+assert(r.projectedDays > 0 && r.warnings.some(w => w.includes('future')), 'future days projected with warning');
+
+// 12. ESI applies for low gross
+r = computePayroll({ year: 2026, month: 9, salary: { ...salary, basicMonthly: 9000, hraMonthly: 3600, specialMonthly: 5400, tdsMonthly: 0 }, attendance: workdays.map(d => punch(d, '09:20', 9)), leaves: [], holidays: [], today });
+assert(r.deductions.find(d => d.code === 'ESI')!.amount === Math.ceil(18000 * 0.0075), 'ESI 0.75% when gross ≤ 21000');
+
+// 13. No salary → zero pay + warning
+r = computePayroll({ year: 2026, month: 9, salary: null, attendance: [], leaves: [], holidays: [], today });
+assert(r.netPay === 0 && r.warnings.some(w => w.includes('salary')), 'no salary warning');
+
+// 14. CTC split sums back to CTC
+for (const ctc of [300000, 600000, 1800000]) {
+  const s = splitCtc(ctc, 0.5, 0.4, true);
+  const gross = s.basicMonthly + s.hraMonthly + s.specialMonthly;
+  const erPf = Math.round(Math.min(s.basicMonthly, 15000) * 0.12);
+  assert(Math.abs((gross + erPf) * 12 - ctc) <= 24, `split ${ctc}: monthly gross ${gross} + erPF ${erPf} ≈ CTC/12`);
+}

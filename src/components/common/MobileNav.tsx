@@ -11,8 +11,71 @@ import {
 } from 'lucide-react';
 
 export const MobileNav: React.FC = () => {
-  const { activeNav, setActiveNav, isManager, isAccounts, isHr, isCeo, isAdmin } = useAuth();
+  const { activeNav, setActiveNav, isManager, isAccounts, isHr, isIt, isCeo, isAdmin } = useAuth();
   const [showDrawer, setShowDrawer] = useState(false);
+
+  const sections: Array<{ title: string; show: boolean; items: Array<[string, string]> }> = [
+    {
+      title: 'Employee',
+      show: true,
+      items: [
+        ['leave-requests', 'My Leave Requests'],
+        ['calendar', 'Holidays & Team Calendar'],
+        ['kpis', 'My KPIs'],
+        ['my-assets', 'My Assets & IT Help']
+      ]
+    },
+    {
+      title: 'Manager',
+      show: isManager,
+      items: [
+        ['team-dashboard', 'Team Dashboard'],
+        ['team-approvals', 'Leave Approvals'],
+        ['team-regularization', 'Regularizations'],
+        ['team-calendar', 'Team Calendar']
+      ]
+    },
+    {
+      title: 'HR',
+      show: isHr,
+      items: [
+        ['hr-register', 'Register New Staff'],
+        ['hr-lifecycle', 'Onboarding & Exit'],
+        ['hr-directory', 'Employee Directory'],
+        ['hr-orgchart', 'Org Chart'],
+        ['hr-attendance', 'Attendance Register & Lock'],
+        ['hr-holidays', 'Holiday Calendar']
+      ]
+    },
+    {
+      title: 'Accounts & Payroll',
+      show: isAccounts,
+      items: [
+        ['payroll-attendance', 'Attendance Payroll'],
+        ['payroll-increments', 'Increments & Revisions'],
+        ['payroll-dashboard', 'Payroll Dashboard'],
+        ['payroll-structures', 'Salary Structures']
+      ]
+    },
+    {
+      title: 'IT',
+      show: isIt,
+      items: [
+        ['it-dashboard', 'IT Overview'],
+        ['it-assets', 'Asset Register'],
+        ['it-requests', 'Service Desk']
+      ]
+    },
+    {
+      title: 'CEO',
+      show: isCeo,
+      items: [
+        ['ceo-dashboard', 'Org-wide Overview'],
+        ['payroll-increments', 'Salary Approvals']
+      ]
+    },
+    { title: 'Admin', show: isAdmin, items: [['admin-users', 'User & Role Management']] }
+  ];
 
   return (
     <>
@@ -98,143 +161,29 @@ export const MobileNav: React.FC = () => {
             </div>
 
             <div className="py-3 space-y-4 text-xs">
-              <div>
-                <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1">
-                  Employee
-                </div>
-                <div className="space-y-1">
-                  <button
-                    onClick={() => { setActiveNav('leave-requests'); setShowDrawer(false); }}
-                    className="w-full text-left py-1.5 px-2 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200"
-                  >
-                    My Leave Requests
-                  </button>
-                  <button
-                    onClick={() => { setActiveNav('calendar'); setShowDrawer(false); }}
-                    className="w-full text-left py-1.5 px-2 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200"
-                  >
-                    Holidays & Team Calendar
-                  </button>
-                  <button
-                    onClick={() => { setActiveNav('kpis'); setShowDrawer(false); }}
-                    className="w-full text-left py-1.5 px-2 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200"
-                  >
-                    My KPIs
-                  </button>
-                </div>
-              </div>
-
-              {isManager && (
-                <div>
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1">
-                    Manager View
+              {sections
+                .filter(sec => sec.show)
+                .map(sec => (
+                  <div key={sec.title}>
+                    <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1">{sec.title}</div>
+                    <div className="space-y-1">
+                      {sec.items.map(([id, label]) => (
+                        <button
+                          key={id + label}
+                          onClick={() => {
+                            setActiveNav(id);
+                            setShowDrawer(false);
+                          }}
+                          className={`w-full text-left py-1.5 px-2 rounded hover:bg-slate-100 dark:hover:bg-slate-800 ${
+                            activeNav === id ? 'text-teal-700 dark:text-teal-400 font-semibold' : 'text-slate-700 dark:text-slate-200'
+                          }`}
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                  <div className="space-y-1">
-                    <button
-                      onClick={() => { setActiveNav('team-dashboard'); setShowDrawer(false); }}
-                      className="w-full text-left py-1.5 px-2 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200"
-                    >
-                      Team Dashboard
-                    </button>
-                    <button
-                      onClick={() => { setActiveNav('team-approvals'); setShowDrawer(false); }}
-                      className="w-full text-left py-1.5 px-2 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200"
-                    >
-                      Pending Approvals
-                    </button>
-                    <button
-                      onClick={() => { setActiveNav('team-calendar'); setShowDrawer(false); }}
-                      className="w-full text-left py-1.5 px-2 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200"
-                    >
-                      Team Calendar
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {isHr && (
-                <div>
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1">
-                    HR (No Payroll)
-                  </div>
-                  <div className="space-y-1">
-                    <button
-                      onClick={() => { setActiveNav('hr-directory'); setShowDrawer(false); }}
-                      className="w-full text-left py-1.5 px-2 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200"
-                    >
-                      Employee Directory
-                    </button>
-                    <button
-                      onClick={() => { setActiveNav('hr-orgchart'); setShowDrawer(false); }}
-                      className="w-full text-left py-1.5 px-2 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200"
-                    >
-                      Org Chart
-                    </button>
-                    <button
-                      onClick={() => { setActiveNav('hr-attendance'); setShowDrawer(false); }}
-                      className="w-full text-left py-1.5 px-2 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200"
-                    >
-                      Attendance Register & Lock
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {isAccounts && (
-                <div>
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1">
-                    Accounts & Payroll
-                  </div>
-                  <div className="space-y-1">
-                    <button
-                      onClick={() => { setActiveNav('payroll-dashboard'); setShowDrawer(false); }}
-                      className="w-full text-left py-1.5 px-2 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200"
-                    >
-                      Payroll Dashboard
-                    </button>
-                    <button
-                      onClick={() => { setActiveNav('payroll-structures'); setShowDrawer(false); }}
-                      className="w-full text-left py-1.5 px-2 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200"
-                    >
-                      Salary Structures
-                    </button>
-                    <button
-                      onClick={() => { setActiveNav('payroll-generate'); setShowDrawer(false); }}
-                      className="w-full text-left py-1.5 px-2 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200"
-                    >
-                      Generate Payslips
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {isCeo && (
-                <div>
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1">
-                    CEO
-                  </div>
-                  <button
-                    onClick={() => { setActiveNav('ceo-dashboard'); setShowDrawer(false); }}
-                    className="w-full text-left py-1.5 px-2 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200"
-                  >
-                    Org-wide Overview
-                  </button>
-                </div>
-              )}
-
-              {isAdmin && (
-                <div>
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1">
-                    Admin
-                  </div>
-                  <button
-                    onClick={() => { setActiveNav('admin-users'); setShowDrawer(false); }}
-                    className="w-full text-left py-1.5 px-2 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200"
-                  >
-                    User & Role Management
-                  </button>
-                </div>
-              )}
+                ))}
             </div>
           </div>
         </div>

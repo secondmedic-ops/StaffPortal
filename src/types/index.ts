@@ -1,10 +1,11 @@
-export type RoleType = 'EMPLOYEE' | 'MANAGER' | 'HR' | 'ACCOUNTS' | 'CEO' | 'SYSTEM_ADMIN';
+export type RoleType = 'EMPLOYEE' | 'MANAGER' | 'HR' | 'ACCOUNTS' | 'IT' | 'CEO' | 'SYSTEM_ADMIN';
 
 export enum Role {
   EMPLOYEE = 'EMPLOYEE',
   MANAGER = 'MANAGER',
   HR = 'HR',
   ACCOUNTS = 'ACCOUNTS',
+  IT = 'IT',
   CEO = 'CEO',
   SYSTEM_ADMIN = 'SYSTEM_ADMIN'
 }
@@ -397,4 +398,188 @@ export interface AuditLogEntry {
   entityId?: number;
   details: string;
   ipAddress: string;
+}
+
+// ---------------------------------------------------------------------------
+// Staff lifecycle: profiles, onboarding, IT assets, compensation & payroll
+// ---------------------------------------------------------------------------
+
+export interface EmployeeProfile {
+  employeeId: number;
+  dateOfBirth?: string;
+  gender?: string;
+  bloodGroup?: string;
+  maritalStatus?: string;
+  fatherName?: string;
+  currentAddress?: string;
+  permanentAddress?: string;
+  emergencyContactName?: string;
+  emergencyContactPhone?: string;
+  emergencyContactRelation?: string;
+  panNumber?: string;
+  aadhaarLast4?: string;
+  uanNumber?: string;
+  esicNumber?: string;
+  bankName?: string;
+  bankAccountNumber?: string;
+  bankIfsc?: string;
+}
+
+export type AssetCategory =
+  | 'LAPTOP'
+  | 'DESKTOP'
+  | 'MOBILE'
+  | 'SIM'
+  | 'TABLET'
+  | 'MONITOR'
+  | 'ACCESSORY'
+  | 'ID_CARD'
+  | 'OTHER';
+
+export type AssetStatus = 'IN_STOCK' | 'ASSIGNED' | 'IN_REPAIR' | 'RETIRED' | 'LOST';
+
+export type AssetCondition = 'NEW' | 'GOOD' | 'FAIR' | 'DAMAGED';
+
+export interface Asset {
+  id: number;
+  assetTag: string;
+  category: AssetCategory;
+  brand?: string;
+  model?: string;
+  serialNumber?: string;
+  imei?: string;
+  /** For SIM cards / company mobile numbers. */
+  phoneNumber?: string;
+  carrier?: string;
+  planDetails?: string;
+  specs?: string;
+  purchaseDate?: string;
+  purchaseCost?: number;
+  vendor?: string;
+  warrantyUntil?: string;
+  status: AssetStatus;
+  condition: AssetCondition;
+  assignedTo?: number;
+  assignedToName?: string;
+  assignedToCode?: string;
+  assignedAt?: string;
+  acknowledgedAt?: string;
+  notes?: string;
+}
+
+export interface AssetAssignment {
+  id: number;
+  assetId: number;
+  assetTag?: string;
+  employeeId: number;
+  employeeName?: string;
+  assignedAt: string;
+  assignedByName?: string;
+  returnedAt?: string;
+  returnCondition?: AssetCondition;
+  notes?: string;
+}
+
+export type ItRequestType = 'ONBOARDING' | 'OFFBOARDING' | 'NEW_ASSET' | 'REPAIR' | 'ACCESS' | 'OTHER';
+export type ItRequestStatus = 'OPEN' | 'IN_PROGRESS' | 'DONE' | 'CANCELLED';
+
+export interface ItRequest {
+  id: number;
+  employeeId: number;
+  employeeName?: string;
+  employeeCode?: string;
+  requestType: ItRequestType;
+  title: string;
+  details?: string;
+  priority: 'LOW' | 'MEDIUM' | 'HIGH';
+  status: ItRequestStatus;
+  raisedById?: number;
+  raisedByName?: string;
+  resolution?: string;
+  createdAt: string;
+  closedAt?: string;
+}
+
+export type LifecycleTaskOwner = 'HR' | 'IT' | 'ACCOUNTS' | 'MANAGER';
+
+export interface LifecycleTask {
+  id: number;
+  employeeId: number;
+  employeeName?: string;
+  employeeCode?: string;
+  kind: 'ONBOARDING' | 'OFFBOARDING';
+  ownerRole: LifecycleTaskOwner;
+  title: string;
+  dueDate?: string;
+  done: boolean;
+  doneByName?: string;
+  doneAt?: string;
+}
+
+export type SalaryRevisionType = 'JOINING' | 'INCREMENT' | 'PROMOTION' | 'CORRECTION';
+export type SalaryRevisionStatus = 'PROPOSED' | 'APPROVED' | 'REJECTED';
+
+export interface SalaryRevision {
+  id: number;
+  employeeId: number;
+  employeeName?: string;
+  employeeCode?: string;
+  designation?: string;
+  departmentName?: string;
+  revisionType: SalaryRevisionType;
+  effectiveFrom: string;
+  ctcAnnual: number;
+  basicMonthly: number;
+  hraMonthly: number;
+  specialMonthly: number;
+  otherAllowanceMonthly: number;
+  tdsMonthly: number;
+  pfApplicable: boolean;
+  incrementPct?: number;
+  newDesignation?: string;
+  reason?: string;
+  status: SalaryRevisionStatus;
+  proposedById?: number;
+  proposedByName?: string;
+  approvedByName?: string;
+  approvedAt?: string;
+  createdAt?: string;
+}
+
+export type PayrollEntryStatus = 'DRAFT' | 'APPROVED' | 'PUBLISHED';
+
+export interface PayrollLine {
+  code: string;
+  label: string;
+  amount: number;
+}
+
+export interface PayrollEntry {
+  id: number;
+  employeeId: number;
+  employeeName?: string;
+  employeeCode?: string;
+  designation?: string;
+  departmentName?: string;
+  year: number;
+  month: number;
+  calendarDays: number;
+  payableDays: number;
+  presentDays: number;
+  paidLeaveDays: number;
+  holidayDays: number;
+  weekOffDays: number;
+  lopDays: number;
+  lateMarks: number;
+  earnings: PayrollLine[];
+  deductions: PayrollLine[];
+  employerContributions: PayrollLine[];
+  grossEarnings: number;
+  totalDeductions: number;
+  netPay: number;
+  status: PayrollEntryStatus;
+  revisionId?: number;
+  computedByName?: string;
+  computedAt?: string;
+  publishedAt?: string;
 }

@@ -43,6 +43,18 @@ export const StatusPill: React.FC<StatusPillProps> = ({ status, size = 'sm' }) =
     styleClasses = 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-700';
   } else if (norm === 'REVOKED') {
     styleClasses = 'bg-red-50 dark:bg-red-950/60 text-red-700 dark:text-red-400 border-red-300 dark:border-red-800';
+  } else if (norm === 'IN_STOCK' || norm === 'DONE' || norm === 'PROPOSED' || norm === 'OPEN') {
+    styleClasses = norm === 'DONE'
+      ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800'
+      : norm === 'IN_STOCK'
+      ? 'bg-sky-50 dark:bg-sky-950/60 text-sky-700 dark:text-sky-400 border-sky-200 dark:border-sky-800'
+      : 'bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-800';
+  } else if (norm === 'ASSIGNED' || norm === 'IN_PROGRESS') {
+    styleClasses = 'bg-teal-50 dark:bg-teal-950/60 text-teal-800 dark:text-teal-300 border-teal-300 dark:border-teal-800';
+  } else if (norm === 'IN_REPAIR' || norm === 'NOTICE_PERIOD' || norm === 'PROBATION') {
+    styleClasses = 'bg-orange-50 dark:bg-orange-950/60 text-orange-700 dark:text-orange-400 border-orange-200 dark:border-orange-800';
+  } else if (norm === 'LOST' || norm === 'RETIRED' || norm === 'EXITED') {
+    styleClasses = 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-300 dark:border-slate-700';
   } else if (norm === 'ACTIVE') {
     styleClasses = 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800';
   }
@@ -53,7 +65,7 @@ export const StatusPill: React.FC<StatusPillProps> = ({ status, size = 'sm' }) =
     <span
       className={`inline-flex items-center font-medium rounded-full border whitespace-nowrap transition-colors ${sizeClasses} ${styleClasses}`}
     >
-      {status.replace('_', ' ')}
+      {status.replace(/_/g, ' ')}
     </span>
   );
 };

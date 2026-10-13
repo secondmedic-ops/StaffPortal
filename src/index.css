@@ -10,3 +10,24 @@ html {
 html.dark {
   color-scheme: dark;
 }
+
+/* Print only the payslip (or any .print-area) when the user prints */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .print-area,
+  .print-area * {
+    visibility: visible;
+  }
+  .print-area {
+    position: absolute;
+    inset: 0 auto auto 0;
+    width: 100%;
+    background: white;
+    color: black;
+  }
+  .no-print {
+    display: none !important;
+  }
+}
