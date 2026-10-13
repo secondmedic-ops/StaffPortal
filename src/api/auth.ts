@@ -6,7 +6,7 @@ export const authApi = {
   async login(officialEmail: string, password?: string, _otp?: string): Promise<AuthResponse> {
     const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
       email: officialEmail,
-      password: password || 'SecondMedic@2026'
+      password: password ?? ''
     });
 
     if (authError) {

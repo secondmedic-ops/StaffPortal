@@ -246,7 +246,7 @@ const UnauthorizedView: React.FC<{ role: string }> = ({ role }) => (
       In accordance with SecondMedic zero-trust security separation, this module requires explicit authorization.
     </p>
     <p className="text-[11px] text-teal-800 dark:text-teal-300 bg-teal-50 dark:bg-teal-950/50 p-2.5 rounded-lg border border-teal-200 dark:border-teal-800">
-      Tip: You can switch to an authorized staff role using the persona selector in the top right header.
+      Need this access? Ask HR or your System Administrator to grant the role.
     </p>
   </div>
 );
