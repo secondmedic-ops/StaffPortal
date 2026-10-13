@@ -38,7 +38,7 @@ export async function getSessionEmployee(): Promise<SessionEmployee> {
     if (user) {
       const { data: emp, error: empError } = await supabase
         .from('employees')
-        .select('id, emp_code, full_name, manager_id, department_id, department:departments(name)')
+        .select('id, emp_code, full_name, manager_id, department_id, department:departments!employees_department_id_fkey(name)')
         .or(`auth_user_id.eq.${user.id},official_email.eq.${user.email ?? ''}`)
         .single();
 

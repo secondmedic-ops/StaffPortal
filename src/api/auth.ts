@@ -20,7 +20,7 @@ export const authApi = {
 
     const { data: empData, error: empError } = await supabase
       .from('employees')
-      .select('*, department:departments(name), manager:employees!employees_manager_id_fkey(full_name)')
+      .select('*, department:departments!employees_department_id_fkey(name), manager:employees!employees_manager_id_fkey(full_name)')
       .or(`auth_user_id.eq.${user.id},official_email.eq.${officialEmail}`)
       .single();
 
@@ -67,7 +67,7 @@ export const authApi = {
 
     const { data: empData, error: empError } = await supabase
       .from('employees')
-      .select('*, department:departments(name), manager:employees!employees_manager_id_fkey(full_name)')
+      .select('*, department:departments!employees_department_id_fkey(name), manager:employees!employees_manager_id_fkey(full_name)')
       .or(`auth_user_id.eq.${session.user.id},official_email.eq.${session.user.email ?? ''}`)
       .single();
 

@@ -41,7 +41,7 @@ export const teamApi = {
     const emp = await getCurrentEmployee();
     const { data, error } = await supabase
       .from('employees')
-      .select('*, department:departments(name), manager:employees!employees_manager_id_fkey(full_name)')
+      .select('*, department:departments!employees_department_id_fkey(name), manager:employees!employees_manager_id_fkey(full_name)')
       .eq('manager_id', emp.id)
       .order('full_name');
 
@@ -53,7 +53,7 @@ export const teamApi = {
     const emp = await getCurrentEmployee();
     const { data: members, error: membersError } = await supabase
       .from('employees')
-      .select('*, department:departments(name), manager:employees!employees_manager_id_fkey(full_name)')
+      .select('*, department:departments!employees_department_id_fkey(name), manager:employees!employees_manager_id_fkey(full_name)')
       .eq('manager_id', emp.id)
       .order('full_name');
 
@@ -94,7 +94,7 @@ export const teamApi = {
 
     let query = supabase
       .from('leave_requests')
-      .select('*, employee:employees!leave_requests_employee_id_fkey(emp_code, full_name, department:departments(name)), leave_type:leave_types(code, name), current_approver:employees!leave_requests_current_approver_id_fkey(full_name)')
+      .select('*, employee:employees!leave_requests_employee_id_fkey(emp_code, full_name, department:departments!employees_department_id_fkey(name)), leave_type:leave_types(code, name), current_approver:employees!leave_requests_current_approver_id_fkey(full_name)')
       .eq('status', 'PENDING');
 
     if (scope === 'MINE') query = query.eq('current_approver_id', emp.id);
@@ -319,7 +319,7 @@ export const teamApi = {
     const emp = await getCurrentEmployee();
     const { data: reportsData, error: reportsError } = await supabase
       .from('employees')
-      .select('*, department:departments(name), manager:employees!employees_manager_id_fkey(full_name)')
+      .select('*, department:departments!employees_department_id_fkey(name), manager:employees!employees_manager_id_fkey(full_name)')
       .eq('manager_id', emp.id);
 
     if (reportsError) throw new Error(`Failed to load team reports: ${reportsError.message}`);
@@ -336,7 +336,7 @@ export const teamApi = {
 
     const { data: leavesData, error: leavesError } = await supabase
       .from('leave_requests')
-      .select('*, employee:employees!leave_requests_employee_id_fkey(emp_code, full_name, department:departments(name)), leave_type:leave_types(code, name), current_approver:employees!leave_requests_current_approver_id_fkey(full_name)')
+      .select('*, employee:employees!leave_requests_employee_id_fkey(emp_code, full_name, department:departments!employees_department_id_fkey(name)), leave_type:leave_types(code, name), current_approver:employees!leave_requests_current_approver_id_fkey(full_name)')
       .in('employee_id', reportIds)
       .in('status', ['APPROVED', 'PENDING'])
       .lte('from_date', endMonth)
@@ -354,7 +354,7 @@ export const teamApi = {
     const emp = await getCurrentEmployee();
     const { data: reportsData, error: reportsError } = await supabase
       .from('employees')
-      .select('*, department:departments(name), manager:employees!employees_manager_id_fkey(full_name)')
+      .select('*, department:departments!employees_department_id_fkey(name), manager:employees!employees_manager_id_fkey(full_name)')
       .eq('manager_id', emp.id);
 
     if (reportsError) throw new Error(`Failed to load team members for KPIs: ${reportsError.message}`);

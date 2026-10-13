@@ -17,9 +17,9 @@ import type {
 } from '../types';
 
 const REVISION_SELECT =
-  '*, employee:employees!salary_revisions_employee_id_fkey(full_name, emp_code, designation, department:departments(name)), proposer:employees!salary_revisions_proposed_by_fkey(full_name), approver:employees!salary_revisions_approved_by_fkey(full_name)';
+  '*, employee:employees!salary_revisions_employee_id_fkey(full_name, emp_code, designation, department:departments!employees_department_id_fkey(name)), proposer:employees!salary_revisions_proposed_by_fkey(full_name), approver:employees!salary_revisions_approved_by_fkey(full_name)';
 const ENTRY_SELECT =
-  '*, employee:employees!payroll_entries_employee_id_fkey(full_name, emp_code, designation, department:departments(name)), computer:employees!payroll_entries_computed_by_fkey(full_name)';
+  '*, employee:employees!payroll_entries_employee_id_fkey(full_name, emp_code, designation, department:departments!employees_department_id_fkey(name)), computer:employees!payroll_entries_computed_by_fkey(full_name)';
 
 export interface PayrollPreviewRow {
   employee: Employee;
@@ -163,7 +163,7 @@ export const compensationApi = {
     const warnings: string[] = [];
 
     const [empRes, attRes, leaveRes, typeRes, holRes, revisions, entryRes] = await Promise.all([
-      supabase.from('employees').select('*, department:departments(name)').order('full_name'),
+      supabase.from('employees').select('*, department:departments!employees_department_id_fkey(name)').order('full_name'),
       fetchMonthAttendance(start, end),
       supabase
         .from('leave_requests')

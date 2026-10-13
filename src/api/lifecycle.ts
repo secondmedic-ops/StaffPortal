@@ -13,7 +13,7 @@ import type {
   RoleType
 } from '../types';
 
-const EMPLOYEE_SELECT = '*, department:departments(name), manager:employees!employees_manager_id_fkey(full_name)';
+const EMPLOYEE_SELECT = '*, department:departments!employees_department_id_fkey(name), manager:employees!employees_manager_id_fkey(full_name)';
 const TASK_SELECT =
   '*, employee:employees!lifecycle_tasks_employee_id_fkey(full_name, emp_code), doer:employees!lifecycle_tasks_done_by_fkey(full_name)';
 
