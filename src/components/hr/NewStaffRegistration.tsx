@@ -60,7 +60,7 @@ interface FormState {
   emergencyContactPhone: string;
   emergencyContactRelation: string;
   panNumber: string;
-  aadhaarLast4: string;
+  aadhaarNumber: string;
   uanNumber: string;
   esicNumber: string;
   bankName: string;
@@ -100,7 +100,7 @@ const initialState = (): FormState => ({
   emergencyContactPhone: '',
   emergencyContactRelation: '',
   panNumber: '',
-  aadhaarLast4: '',
+  aadhaarNumber: '',
   uanNumber: '',
   esicNumber: '',
   bankName: '',
@@ -175,8 +175,11 @@ export const NewStaffRegistration: React.FC = () => {
     }
     if (s === 2) {
       if (form.panNumber && !PAN_RE.test(form.panNumber.toUpperCase())) return 'PAN must look like ABCDE1234F.';
-      if (form.aadhaarLast4 && !/^\d{4}$/.test(form.aadhaarLast4)) return 'Enter only the last 4 digits of Aadhaar.';
-      if (form.bankIfsc && !IFSC_RE.test(form.bankIfsc.toUpperCase())) return 'IFSC must look like HDFC0001234.';
+      if (form.aadhaarNumber && !/^\d{12}$/.test(form.aadhaarNumber)) return 'Aadhaar must be 12 digits.';
+      if (!form.bankName.trim()) return 'Bank name is required — salary is paid into this account.';
+      if (!form.bankIfsc.trim()) return 'IFSC is required.';
+      if (!IFSC_RE.test(form.bankIfsc.toUpperCase())) return 'IFSC must look like HDFC0001234.';
+      if (!/^\d{6,18}$/.test(form.bankAccountNumber)) return 'Enter a valid bank account number (6–18 digits).';
       if (form.bankAccountNumber !== form.bankAccountConfirm) return 'Bank account numbers do not match.';
     }
     return null;
@@ -228,7 +231,7 @@ export const NewStaffRegistration: React.FC = () => {
         emergencyContactPhone: form.emergencyContactPhone || undefined,
         emergencyContactRelation: form.emergencyContactRelation || undefined,
         panNumber: form.panNumber || undefined,
-        aadhaarLast4: form.aadhaarLast4 || undefined,
+        aadhaarNumber: form.aadhaarNumber || undefined,
         uanNumber: form.uanNumber || undefined,
         esicNumber: form.esicNumber || undefined,
         bankName: form.bankName || undefined,
@@ -463,15 +466,15 @@ export const NewStaffRegistration: React.FC = () => {
         {step === 2 && (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {field('PAN', <input value={form.panNumber} onChange={e => set('panNumber', e.target.value.toUpperCase())} maxLength={10} className={`${inputClass} font-mono`} placeholder="ABCDE1234F" />)}
-            {field('Aadhaar (last 4 digits only)', <input value={form.aadhaarLast4} onChange={e => set('aadhaarLast4', e.target.value.replace(/\D/g, '').slice(0, 4))} className={`${inputClass} font-mono`} placeholder="1234" />)}
+            {field('Aadhaar number', <input value={form.aadhaarNumber} onChange={e => set('aadhaarNumber', e.target.value.replace(/\D/g, '').slice(0, 12))} inputMode="numeric" className={`${inputClass} font-mono`} placeholder="12 digits" />)}
             {field('UAN (PF)', <input value={form.uanNumber} onChange={e => set('uanNumber', e.target.value)} className={`${inputClass} font-mono`} />)}
             {field('ESIC number', <input value={form.esicNumber} onChange={e => set('esicNumber', e.target.value)} className={`${inputClass} font-mono`} />)}
-            {field('Bank name', <input value={form.bankName} onChange={e => set('bankName', e.target.value)} className={inputClass} placeholder="HDFC Bank" />)}
-            {field('IFSC', <input value={form.bankIfsc} onChange={e => set('bankIfsc', e.target.value.toUpperCase())} maxLength={11} className={`${inputClass} font-mono`} placeholder="HDFC0001234" />)}
-            {field('Account number', <input value={form.bankAccountNumber} onChange={e => set('bankAccountNumber', e.target.value.replace(/\s/g, ''))} className={`${inputClass} font-mono`} />)}
-            {field('Confirm account number', <input value={form.bankAccountConfirm} onChange={e => set('bankAccountConfirm', e.target.value.replace(/\s/g, ''))} onPaste={e => e.preventDefault()} className={`${inputClass} font-mono`} />)}
+            {field('Bank name *', <input value={form.bankName} onChange={e => set('bankName', e.target.value)} className={inputClass} placeholder="HDFC Bank" />)}
+            {field('IFSC *', <input value={form.bankIfsc} onChange={e => set('bankIfsc', e.target.value.toUpperCase())} maxLength={11} className={`${inputClass} font-mono`} placeholder="HDFC0001234" />)}
+            {field('Account number *', <input value={form.bankAccountNumber} onChange={e => set('bankAccountNumber', e.target.value.replace(/\s/g, ''))} className={`${inputClass} font-mono`} />)}
+            {field('Confirm account number *', <input value={form.bankAccountConfirm} onChange={e => set('bankAccountConfirm', e.target.value.replace(/\s/g, ''))} onPaste={e => e.preventDefault()} className={`${inputClass} font-mono`} />)}
             <p className="sm:col-span-2 text-[12.5px] text-slate-500">
-              Visible only to the employee, HR and Accounts. Full Aadhaar numbers are never stored.
+              Bank details are required: payslips show the account salary is paid into. Visible only to the employee, HR and Accounts.
             </p>
           </div>
         )}

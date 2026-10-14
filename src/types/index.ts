@@ -420,6 +420,8 @@ export interface EmployeeProfile {
   emergencyContactRelation?: string;
   panNumber?: string;
   aadhaarLast4?: string;
+  /** Full 12-digit Aadhaar (visible to the employee, HR and Accounts only). */
+  aadhaarNumber?: string;
   uanNumber?: string;
   esicNumber?: string;
   bankName?: string;
