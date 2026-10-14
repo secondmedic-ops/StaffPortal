@@ -1,10 +1,9 @@
 import React, { useMemo, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { compensationApi, lifecycleApi } from '../../api';
-import type { PayrollPreviewRow } from '../../api/compensation';
-import type { EmployeeProfile } from '../../types';
+import { compensationApi } from '../../api';
+import { recomputeRow, type PayrollPreviewRow } from '../../api/compensation';
 import { formatInr } from '../../lib/payrollEngine';
-import { ATTENDANCE_POLICY, OVERTIME_POLICY, PAYROLL_POLICY, SHIFT_POLICY } from '../../config/policy';
+import { ATTENDANCE_POLICY, OVERTIME_POLICY, PAYROLL_POLICY, SHIFT_POLICY, STATUTORY_DEDUCTIONS } from '../../config/policy';
 import { getMonthName } from '../../utils/dateUtils';
 import {
   Calculator,
@@ -44,7 +43,7 @@ export const AttendancePayroll: React.FC = () => {
   const [search, setSearch] = useState('');
 
   const [viewing, setViewing] = useState<PayrollPreviewRow | null>(null);
-  const [profile, setProfile] = useState<EmployeeProfile | null>(null);
+  const [adjust, setAdjust] = useState({ arrears: '', advance: '' });
 
   const compute = async () => {
     try {
@@ -101,30 +100,44 @@ export const AttendancePayroll: React.FC = () => {
     }
   };
 
-  const openPayslip = async (row: PayrollPreviewRow) => {
+  const openPayslip = (row: PayrollPreviewRow) => {
     setViewing(row);
-    setProfile(null);
-    try {
-      setProfile(await lifecycleApi.getProfile(row.employee.id));
-    } catch {
-      // Bank details are optional on the preview.
-    }
+    setAdjust({
+      arrears: row.input.arrears ? String(row.input.arrears) : '',
+      advance: row.input.advance ? String(row.input.advance) : ''
+    });
   };
 
+  /** Re-run this employee's pay with the arrears / advance Accounts entered. */
+  const applyAdjustments = () => {
+    if (!viewing) return;
+    const next = recomputeRow(viewing, { arrears: Number(adjust.arrears) || 0, advance: Number(adjust.advance) || 0 });
+    setRows(prev => (prev ?? []).map(r => (r.employee.id === next.employee.id ? next : r)));
+    setViewing(next);
+    showToast('Payslip updated', 'Save & send for approval to keep these amounts.', 'success');
+  };
+  const locked = viewing?.existing?.status === 'PUBLISHED';
+
   const exportCsv = () => {
-    const header = ['Emp Code', 'Name', 'Department', 'Month Days', 'Paid Days', 'LOP Days', 'Late Marks', 'Gross', 'PF', 'ESI', 'PT', 'TDS', 'Total Deductions', 'Net Pay'];
+    const header = ['Emp Code', 'Name', 'Department', 'Pay Type', 'Worked Hrs', 'Rate', 'Month Days', 'Paid Days', 'LOP Days', 'Late Marks', 'Arrears', 'Gross', 'LWF', 'Advance', 'ESI', 'PF', 'PT', 'TDS', 'Total Deductions', 'Net Pay'];
     const find = (r: PayrollPreviewRow, code: string) => r.computation.deductions.find(d => d.code === code)?.amount ?? 0;
     const lines = (rows ?? []).map(r => [
       r.employee.empCode,
       r.employee.fullName,
       r.employee.departmentName,
+      r.computation.payType === 'HOURLY' ? 'Hourly' : 'Monthly',
+      r.computation.workedHours,
+      r.computation.hourlyRate ?? '',
       r.computation.calendarDays,
       r.computation.payableDays,
       r.computation.lopDays,
       r.computation.lateMarks,
+      r.computation.earnings.find(e => e.code === 'ARREARS')?.amount ?? 0,
       r.computation.grossEarnings,
-      find(r, 'PF'),
+      find(r, 'LWF'),
+      find(r, 'ADVANCE'),
       find(r, 'ESI'),
+      find(r, 'PF'),
       find(r, 'PT'),
       find(r, 'TDS'),
       r.computation.totalDeductions,
@@ -173,6 +186,13 @@ export const AttendancePayroll: React.FC = () => {
           <div>
             Pay basis: {PAYROLL_POLICY.payBasis === 'CALENDAR' ? 'monthly salary ÷ calendar days × paid days' : 'monthly salary ÷ 26 per LOP day'} · PF{' '}
             {PAYROLL_POLICY.pfRate * 100}% of basic (ceiling {formatInr(PAYROLL_POLICY.pfWageCeiling)}) · ESI if gross ≤ {formatInr(PAYROLL_POLICY.esiGrossThreshold)} · PT {formatInr(PAYROLL_POLICY.professionalTaxMonthly)}/month · TDS from salary revision · approved time updates replace punch times · approved holiday/Sunday work chosen as overtime is paid at {OVERTIME_POLICY.payMultiplier}× a day's gross.
+          </div>
+          <div>
+            Part-time (hourly): hours worked × hourly rate · PF {PAYROLL_POLICY.pfRate * 100}% of gross · ESI {PAYROLL_POLICY.esiEmployeeRate * 100}% of gross · no PT · LWF{' '}
+            {STATUTORY_DEDUCTIONS.lwfEmployeeAmount > 0
+              ? `${formatInr(STATUTORY_DEDUCTIONS.lwfEmployeeAmount)} in ${STATUTORY_DEDUCTIONS.lwfMonths.map(m => getMonthName(m, true)).join(' & ')}`
+              : 'rate not set (prints as 0.00)'}{' '}
+            · open a payslip to add arrears or an advance recovery.
           </div>
         </div>
       </div>
@@ -241,7 +261,7 @@ export const AttendancePayroll: React.FC = () => {
                 <thead className={tableHeadClass}>
                   <tr>
                     <th className="px-4 py-3">Employee</th>
-                    <th className="px-3 py-3 text-center">Paid / Month</th>
+                    <th className="px-3 py-3 text-center" title="Paid days of the month, or hours worked for part-time staff">Paid / Month</th>
                     <th className="px-3 py-3 text-center">Worked</th>
                     <th className="px-3 py-3 text-center">Leave</th>
                     <th className="px-3 py-3 text-center">Late</th>
@@ -265,7 +285,13 @@ export const AttendancePayroll: React.FC = () => {
                           </div>
                         </td>
                         <td className="px-3 py-2.5 text-center font-mono">
-                          {c.payableDays}/{c.calendarDays}
+                          {c.payType === 'HOURLY' ? (
+                            <span title={`Hourly: ${c.workedHours} h × ${formatInr(c.hourlyRate ?? 0)}`}>{c.workedHours} h</span>
+                          ) : (
+                            <>
+                              {c.payableDays}/{c.calendarDays}
+                            </>
+                          )}
                         </td>
                         <td className="px-3 py-2.5 text-center">{c.presentDays}</td>
                         <td className="px-3 py-2.5 text-center">{c.paidLeaveDays}</td>
@@ -303,7 +329,7 @@ export const AttendancePayroll: React.FC = () => {
         isOpen={!!viewing}
         onClose={() => setViewing(null)}
         title={viewing ? `${viewing.employee.fullName} · ${getMonthName(month)} ${year}` : ''}
-        subtitle={viewing?.revision ? `Salary revision effective ${viewing.revision.effectiveFrom} · CTC ${formatInr(viewing.revision.ctcAnnual)}` : 'No approved salary revision'}
+        subtitle={viewing?.revision ? `Salary revision effective ${viewing.revision.effectiveFrom} · ${viewing.revision.payType === 'HOURLY' ? `hourly rate ${formatInr(viewing.revision.hourlyRate ?? 0)}` : `CTC ${formatInr(viewing.revision.ctcAnnual)}`}` : 'No approved salary revision'}
         maxWidth="2xl"
       >
         {viewing && (
@@ -313,15 +339,31 @@ export const AttendancePayroll: React.FC = () => {
                 {w}
               </div>
             ))}
+            {viewing.revision && (
+              <div className="flex flex-wrap items-end gap-2 p-3 rounded-lg border border-slate-200 dark:border-slate-800">
+                <div>
+                  <label className="block text-[12.5px] font-semibold text-slate-600 dark:text-slate-300 mb-1">Arrears (₹)</label>
+                  <input type="number" min={0} value={adjust.arrears} disabled={locked} onChange={e => setAdjust(a => ({ ...a, arrears: e.target.value }))} className={`${compactInputClass} w-32`} placeholder="0" />
+                </div>
+                <div>
+                  <label className="block text-[12.5px] font-semibold text-slate-600 dark:text-slate-300 mb-1">Advance recovery (₹)</label>
+                  <input type="number" min={0} value={adjust.advance} disabled={locked} onChange={e => setAdjust(a => ({ ...a, advance: e.target.value }))} className={`${compactInputClass} w-36`} placeholder="0" />
+                </div>
+                <button type="button" onClick={applyAdjustments} disabled={locked} className={secondaryBtn}>
+                  Update payslip
+                </button>
+                {locked && <span className="text-[12.5px] text-slate-500">Published payslips can't be changed.</span>}
+              </div>
+            )}
             <PayslipView
               entry={{ year, month, ...viewing.computation }}
+              employeeId={viewing.employee.id}
               employee={{
                 name: viewing.employee.fullName,
                 code: viewing.employee.empCode,
                 designation: viewing.employee.designation,
                 department: viewing.employee.departmentName
               }}
-              bank={{ name: profile?.bankName, account: profile?.bankAccountNumber, pan: profile?.panNumber, uan: profile?.uanNumber }}
               days={viewing.computation.days}
               status={viewing.existing?.status ?? 'Preview'}
             />

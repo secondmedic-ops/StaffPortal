@@ -19,6 +19,7 @@ import {
   UserPlus
 } from 'lucide-react';
 import { SkeletonLoader } from '../common/SkeletonLoader';
+import { COMPANY } from '../../config/company';
 import { PageHeader, inputClass, labelClass, primaryBtn, secondaryBtn, cardClass } from '../common/PageHeader';
 
 const STEPS = [
@@ -44,6 +45,7 @@ interface FormState {
   employmentType: EmploymentType;
   dateOfJoining: string;
   workLocation: string;
+  division: string;
   managerId: number | '';
   probation: boolean;
   dateOfBirth: string;
@@ -83,6 +85,7 @@ const initialState = (): FormState => ({
   employmentType: 'FULL_TIME',
   dateOfJoining: getTodayIsoString(),
   workLocation: '',
+  division: COMPANY.defaultDivision,
   managerId: '',
   probation: true,
   dateOfBirth: '',
@@ -209,6 +212,7 @@ export const NewStaffRegistration: React.FC = () => {
         employmentType: form.employmentType,
         dateOfJoining: form.dateOfJoining,
         workLocation: form.workLocation.trim() || undefined,
+        division: form.division.trim() || undefined,
         managerId: form.managerId ? Number(form.managerId) : undefined,
         probation: form.probation
       },
@@ -358,6 +362,7 @@ export const NewStaffRegistration: React.FC = () => {
             {field('Personal email', <input type="email" value={form.personalEmail} onChange={e => set('personalEmail', e.target.value)} className={inputClass} />)}
             {field('Personal mobile', <input value={form.mobile} onChange={e => set('mobile', e.target.value)} className={inputClass} placeholder="98xxxxxxxx" />)}
             {field('Work location', <input value={form.workLocation} onChange={e => set('workLocation', e.target.value)} className={inputClass} placeholder="Mumbai HQ / Field" />)}
+            {field('Division (state)', <input value={form.division} onChange={e => set('division', e.target.value)} className={inputClass} placeholder="Maharashtra" />)}
             {field(
               'Department *',
               <select

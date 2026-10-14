@@ -55,6 +55,8 @@ export interface Employee {
   joiningDate?: string;
   dateOfExit?: string;
   workLocation?: string;
+  /** State / division printed on the payslip. */
+  division?: string;
   status: EmployeeStatus;
   managerId?: number;
   managerName?: string;
@@ -535,6 +537,9 @@ export interface SalaryRevision {
   otherAllowanceMonthly: number;
   tdsMonthly: number;
   pfApplicable: boolean;
+  /** MONTHLY: salary prorated by paid days. HOURLY: worked hours x hourlyRate. */
+  payType: PayType;
+  hourlyRate?: number;
   incrementPct?: number;
   newDesignation?: string;
   reason?: string;
@@ -545,6 +550,8 @@ export interface SalaryRevision {
   approvedAt?: string;
   createdAt?: string;
 }
+
+export type PayType = 'MONTHLY' | 'HOURLY';
 
 export type PayrollEntryStatus = 'DRAFT' | 'APPROVED' | 'PUBLISHED';
 
@@ -577,6 +584,9 @@ export interface PayrollEntry {
   grossEarnings: number;
   totalDeductions: number;
   netPay: number;
+  payType: PayType;
+  workedHours?: number;
+  hourlyRate?: number;
   status: PayrollEntryStatus;
   revisionId?: number;
   computedById?: number;

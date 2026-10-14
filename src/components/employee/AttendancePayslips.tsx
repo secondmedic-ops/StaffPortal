@@ -127,7 +127,7 @@ export const AttendancePayslips: React.FC = () => {
                     {h.newDesignation && ` · ${h.newDesignation}`}
                   </span>
                   <span className="font-mono font-bold text-slate-900 dark:text-slate-100">
-                    {formatInr(h.ctcAnnual)} p.a.
+                    {h.payType === 'HOURLY' ? `${formatInr(h.hourlyRate ?? 0)} / hr` : `${formatInr(h.ctcAnnual)} p.a.`}
                     {h.incrementPct != null && <span className="ml-2 text-emerald-600">+{h.incrementPct}%</span>}
                   </span>
                 </li>
@@ -146,6 +146,7 @@ export const AttendancePayslips: React.FC = () => {
         {viewing && currentUser && (
           <PayslipView
             entry={viewing}
+            employeeId={currentUser.id}
             employee={{
               name: currentUser.fullName,
               code: currentUser.empCode,

@@ -12,6 +12,8 @@ DB_URL="$(echo "$ADMIN" | sed -E "s#/[^/?]*(\?|$)#/$TEST_DB\1#")"
 psql "$DB_URL" -v ON_ERROR_STOP=1 -q -f "$HERE/stub_schema.sql" || exit 1
 for i in 1 2; do  # applied twice to prove idempotency
   for m in "$HERE"/../migrations/*.sql; do
+    # stub_schema.sql stands in for the core schema (it seeds fixed test users).
+    case "$m" in *_core_schema.sql) continue ;; esac
     psql "$DB_URL" -v ON_ERROR_STOP=1 -q -f "$m" 2>&1 | grep -i error && exit 1
   done
 done
@@ -82,11 +84,17 @@ expect_fail 5 "update payroll_entries set status='APPROVED' where id=1" "Account
 expect_blocked 2 "update payroll_entries set status='APPROVED' where id=1" "Unrelated manager cannot approve"
 expect_val  2 "select count(*) from payroll_entries" "0" "Unrelated manager cannot see payroll"
 expect_fail 1 "update payroll_entries set net_pay=1 where id=1" "Approver cannot change amounts"
+expect_fail 1 "update payroll_entries set worked_hours=200 where id=1" "Approver cannot change worked hours"
+expect_fail 1 "update payroll_entries set hourly_rate=500 where id=1" "Approver cannot change hourly rate"
 expect_ok   1 "update payroll_entries set status='APPROVED' where id=1" "Accounts A's reporting manager (CEO) approves"
 expect_fail 1 "update payroll_entries set status='PUBLISHED' where id=1" "Approver cannot publish (Accounts does)"
 expect_ok   5 "update payroll_entries set status='PUBLISHED', published_at=now() where id=1" "Accounts publishes approved payroll"
 expect_val  3 "select net_pay from payroll_entries" "37000.00" "Employee sees published payslip"
 expect_fail 5 "update payroll_entries set net_pay=1 where id=1" "Published payslip is immutable"
+
+echo "== Hourly (part-time) salary =="
+expect_fail 5 "insert into salary_revisions(employee_id, revision_type, effective_from, ctc_annual, basic_monthly, pay_type, proposed_by) values (3,'JOINING','2026-10-01',0,0,'HOURLY',5)" "Hourly salary needs an hourly rate"
+expect_ok   5 "insert into salary_revisions(employee_id, revision_type, effective_from, ctc_annual, basic_monthly, pay_type, hourly_rate, proposed_by) values (3,'CORRECTION','2026-10-01',72000,0,'HOURLY',60,5)" "Accounts proposes an hourly rate"
 
 echo "== Comp-off / overtime claims =="
 $P -c "insert into leave_types(id, code, name, is_paid) values (9,'COMP_OFF','Comp Off',true)"

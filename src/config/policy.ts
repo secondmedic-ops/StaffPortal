@@ -80,3 +80,20 @@ export const ASSET_POLICY = {
   /** Warn IT when warranty ends within this many days. */
   warrantyAlertDays: 60,
 } as const;
+
+/** Part-time staff are paid worked hours × hourly rate (no paid leave or holidays). */
+export const HOURLY_PAY_POLICY = {
+  /** PF for hourly staff is a share of gross pay (capped at the PF wage ceiling), as on the part-time payslip. */
+  pfOnGross: true,
+  /** The part-time payslip carries no Professional Tax line. */
+  professionalTax: false,
+} as const;
+
+export const STATUTORY_DEDUCTIONS = {
+  /**
+   * Labour Welfare Fund, employee share, deducted in the listed months (1-12).
+   * Left at 0 until Accounts confirms the current rate; the line still prints on payslips.
+   */
+  lwfEmployeeAmount: 0,
+  lwfMonths: [6, 12] as number[],
+} as const;

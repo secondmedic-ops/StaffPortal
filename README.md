@@ -28,6 +28,8 @@ Apply the migrations in `supabase/migrations/` in filename order (Supabase SQL e
 - adds triggers so **only the current approver in the reporting line (or HR)** can approve leave/regularizations, salary revisions need a **different approver than the proposer**, published payslips are **immutable**, and leave balances are reserved/released **server-side**
 - adds read-only policies so Accounts can read attendance for payroll and managers can see their reporting line
 
+`20261015000000_hourly_pay_and_payslip.sql` adds hourly pay (`salary_revisions.pay_type`, `hourly_rate`), stores hours on payroll entries and adds `employees.division`.
+
 `20261014000000_holiday_work_claims.sql` adds comp-off / overtime claims and makes monthly payroll need approval from the reporting manager of the Accounts person who computed it. For comp-off to credit leave, create a leave type with code `COMP_OFF` in Leave Policy Config.
 
 After migrating, grant the `IT` role to your IT staff (User & Role Mgmt → propose → CEO approves, or insert into `employee_roles`).
@@ -66,6 +68,12 @@ Staff fix a missed or wrong punch with a **time update request** (My Attendance 
 
 - **Comp-off**: once the manager approves, the day is credited to their `COMP_OFF` leave balance.
 - **Overtime pay**: once the manager approves, payroll adds 1× a day's gross (monthly gross ÷ days in month) to that month's payslip.
+
+## Part-time (hourly) pay and the payslip format
+
+In **Increments & Revisions**, choose *Hourly (part-time)* and enter the hourly rate. Payroll then pays **hours worked × rate** (hours come from punches; a day without a punch-out is not paid until a time update is approved). Deductions follow the company part-time payslip: PF 12% of gross, ESI 0.75% of gross (gross ≤ ₹21,000), LWF and advance recovery, no Professional Tax. Accounts can add **arrears** or an **advance recovery** for any employee by opening their payslip under *Run payroll*.
+
+Every payslip prints in the company format (`src/components/common/PayslipView.tsx`, company name and logo in `src/config/company.ts`): division, location, code, name, masked Aadhaar and PAN, designation, department, ESI number; earnings beside LWF / Advance / ESI / PF; gross and total; net payable worked out, the bank account it was paid into and the amount in words. The LWF rate is `STATUTORY_DEDUCTIONS` in `src/config/policy.ts` (0 until Accounts sets it).
 
 ## Payroll approval
 

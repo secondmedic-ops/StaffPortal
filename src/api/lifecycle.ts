@@ -75,6 +75,7 @@ export interface RegistrationPayload {
     employmentType: EmploymentType;
     dateOfJoining: string;
     workLocation?: string;
+    division?: string;
     managerId?: number;
     probation: boolean;
   };
@@ -135,6 +136,7 @@ export const lifecycleApi = {
         employment_type: e.employmentType,
         date_of_joining: e.dateOfJoining,
         work_location: e.workLocation || null,
+        division: e.division || null,
         status: e.probation ? 'PROBATION' : 'ACTIVE',
         manager_id: e.managerId ?? null
       })
@@ -303,6 +305,22 @@ export const lifecycleApi = {
     });
 
     return { employee: mapEmployee(created), completed, warnings };
+  },
+
+  /**
+   * Details printed on a payslip. Bank and ID numbers are visible only to the
+   * employee, HR and Accounts (row-level security); others get nulls.
+   */
+  async getPayslipDetails(employeeId: number): Promise<{ profile: EmployeeProfile | null; division?: string; workLocation?: string }> {
+    const [profileRes, empRes] = await Promise.all([
+      supabase.from('employee_profiles').select('*').eq('employee_id', employeeId).maybeSingle(),
+      supabase.from('employees').select('division, work_location').eq('id', employeeId).maybeSingle()
+    ]);
+    return {
+      profile: profileRes.data ? mapEmployeeProfile(profileRes.data) : null,
+      division: empRes.data?.division ?? undefined,
+      workLocation: empRes.data?.work_location ?? undefined
+    };
   },
 
   async getProfile(employeeId: number): Promise<EmployeeProfile | null> {

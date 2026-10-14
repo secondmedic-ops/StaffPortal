@@ -1,9 +1,10 @@
-import React from 'react';
-import type { PayrollEntry } from '../../types';
-import { amountInWords, formatInr, type PayDay } from '../../lib/payrollEngine';
+import React, { useEffect, useState } from 'react';
+import type { EmployeeProfile, PayrollEntry, PayrollLine } from '../../types';
+import { formatAmount, numberInWords, type PayDay } from '../../lib/payrollEngine';
 import { getMonthName } from '../../utils/dateUtils';
-import { ATTENDANCE_POLICY } from '../../config/policy';
-import { Printer, Stethoscope } from 'lucide-react';
+import { COMPANY } from '../../config/company';
+import { lifecycleApi } from '../../api';
+import { Printer } from 'lucide-react';
 
 const DAY_STYLE: Record<PayDay['kind'], string> = {
   PRESENT: 'bg-emerald-500',
@@ -56,6 +57,27 @@ export const AttendanceStrip: React.FC<{ days: PayDay[] }> = ({ days }) => (
   </div>
 );
 
+/** Deductions always printed, in the order of the company payslip, even at zero. */
+const STANDARD_DEDUCTIONS: Array<[string, string]> = [
+  ['LWF', 'LWF'],
+  ['ADVANCE', 'ADVANCE'],
+  ['ESI', 'ESI'],
+  ['PF', 'PF']
+];
+const OTHER_DEDUCTION_LABELS: Record<string, string> = { PT: 'PROF. TAX', TDS: 'TDS' };
+
+function deductionRows(deductions: PayrollLine[]): Array<{ label: string; amount: number }> {
+  const byCode = new Map(deductions.map(d => [d.code, d]));
+  const rows = STANDARD_DEDUCTIONS.map(([code, label]) => ({ label, amount: byCode.get(code)?.amount ?? 0 }));
+  for (const d of deductions) {
+    if (STANDARD_DEDUCTIONS.some(([code]) => code === d.code)) continue;
+    rows.push({ label: OTHER_DEDUCTION_LABELS[d.code] ?? d.label.toUpperCase(), amount: d.amount });
+  }
+  return rows;
+}
+
+const maskAadhaar = (last4?: string) => (last4 ? `XXXX XXXX ${last4}` : '');
+
 interface PayslipViewProps {
   entry: Pick<
     PayrollEntry,
@@ -75,123 +97,215 @@ interface PayslipViewProps {
     | 'grossEarnings'
     | 'totalDeductions'
     | 'netPay'
-  >;
+  > &
+    Partial<Pick<PayrollEntry, 'payType' | 'workedHours' | 'hourlyRate'>>;
+  /** Loads division, location, ID and bank details for the slip. */
+  employeeId?: number;
   employee: { name: string; code: string; designation?: string; department?: string };
-  bank?: { name?: string; account?: string; pan?: string; uan?: string };
   days?: PayDay[];
   status?: string;
 }
 
-export const PayslipView: React.FC<PayslipViewProps> = ({ entry, employee, bank, days, status }) => {
-  const rows = Math.max(entry.earnings.length, entry.deductions.length);
+/**
+ * Payslip in the company format (Remote Healthcare Technologies part-time slip):
+ * employee block, earnings beside deductions, gross and total, then net payable
+ * worked out, bank transfer and the amount in words.
+ */
+export const PayslipView: React.FC<PayslipViewProps> = ({ entry, employeeId, employee, days, status }) => {
+  const [details, setDetails] = useState<{ profile: EmployeeProfile | null; division?: string; workLocation?: string } | null>(null);
+
+  useEffect(() => {
+    if (!employeeId) return;
+    let cancelled = false;
+    lifecycleApi
+      .getPayslipDetails(employeeId)
+      .then(d => !cancelled && setDetails(d))
+      .catch(() => !cancelled && setDetails({ profile: null }));
+    return () => {
+      cancelled = true;
+    };
+  }, [employeeId]);
+
+  const profile = details?.profile ?? null;
+  const hourly = entry.payType === 'HOURLY';
+  const arrears = entry.earnings.find(e => e.code === 'ARREARS')?.amount ?? 0;
+  const earningLines = entry.earnings.filter(e => e.code !== 'ARREARS');
+  const dRows = deductionRows(entry.deductions);
+  const earningRows = hourly ? 1 : earningLines.length;
+  const bodyRows = Math.max(earningRows, dRows.length);
+
+  const idLine = [maskAadhaar(profile?.aadhaarLast4), profile?.panNumber].filter(Boolean).join(' / ');
+  const info: Array<[string, string | undefined]> = [
+    ['Division', details?.division || COMPANY.defaultDivision],
+    ['Location', details?.workLocation],
+    ['Code', employee.code],
+    ['Name', employee.name.toUpperCase()],
+    ['AADHAR & PAN', idLine],
+    ['Designation', employee.designation],
+    ['Department', employee.department],
+    ['ESI Number', profile?.esicNumber]
+  ];
+
+  const cell = 'border-black px-2 py-1';
+  const num = 'text-right tabular';
+
   return (
     <div className="space-y-3">
-      <div className="flex justify-end no-print">
+      <div className="flex items-center justify-between gap-2 no-print">
+        {status ? <span className="text-[12.5px] text-slate-500 dark:text-slate-400">Status: {status}</span> : <span />}
         <button
+          type="button"
           onClick={() => window.print()}
           className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 flex items-center gap-1.5"
         >
           <Printer className="w-4 h-4" /> Print / Save as PDF
         </button>
       </div>
-      <div className="print-area bg-white text-slate-900 rounded-lg border border-slate-200 p-5 text-xs space-y-4">
-        <div className="flex items-start justify-between border-b border-slate-200 pb-3">
-          <div className="flex items-center gap-2">
-            <div className="w-9 h-9 rounded-lg bg-teal-700 text-white flex items-center justify-center">
-              <Stethoscope className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="font-bold text-sm">SecondMedic</div>
-              <div className="text-[11.5px] text-slate-500">Salary slip · computed from attendance</div>
+
+      <div className="overflow-x-auto">
+        <div className="print-area min-w-[640px] bg-white text-black p-6 sm:p-8 font-[Georgia,'Times_New_Roman',serif] text-[13px] leading-snug">
+          {/* Letterhead */}
+          <div className="flex items-center gap-4">
+            <img src={COMPANY.logoUrl} alt="" className="h-14 w-14 object-contain shrink-0" />
+            <div className="flex-1 text-center pr-14">
+              <div className="text-[19px] font-bold">{COMPANY.legalName}</div>
             </div>
           </div>
-          <div className="text-right">
-            <div className="font-bold text-sm">
-              {getMonthName(entry.month)} {entry.year}
-            </div>
-            {status && <div className="text-[11.5px] text-slate-500 uppercase">{status}</div>}
+          <div className="mt-4 text-center text-[14px]">
+            Pay Slip For The Month Of {getMonthName(entry.month)} - {entry.year}
           </div>
-        </div>
 
-        <div className="grid grid-cols-2 gap-x-6 gap-y-1">
-          <Info label="Employee" value={`${employee.name} (${employee.code})`} />
-          <Info label="Designation" value={employee.designation} />
-          <Info label="Department" value={employee.department} />
-          <Info label="PAN" value={bank?.pan} />
-          <Info label="Bank" value={bank?.name && bank.account ? `${bank.name} ••••${bank.account.slice(-4)}` : undefined} />
-          <Info label="UAN" value={bank?.uan} />
-        </div>
-
-        <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 text-center">
-          {[
-            ['Month days', entry.calendarDays],
-            ['Paid days', entry.payableDays],
-            ['Worked', entry.presentDays],
-            ['Paid leave', entry.paidLeaveDays],
-            ['Late marks', entry.lateMarks],
-            ['LOP days', entry.lopDays]
-          ].map(([l, v]) => (
-            <div key={l as string} className={`p-2 rounded border ${l === 'LOP days' && Number(v) > 0 ? 'border-rose-200 bg-rose-50' : 'border-slate-200 bg-slate-50'}`}>
-              <div className="text-[11.5px] text-slate-500">{l}</div>
-              <div className="font-bold text-sm">{v}</div>
-            </div>
-          ))}
-        </div>
-
-        {days && days.length > 0 && <AttendanceStrip days={days} />}
-
-        <table className="w-full border border-slate-200">
-          <thead className="bg-slate-50 text-[11.5px] uppercase text-slate-600">
-            <tr>
-              <th className="text-left px-2 py-1.5">Earnings</th>
-              <th className="text-right px-2 py-1.5">Amount</th>
-              <th className="text-left px-2 py-1.5 border-l border-slate-200">Deductions</th>
-              <th className="text-right px-2 py-1.5">Amount</th>
-            </tr>
-          </thead>
-          <tbody>
-            {Array.from({ length: rows }).map((_, i) => (
-              <tr key={i} className="border-t border-slate-100">
-                <td className="px-2 py-1">{entry.earnings[i]?.label ?? ''}</td>
-                <td className="px-2 py-1 text-right font-mono">{entry.earnings[i] ? formatInr(entry.earnings[i].amount) : ''}</td>
-                <td className="px-2 py-1 border-l border-slate-200">{entry.deductions[i]?.label ?? ''}</td>
-                <td className="px-2 py-1 text-right font-mono">{entry.deductions[i] ? formatInr(entry.deductions[i].amount) : ''}</td>
+          {/* Employee block */}
+          <table className="mt-4 w-full border-collapse border-y-2 border-black">
+            <tbody>
+              <tr>
+                <td className="align-top py-2 pr-2 w-[62%] border-r border-black">
+                  <table className="w-full">
+                    <tbody>
+                      {info.map(([label, value]) => (
+                        <tr key={label}>
+                          <td className="font-bold pr-2 py-[1px] whitespace-nowrap w-32">{label}</td>
+                          <td className="font-bold py-[1px]">: {value || ''}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </td>
+                <td className="align-top py-2 pl-3 text-[12.5px]">
+                  <table className="w-full">
+                    <tbody>
+                      {(
+                        hourly
+                          ? [
+                              ['Days worked', String(entry.presentDays)],
+                              ['UAN', profile?.uanNumber]
+                            ]
+                          : [
+                              ['Paid days', `${entry.payableDays} / ${entry.calendarDays}`],
+                              ['LOP days', String(entry.lopDays)],
+                              ['UAN', profile?.uanNumber]
+                            ]
+                      ).map(([l, v]) => (
+                        <tr key={l}>
+                          <td className="pr-2 py-[1px] whitespace-nowrap">{l}</td>
+                          <td className="py-[1px]">: {v || ''}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </td>
               </tr>
-            ))}
-            <tr className="border-t border-slate-300 font-bold bg-slate-50">
-              <td className="px-2 py-1.5">Gross earnings</td>
-              <td className="px-2 py-1.5 text-right font-mono">{formatInr(entry.grossEarnings)}</td>
-              <td className="px-2 py-1.5 border-l border-slate-200">Total deductions</td>
-              <td className="px-2 py-1.5 text-right font-mono">{formatInr(entry.totalDeductions)}</td>
-            </tr>
-          </tbody>
-        </table>
+            </tbody>
+          </table>
 
-        <div className="flex flex-col sm:flex-row justify-between gap-2 p-3 rounded-lg bg-teal-50 border border-teal-200">
-          <div>
-            <div className="text-[11.5px] uppercase text-teal-800 font-bold">Net pay</div>
-            <div className="text-[12.5px] text-teal-900 italic">{amountInWords(entry.netPay)}</div>
-          </div>
-          <div className="text-xl font-bold text-teal-900">{formatInr(entry.netPay)}</div>
-        </div>
+          {/* Earnings | Deductions */}
+          <table className="w-full border-collapse border-b border-black">
+            <thead>
+              <tr className="border-b border-black">
+                <th className={`${cell} font-normal text-left`}>{hourly ? 'Total Working Hrs' : 'Earnings'}</th>
+                <th className={`${cell} font-normal ${num}`}>{hourly ? 'Rate' : 'Paid Days'}</th>
+                <th className={`${cell} font-normal ${num}`}>Earning</th>
+                <th className={`${cell} font-normal ${num} border-r`}>Arrears</th>
+                <th className={`${cell} font-normal text-left`}>Deduction</th>
+                <th className={`${cell} font-normal ${num}`}>Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              {Array.from({ length: bodyRows }).map((_, i) => {
+                const d = dRows[i];
+                let left: React.ReactNode = null;
+                if (hourly && i === 0) {
+                  left = (
+                    <>
+                      <td className={`${cell} text-center`}>{formatAmount(entry.workedHours ?? 0).replace(/\.00$/, '')}</td>
+                      <td className={`${cell} ${num}`}>{formatAmount(entry.hourlyRate ?? 0)}</td>
+                      <td className={`${cell} ${num}`}>{formatAmount(earningLines[0]?.amount ?? 0)}</td>
+                      <td className={`${cell} ${num} border-r`}>{arrears ? formatAmount(arrears) : ''}</td>
+                    </>
+                  );
+                } else if (!hourly && earningLines[i]) {
+                  left = (
+                    <>
+                      <td className={cell}>{earningLines[i].label}</td>
+                      <td className={`${cell} ${num}`}>{i === 0 ? `${entry.payableDays} / ${entry.calendarDays}` : ''}</td>
+                      <td className={`${cell} ${num}`}>{formatAmount(earningLines[i].amount)}</td>
+                      <td className={`${cell} ${num} border-r`}>{i === 0 && arrears ? formatAmount(arrears) : ''}</td>
+                    </>
+                  );
+                }
+                return (
+                  <tr key={i}>
+                    {left ?? (
+                      <>
+                        <td className={cell} />
+                        <td className={cell} />
+                        <td className={cell} />
+                        <td className={`${cell} border-r`} />
+                      </>
+                    )}
+                    <td className={cell}>{d?.label ?? ''}</td>
+                    <td className={`${cell} ${num}`}>{d ? formatAmount(d.amount) : ''}</td>
+                  </tr>
+                );
+              })}
+              <tr className="border-t border-black font-bold">
+                <td className={cell}>Gross Pay</td>
+                <td className={cell} />
+                <td className={`${cell} ${num}`} colSpan={2}>
+                  {formatAmount(entry.grossEarnings)}
+                </td>
+                <td className={`${cell} border-l`}>Total</td>
+                <td className={`${cell} ${num}`}>{formatAmount(entry.totalDeductions)}</td>
+              </tr>
+            </tbody>
+          </table>
 
-        {entry.employerContributions.length > 0 && (
-          <div className="text-[11.5px] text-slate-500">
-            Employer contributions (part of CTC, not deducted):{' '}
-            {entry.employerContributions.map(c => `${c.label} ${formatInr(c.amount)}`).join(' · ')}
+          {/* Net payable */}
+          <div className="mt-2 grid grid-cols-[auto_1fr] gap-x-6 gap-y-1">
+            <div>
+              <span className="font-bold">Net Payable:</span>{' '}
+              <span className="font-bold tabular">
+                {formatAmount(entry.grossEarnings)} – {formatAmount(entry.totalDeductions)} = {formatAmount(entry.netPay)}
+              </span>
+            </div>
+            <div>{profile?.bankName ? `Transferred into ${profile.bankName}` : 'Bank details not on record'}</div>
+            <div className="col-span-2">
+              {profile?.bankAccountNumber ? `A/c No. ${profile.bankAccountNumber} ` : ''}
+              Rupees – {numberInWords(entry.netPay)} Only
+            </div>
           </div>
-        )}
-        <div className="text-[11.5px] text-slate-400 border-t border-slate-100 pt-2">
-          Pay is prorated on paid days. Absence without approved leave reduces paid days; a missing punch-out counts as a half day, and every {ATTENDANCE_POLICY.lateMarksPerHalfDayLop} late marks deduct half a day.
+
+          <div className="mt-6">THANK YOU</div>
+          <div className="mt-10 text-right text-[12.5px]">Computer Generated Slip, Hence signature not required</div>
         </div>
       </div>
+
+      {!hourly && days && days.length > 0 && (
+        <div className="no-print rounded-lg border border-slate-200 dark:border-slate-800 p-3">
+          <div className="text-[12.5px] font-semibold text-slate-700 dark:text-slate-300 mb-2">How each day was counted</div>
+          <AttendanceStrip days={days} />
+        </div>
+      )}
     </div>
   );
 };
-
-const Info: React.FC<{ label: string; value?: string }> = ({ label, value }) => (
-  <div className="flex justify-between gap-2">
-    <span className="text-slate-500">{label}</span>
-    <span className="font-medium text-right">{value || '—'}</span>
-  </div>
-);
