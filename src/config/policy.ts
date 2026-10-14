@@ -90,10 +90,7 @@ export const HOURLY_PAY_POLICY = {
 } as const;
 
 export const STATUTORY_DEDUCTIONS = {
-  /**
-   * Labour Welfare Fund, employee share, deducted in the listed months (1-12).
-   * Left at 0 until Accounts confirms the current rate; the line still prints on payslips.
-   */
-  lwfEmployeeAmount: 0,
+  /** Labour Welfare Fund, employee share, deducted in the listed months (1-12). */
+  lwfEmployeeAmount: 25,
   lwfMonths: [6, 12] as number[],
 } as const;
