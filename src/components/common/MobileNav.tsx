@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { LayoutDashboard, CalendarCheck, CalendarPlus, FileText, Menu, X } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { BrandMark, NavList, useNavGroups } from './Sidebar';
+import { BrandMark, NavFooter, NavList, useNavGroups } from './Sidebar';
 
 const QUICK = [
   { id: 'dashboard', label: 'Today', icon: LayoutDashboard },
@@ -46,7 +46,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({ open, onOpenChange }) => {
                 onClick={() => setActiveNav(id)}
                 aria-current={active ? 'page' : undefined}
                 className={`flex flex-col items-center gap-0.5 py-2 min-h-[56px] text-[12.5px] font-medium ${
-                  active ? 'text-teal-700 dark:text-teal-300' : 'text-slate-500 dark:text-slate-400'
+                  active ? 'text-teal-600 dark:text-teal-300' : 'text-slate-500 dark:text-slate-400'
                 }`}
               >
                 <Icon className="h-5 w-5" aria-hidden />
@@ -69,17 +69,17 @@ export const MobileNav: React.FC<MobileNavProps> = ({ open, onOpenChange }) => {
         <div className="md:hidden fixed inset-0 z-50 flex" role="dialog" aria-modal="true" aria-label="Menu">
           <button
             type="button"
-            className="absolute inset-0 bg-ink/60"
+            className="absolute inset-0 bg-ink/50 backdrop-blur-[2px]"
             aria-label="Close menu"
             onClick={() => onOpenChange(false)}
           />
-          <div className="relative w-[85%] max-w-xs h-full bg-ink text-slate-200 flex flex-col shadow-2xl">
+          <div className="relative w-[85%] max-w-xs h-full bg-white dark:bg-slate-900 flex flex-col shadow-2xl">
             <div className="flex items-center justify-between px-4 pt-4 pb-4">
               <BrandMark />
               <button
                 type="button"
                 onClick={() => onOpenChange(false)}
-                className="p-2 rounded-lg text-slate-300 hover:bg-white/10"
+                className="p-2 rounded-lg text-slate-500 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
                 aria-label="Close menu"
               >
                 <X className="h-5 w-5" />
@@ -88,6 +88,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({ open, onOpenChange }) => {
             <div className="flex-1 overflow-y-auto px-3 pb-6">
               <NavList groups={groups} onNavigate={() => onOpenChange(false)} />
             </div>
+            <NavFooter />
           </div>
         </div>
       )}

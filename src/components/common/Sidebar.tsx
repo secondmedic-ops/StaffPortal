@@ -1,12 +1,12 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, LogOut, Moon } from 'lucide-react';
 import { BrandMark } from './BrandMark';
 
 export { BrandMark };
 import { useAuth } from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
 import { usePendingCounts } from '../../context/PendingCountsContext';
 import { buildNavGroups, findNav, groupBadgeTotal, NavGroup } from '../../config/navigation';
-import { SHIFT_POLICY } from '../../config/policy';
 
 /** Navigation groups for the signed-in person, shared by the sidebar, mobile menu and header. */
 export function useNavGroups(): NavGroup[] {
@@ -36,11 +36,10 @@ export const NavList: React.FC<NavListProps> = ({ groups, onNavigate }) => {
   const single = groups.length === 1;
 
   return (
-    <nav aria-label="Main" className="space-y-1">
+    <nav aria-label="Main" className="space-y-0.5">
       {groups.map(group => {
         const isOpen = single || open[group.id];
         const pending = groupBadgeTotal(group);
-        const GroupIcon = group.icon;
         return (
           <div key={group.id}>
             {!single && (
@@ -48,23 +47,26 @@ export const NavList: React.FC<NavListProps> = ({ groups, onNavigate }) => {
                 type="button"
                 onClick={() => setOpen(prev => ({ ...prev, [group.id]: !isOpen }))}
                 aria-expanded={isOpen}
-                className={`w-full flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13.5px] font-semibold transition-colors ${
-                  group.id === current ? 'text-white' : 'text-slate-300 hover:text-white'
-                } hover:bg-white/5`}
+                className={`w-full flex items-center gap-2 rounded-lg px-3 pt-3 pb-1.5 text-[11.5px] font-semibold uppercase tracking-[0.08em] transition-colors ${
+                  group.id === current
+                    ? 'text-slate-700 dark:text-slate-200'
+                    : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'
+                }`}
               >
-                <GroupIcon className="h-4 w-4 shrink-0 opacity-80" aria-hidden />
                 <span className="flex-1 text-left">{group.label}</span>
                 {!isOpen && pending > 0 && (
-                  <span className="rounded-full bg-amber-400 px-1.5 text-[11.5px] font-bold text-ink tabular">{pending}</span>
+                  <span className="rounded-full bg-rose-500 px-1.5 text-[11px] font-semibold leading-[17px] text-white tabular normal-case tracking-normal">
+                    {pending}
+                  </span>
                 )}
                 <ChevronDown
-                  className={`h-4 w-4 shrink-0 text-slate-400 transition-transform duration-200 ${isOpen ? '' : '-rotate-90'}`}
+                  className={`h-3.5 w-3.5 shrink-0 transition-transform duration-200 ${isOpen ? '' : '-rotate-90'}`}
                   aria-hidden
                 />
               </button>
             )}
             {isOpen && (
-              <ul className={`${single ? '' : 'mt-0.5 mb-2 ml-[18px] border-l border-ink-line pl-2'} space-y-px`}>
+              <ul className="space-y-1 pb-1">
                 {group.items.map(item => {
                   const active = activeNav === item.id || (item.id === 'dashboard' && activeNav === 'employee-dashboard');
                   const Icon = item.icon;
@@ -78,20 +80,22 @@ export const NavList: React.FC<NavListProps> = ({ groups, onNavigate }) => {
                           onNavigate?.();
                         }}
                         aria-current={active ? 'page' : undefined}
-                        className={`group w-full flex items-center gap-2.5 rounded-md px-2.5 py-[7px] text-[13.5px] transition-colors ${
+                        className={`group w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-[14px] transition-all ${
                           active
-                            ? 'bg-teal-500/15 text-white font-semibold shadow-[inset_2px_0_0_var(--color-teal-300)]'
-                            : 'text-slate-300 hover:bg-white/5 hover:text-white'
+                            ? 'bg-teal-600 text-white font-medium shadow-primary'
+                            : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white'
                         }`}
                       >
                         <Icon
-                          className={`h-4 w-4 shrink-0 ${active ? 'text-teal-300' : 'text-slate-400 group-hover:text-slate-200'}`}
+                          className={`h-[18px] w-[18px] shrink-0 ${active ? 'text-white' : 'text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-200'}`}
                           aria-hidden
                         />
                         <span className="flex-1 text-left truncate">{item.label}</span>
                         {item.badge !== undefined && (
                           <span
-                            className="rounded-full bg-amber-400 px-1.5 text-[11.5px] font-bold leading-[18px] text-ink tabular"
+                            className={`rounded-full px-1.5 text-[11.5px] font-semibold leading-[18px] tabular ${
+                              active ? 'bg-white text-teal-700' : 'bg-rose-500 text-white'
+                            }`}
                             aria-label={`${item.badge} pending`}
                           >
                             {item.badge}
@@ -110,26 +114,60 @@ export const NavList: React.FC<NavListProps> = ({ groups, onNavigate }) => {
   );
 };
 
+/** Dark mode switch and sign out, pinned under the navigation. */
+export const NavFooter: React.FC = () => {
+  const { isDark, toggleTheme } = useTheme();
+  const { logout } = useAuth();
+  return (
+    <div className="border-t border-slate-200/80 dark:border-slate-800 px-3 py-3 space-y-1">
+      <button
+        type="button"
+        role="switch"
+        aria-checked={isDark}
+        onClick={toggleTheme}
+        className="w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-[14px] text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+      >
+        <Moon className="h-[18px] w-[18px] text-slate-400" aria-hidden />
+        <span className="flex-1 text-left">Dark mode</span>
+        <span
+          className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors ${
+            isDark ? 'bg-teal-600' : 'bg-slate-200'
+          }`}
+          aria-hidden
+        >
+          <span
+            className={`inline-block h-[18px] w-[18px] rounded-full bg-white shadow transition-transform ${
+              isDark ? 'translate-x-[23px]' : 'translate-x-[3px]'
+            }`}
+          />
+        </span>
+      </button>
+      <button
+        type="button"
+        onClick={logout}
+        className="w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-[14px] text-slate-600 dark:text-slate-300 hover:bg-rose-50 hover:text-rose-700 dark:hover:bg-rose-950/40 dark:hover:text-rose-300"
+      >
+        <LogOut className="h-[18px] w-[18px] text-slate-400" aria-hidden />
+        <span className="flex-1 text-left">Sign out</span>
+      </button>
+    </div>
+  );
+};
+
 export const Sidebar: React.FC = () => {
   const groups = useNavGroups();
-  const { currentUser } = useAuth();
 
   return (
-    <aside className="hidden md:flex md:w-64 lg:w-[268px] shrink-0 flex-col bg-ink text-slate-200 h-screen sticky top-0 select-none">
-      <div className="px-4 pt-4 pb-5">
+    <aside className="hidden md:flex md:w-64 lg:w-[268px] shrink-0 flex-col bg-white dark:bg-slate-900 border-r border-slate-200/70 dark:border-slate-800 h-screen sticky top-0 select-none">
+      <div className="h-[72px] flex items-center px-6">
         <BrandMark />
       </div>
 
-      <div className="flex-1 overflow-y-auto scrollbar-thin px-3 pb-4">
+      <div className="flex-1 overflow-y-auto scrollbar-thin px-4 pt-2 pb-4">
         <NavList groups={groups} />
       </div>
 
-      {currentUser && (
-        <div className="border-t border-ink-line px-4 py-3 text-[12.5px] leading-snug text-slate-400">
-          <div className="font-medium text-slate-200 truncate">{currentUser.departmentName || 'SecondMedic'}</div>
-          <div className="truncate">Shift {SHIFT_POLICY.startTime} to {SHIFT_POLICY.endTime}</div>
-        </div>
-      )}
+      <NavFooter />
     </aside>
   );
 };

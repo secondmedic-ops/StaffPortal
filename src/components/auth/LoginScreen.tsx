@@ -58,7 +58,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
     <div className="min-h-screen grid lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] bg-white dark:bg-slate-950">
       {/* Brand panel */}
       <aside className="relative hidden lg:flex flex-col justify-between overflow-hidden bg-ink px-12 py-10 text-slate-200">
-        <BrandMark />
+        <BrandMark tone="onDark" />
 
         <div className="relative max-w-md">
           <h1 className="font-display text-[34px] leading-[1.15] font-semibold text-white">
@@ -92,7 +92,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
       {/* Sign-in form */}
       <main className="relative flex flex-col px-5 sm:px-10 py-8">
         <div className="flex items-center justify-between">
-          <div className="lg:hidden rounded-xl bg-ink px-3 py-2">
+          <div className="lg:hidden">
             <BrandMark />
           </div>
           <div className="ml-auto">

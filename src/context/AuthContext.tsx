@@ -447,7 +447,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-slate-50 dark:bg-slate-950" role="status">
-        <div className="rounded-xl bg-ink px-3 py-2">
+        <div>
           <BrandMark />
         </div>
         <div className="h-1 w-40 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">

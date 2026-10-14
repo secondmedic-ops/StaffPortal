@@ -7,53 +7,59 @@
  *
  * Components use Tailwind's `teal-*` for the brand and `slate-*` for neutrals,
  * so the palette is redefined here rather than in 50 screens:
- *   teal  → SecondMedic clinical teal (deeper and bluer than stock teal)
- *   slate → "ink" neutrals tinted toward the sidebar navy
- * Type: Lexend for headings and figures, Source Sans 3 for reading text.
+ *   teal  → SecondMedic royal blue (primary actions, active navigation)
+ *   slate → cool neutrals on a soft grey-blue canvas
+ * Type: Lexend throughout, with tabular figures in tables and counters.
+ * Cards are 16px-radius white panels with a soft lift (see `cardClass`).
  */
 @theme {
-  --font-sans: "Source Sans 3", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-display: "Lexend", "Source Sans 3", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Lexend", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: "Lexend", ui-sans-serif, system-ui, sans-serif;
   --font-mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
 
   /* Readable floor: dense UI text was 12px, now 13px */
   --text-xs: 0.8125rem;
   --text-xs--line-height: 1.15rem;
-  --text-sm: 0.9rem;
+  --text-sm: 0.875rem;
   --text-sm--line-height: 1.3rem;
 
-  --color-ink: #12233a;
-  --color-ink-soft: #1b3150;
-  --color-ink-line: #2a4263;
+  --radius-xl: 0.875rem;
+  --radius-2xl: 1.125rem;
 
-  --color-teal-50: #eef8f7;
-  --color-teal-100: #d4eeeb;
-  --color-teal-200: #a9dcd7;
-  --color-teal-300: #73c2bb;
-  --color-teal-400: #3fa49d;
-  --color-teal-500: #1d8882;
-  --color-teal-600: #0f726d;
-  --color-teal-700: #0c5f5b;
-  --color-teal-800: #0d4c4a;
-  --color-teal-900: #0e3f3e;
-  --color-teal-950: #052626;
+  --color-ink: #161b33;
+  --color-ink-soft: #222846;
+  --color-ink-line: #2f3656;
 
-  --color-slate-50: #f4f6f8;
-  --color-slate-100: #eaeef2;
-  --color-slate-200: #dbe1e8;
-  --color-slate-300: #c2cbd5;
-  --color-slate-400: #758293;
-  --color-slate-500: #5a6677;
-  --color-slate-600: #445062;
-  --color-slate-700: #333e4f;
-  --color-slate-800: #1f2a3a;
-  --color-slate-850: #18222f;
-  --color-slate-900: #121b27;
-  --color-slate-950: #0b121b;
+  --color-teal-50: #eff2ff;
+  --color-teal-100: #e1e7ff;
+  --color-teal-200: #c8d2ff;
+  --color-teal-300: #a3b3fe;
+  --color-teal-400: #7c8cfb;
+  --color-teal-500: #5a6bf6;
+  --color-teal-600: #3f51ec;
+  --color-teal-700: #3240d1;
+  --color-teal-800: #2b36a8;
+  --color-teal-900: #2a3485;
+  --color-teal-950: #1a1f4d;
 
-  --shadow-xs: 0 1px 2px 0 rgb(18 35 58 / 0.05);
-  --shadow-sm: 0 1px 3px 0 rgb(18 35 58 / 0.07), 0 1px 2px -1px rgb(18 35 58 / 0.05);
-  --shadow-lift: 0 10px 30px -12px rgb(18 35 58 / 0.25);
+  --color-slate-50: #f5f6fa;
+  --color-slate-100: #eef0f5;
+  --color-slate-200: #e4e7ef;
+  --color-slate-300: #cdd2de;
+  --color-slate-400: #7d8497;
+  --color-slate-500: #636a7e;
+  --color-slate-600: #4a5063;
+  --color-slate-700: #353a4b;
+  --color-slate-800: #222736;
+  --color-slate-850: #1a1e2b;
+  --color-slate-900: #141824;
+  --color-slate-950: #0d1018;
+
+  --shadow-xs: 0 1px 2px 0 rgb(22 27 51 / 0.04);
+  --shadow-sm: 0 1px 3px 0 rgb(22 27 51 / 0.06), 0 1px 2px -1px rgb(22 27 51 / 0.04);
+  --shadow-card: 0 1px 2px 0 rgb(22 27 51 / 0.03), 0 6px 24px -10px rgb(22 27 51 / 0.10);
+  --shadow-primary: 0 8px 20px -8px rgb(63 81 236 / 0.55);
+  --shadow-lift: 0 16px 40px -16px rgb(22 27 51 / 0.28);
 }
 
 @keyframes loadbar {
