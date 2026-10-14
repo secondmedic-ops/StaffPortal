@@ -165,7 +165,8 @@ export const lifecycleApi = {
       emergency_contact_phone: p.emergencyContactPhone || null,
       emergency_contact_relation: p.emergencyContactRelation || null,
       pan_number: p.panNumber ? p.panNumber.toUpperCase() : null,
-      aadhaar_last4: p.aadhaarLast4 || null,
+      aadhaar_last4: p.aadhaarNumber ? p.aadhaarNumber.slice(-4) : p.aadhaarLast4 || null,
+      aadhaar_number: p.aadhaarNumber || null,
       uan_number: p.uanNumber || null,
       esic_number: p.esicNumber || null,
       bank_name: p.bankName || null,
@@ -321,6 +322,38 @@ export const lifecycleApi = {
       division: empRes.data?.division ?? undefined,
       workLocation: empRes.data?.work_location ?? undefined
     };
+  },
+
+  /** HR saves an employee's statutory IDs and bank account (bank details are mandatory). */
+  async saveStatutoryDetails(
+    employeeId: number,
+    d: Pick<EmployeeProfile, 'panNumber' | 'aadhaarNumber' | 'uanNumber' | 'esicNumber'> & {
+      bankName: string;
+      bankAccountNumber: string;
+      bankIfsc: string;
+    }
+  ): Promise<void> {
+    const { error } = await supabase.from('employee_profiles').upsert(
+      {
+        employee_id: employeeId,
+        pan_number: d.panNumber ? d.panNumber.toUpperCase() : null,
+        aadhaar_number: d.aadhaarNumber || null,
+        ...(d.aadhaarNumber ? { aadhaar_last4: d.aadhaarNumber.slice(-4) } : {}),
+        uan_number: d.uanNumber || null,
+        esic_number: d.esicNumber || null,
+        bank_name: d.bankName.trim(),
+        bank_account_number: d.bankAccountNumber.trim(),
+        bank_ifsc: d.bankIfsc.trim().toUpperCase(),
+        updated_at: new Date().toISOString()
+      },
+      { onConflict: 'employee_id' }
+    );
+    if (error) throw new Error(`Failed to save bank & ID details: ${error.message}`);
+    const me = await getSessionEmployee();
+    await logAudit(me, 'EMPLOYEE', 'BANK_DETAILS_UPDATED', `Bank & statutory details updated for employee #${employeeId}`, {
+      type: 'employee',
+      id: employeeId
+    });
   },
 
   async getProfile(employeeId: number): Promise<EmployeeProfile | null> {

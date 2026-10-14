@@ -76,7 +76,9 @@ function deductionRows(deductions: PayrollLine[]): Array<{ label: string; amount
   return rows;
 }
 
-const maskAadhaar = (last4?: string) => (last4 ? `XXXX XXXX ${last4}` : '');
+/** Full Aadhaar as on the company payslip; older records holding only the last 4 digits stay masked. */
+const aadhaarText = (p: EmployeeProfile | null) =>
+  p?.aadhaarNumber ? p.aadhaarNumber : p?.aadhaarLast4 ? `XXXX XXXX ${p.aadhaarLast4}` : '';
 
 interface PayslipViewProps {
   entry: Pick<
@@ -134,7 +136,7 @@ export const PayslipView: React.FC<PayslipViewProps> = ({ entry, employeeId, emp
   const earningRows = hourly ? 1 : earningLines.length;
   const bodyRows = Math.max(earningRows, dRows.length);
 
-  const idLine = [maskAadhaar(profile?.aadhaarLast4), profile?.panNumber].filter(Boolean).join(' / ');
+  const idLine = [aadhaarText(profile), profile?.panNumber].filter(Boolean).join(' / ');
   const info: Array<[string, string | undefined]> = [
     ['Division', details?.division || COMPANY.defaultDivision],
     ['Location', details?.workLocation],

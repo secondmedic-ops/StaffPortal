@@ -69,6 +69,7 @@ export const AttendancePayroll: React.FC = () => {
     return {
       headcount: list.length,
       missingSalary: list.filter(r => !r.revision).length,
+      missingBank: list.filter(r => r.revision && r.bankMissing).length,
       gross: paid.reduce((s, r) => s + r.computation.grossEarnings, 0),
       net: paid.reduce((s, r) => s + r.computation.netPay, 0),
       lop: list.reduce((s, r) => s + r.computation.lopDays, 0),
@@ -219,7 +220,11 @@ export const AttendancePayroll: React.FC = () => {
       ) : (
         <>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <StatCard label="Employees" value={totals.headcount} hint={totals.missingSalary ? `${totals.missingSalary} without approved salary` : 'All have salary'} icon={Users} tone={totals.missingSalary ? 'amber' : 'teal'} />
+            <StatCard label="Employees" value={totals.headcount} hint={
+                [totals.missingSalary && `${totals.missingSalary} without approved salary`, totals.missingBank && `${totals.missingBank} without bank details`]
+                  .filter(Boolean)
+                  .join(', ') || 'All set for payslips'
+              } icon={Users} tone={totals.missingSalary || totals.missingBank ? 'amber' : 'teal'} />
             <StatCard label="Gross payroll" value={formatInr(totals.gross)} icon={IndianRupee} tone="sky" />
             <StatCard label="Net payout" value={formatInr(totals.net)} icon={IndianRupee} tone="purple" />
             <StatCard label="Loss of pay" value={`${totals.lop} days`} hint={`${totals.withLop} employees affected`} icon={CalendarX} tone="rose" />
@@ -238,7 +243,12 @@ export const AttendancePayroll: React.FC = () => {
                 <Download className="w-4 h-4" /> Register CSV
               </button>
               <button
-                onClick={() => run('Saved as draft', () => compensationApi.saveDrafts(year, month, rows), n => `${n} entries saved and sent to your reporting manager for approval.`)}
+                onClick={() => run('Saved as draft', () => compensationApi.saveDrafts(year, month, rows), n =>
+                      `${n} entries saved and sent to your reporting manager for approval.${
+                        totals.missingBank ? ` ${totals.missingBank} skipped: no bank details.` : ''
+                      }`
+                  )
+                }
                 disabled={!!busy}
                 className={secondaryBtn}
               >
@@ -308,6 +318,10 @@ export const AttendancePayroll: React.FC = () => {
                           {!r.revision ? (
                             <span className="text-[11.5px] font-semibold text-amber-700 dark:text-amber-400 flex items-center gap-1">
                               <AlertTriangle className="w-3 h-3" /> No salary
+                            </span>
+                          ) : r.bankMissing && r.existing?.status !== 'PUBLISHED' ? (
+                            <span className="text-[11.5px] font-semibold text-amber-700 dark:text-amber-400 flex items-center gap-1" title="HR must add bank details under Staff directory → Bank & ID">
+                              <AlertTriangle className="w-3 h-3" /> No bank details
                             </span>
                           ) : r.existing ? (
                             <StatusPill status={r.existing.status} />

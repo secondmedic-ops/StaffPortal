@@ -152,3 +152,11 @@ assert(!r.warnings.some(w => w.includes('Loss of pay')), 'arrears do not trigger
 
 // 25. Amount in words matches the payslip wording
 assert(numberInWords(5235) === 'Five Thousand Two Hundred Thirty Five', `5235 in words (got ${numberInWords(5235)})`);
+
+// 26. LWF ₹25 in June and December only
+const lwf = (month: number) =>
+  computePayroll({ year: 2026, month, salary: hourly, attendance: [], leaves: [], holidays: [], today: '2027-01-15', arrears: 1000 })
+    .deductions.find(d => d.code === 'LWF')?.amount ?? 0;
+assert(lwf(6) === 25 && lwf(12) === 25 && lwf(11) === 0, `LWF 25 in Jun/Dec, none in Nov (got ${lwf(6)}/${lwf(12)}/${lwf(11)})`);
+r = computePayroll({ year: 2026, month: 12, salary, attendance: [], leaves: [], holidays: [], today: '2026-12-01' });
+assert(r.deductions.find(d => d.code === 'LWF')?.amount === 25, 'monthly staff also pay LWF in December');

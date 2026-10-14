@@ -29,6 +29,8 @@ export interface PayrollPreviewRow {
   /** Engine input, kept so Accounts can re-run it after entering arrears or an advance. */
   input: PayrollInput;
   existing?: PayrollEntry;
+  /** No bank name / account on the profile: the payslip cannot be saved until HR adds them. */
+  bankMissing: boolean;
 }
 
 /** Re-run one employee's pay with new one-off amounts. */
@@ -178,7 +180,7 @@ export const compensationApi = {
     const { start, end } = monthBounds(year, month);
     const warnings: string[] = [];
 
-    const [empRes, attRes, leaveRes, typeRes, holRes, revisions, entryRes] = await Promise.all([
+    const [empRes, attRes, leaveRes, typeRes, holRes, revisions, entryRes, bankRes] = await Promise.all([
       supabase.from('employees').select('*, department:departments!employees_department_id_fkey(name)').order('full_name'),
       fetchMonthAttendance(start, end),
       supabase
@@ -190,7 +192,8 @@ export const compensationApi = {
       supabase.from('leave_types').select('id, code, is_paid'),
       supabase.from('holidays').select('holiday_date, is_restricted, is_optional').gte('holiday_date', start).lte('holiday_date', end),
       this.getRevisions(),
-      supabase.from('payroll_entries').select(ENTRY_SELECT).eq('year', year).eq('month', month)
+      supabase.from('payroll_entries').select(ENTRY_SELECT).eq('year', year).eq('month', month),
+      supabase.from('employee_profiles').select('employee_id, bank_name, bank_account_number')
     ]);
 
     for (const [label, res] of [
@@ -199,7 +202,8 @@ export const compensationApi = {
       ['leave requests', leaveRes],
       ['leave types', typeRes],
       ['holidays', holRes],
-      ['payroll entries', entryRes]
+      ['payroll entries', entryRes],
+      ['bank details', bankRes]
     ] as const) {
       if (res.error) throw new Error(`Failed to load ${label}: ${res.error.message}`);
     }
@@ -208,6 +212,9 @@ export const compensationApi = {
     const holidays = (holRes.data ?? []).filter(h => !h.is_restricted && !h.is_optional).map(h => h.holiday_date);
     const salaryMap = pickEffective(revisions, end);
     const existingMap = new Map((entryRes.data ?? []).map(r => [r.employee_id, mapPayrollEntry(r)]));
+    const withBank = new Set(
+      (bankRes.data ?? []).filter(b => b.bank_name?.trim() && b.bank_account_number?.trim()).map(b => b.employee_id)
+    );
 
     const attendanceByEmp = new Map<number, AttendanceRecord[]>();
     for (const row of attRes.data ?? []) {
@@ -267,8 +274,15 @@ export const compensationApi = {
         arrears: lineAmount(existing?.earnings, 'ARREARS'),
         advance: lineAmount(existing?.deductions, 'ADVANCE')
       };
-      return { employee, revision, input, computation: computePayroll(input), existing };
+      return { employee, revision, input, computation: computePayroll(input), existing, bankMissing: !withBank.has(employee.id) };
     });
+
+    const noBank = rows.filter(r => r.bankMissing && r.revision).length;
+    if (noBank > 0) {
+      warnings.push(
+        `${noBank} employee${noBank === 1 ? ' has' : 's have'} no bank details, so their payslips won't be saved. Ask HR to add them under Staff directory → Bank & ID.`
+      );
+    }
 
     return { rows, warnings };
   },
@@ -277,7 +291,7 @@ export const compensationApi = {
   async saveDrafts(year: number, month: number, rows: PayrollPreviewRow[]): Promise<number> {
     const me = await getSessionEmployee();
     const payload = rows
-      .filter(r => r.revision && r.existing?.status !== 'PUBLISHED')
+      .filter(r => r.revision && !r.bankMissing && r.existing?.status !== 'PUBLISHED')
       .map(({ employee, revision, computation: c }) => ({
         employee_id: employee.id,
         year,

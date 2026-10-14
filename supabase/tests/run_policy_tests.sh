@@ -123,7 +123,11 @@ expect_ok   4 "insert into employee_profiles(employee_id, pan_number, bank_accou
 expect_val  3 "select pan_number from employee_profiles" "ABCDE1234F" "Employee sees own profile"
 expect_val  5 "select count(*) from employee_profiles" "1" "Accounts sees bank details"
 expect_val  2 "select count(*) from employee_profiles" "0" "Manager cannot see report's bank details"
-expect_fail 4 "insert into employee_profiles(employee_id, aadhaar_last4) values (2,'12345678')" "Full Aadhaar rejected"
+expect_fail 4 "insert into employee_profiles(employee_id, aadhaar_last4) values (2,'12345678')" "Full Aadhaar in the last-4 field rejected"
+expect_fail 4 "update employee_profiles set aadhaar_number='12345' where employee_id=3" "Aadhaar must be 12 digits"
+expect_ok   4 "update employee_profiles set aadhaar_number='123456789012' where employee_id=3" "HR saves full Aadhaar"
+expect_val  3 "select aadhaar_last4 from employee_profiles" "9012" "Last 4 digits kept in step"
+expect_val  2 "select count(*) from employee_profiles where aadhaar_number is not null" "0" "Manager cannot see Aadhaar"
 
 echo "== Leave balance trigger =="
 expect_val 5 "select reserved||'/'||used from leave_balances where fy_year='2026-2027' and leave_type_id=1" "0/5" "Approved 5 days used, withdrawn day released (latest FY row)"

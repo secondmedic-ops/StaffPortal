@@ -338,6 +338,7 @@ export function mapEmployeeProfile(row: any): EmployeeProfile {
     emergencyContactRelation: opt(row.emergency_contact_relation),
     panNumber: opt(row.pan_number),
     aadhaarLast4: opt(row.aadhaar_last4),
+    aadhaarNumber: opt(row.aadhaar_number),
     uanNumber: opt(row.uan_number),
     esicNumber: opt(row.esic_number),
     bankName: opt(row.bank_name),

@@ -867,6 +867,7 @@ export interface Database {
           emergency_contact_relation: string | null;
           pan_number: string | null;
           aadhaar_last4: string | null;
+          aadhaar_number: string | null;
           uan_number: string | null;
           esic_number: string | null;
           bank_name: string | null;
