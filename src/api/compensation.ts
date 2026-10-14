@@ -7,11 +7,12 @@ import {
   mapSalaryRevision
 } from './mappers';
 import { overtimeApi } from './overtime';
-import { computePayroll, type PayrollComputation, type PayrollLeave } from '../lib/payrollEngine';
+import { computePayroll, type PayrollComputation, type PayrollInput, type PayrollLeave } from '../lib/payrollEngine';
 import type {
   AttendanceRecord,
   Employee,
   PayrollEntry,
+  PayType,
   SalaryRevision,
   SalaryRevisionType
 } from '../types';
@@ -25,8 +26,19 @@ export interface PayrollPreviewRow {
   employee: Employee;
   revision: SalaryRevision | null;
   computation: PayrollComputation;
+  /** Engine input, kept so Accounts can re-run it after entering arrears or an advance. */
+  input: PayrollInput;
   existing?: PayrollEntry;
 }
+
+/** Re-run one employee's pay with new one-off amounts. */
+export function recomputeRow(row: PayrollPreviewRow, adjustments: { arrears?: number; advance?: number }): PayrollPreviewRow {
+  const input = { ...row.input, ...adjustments };
+  return { ...row, input, computation: computePayroll(input) };
+}
+
+const lineAmount = (lines: { code: string; amount: number }[] | undefined, code: string) =>
+  lines?.find(l => l.code === code)?.amount ?? 0;
 
 /** Supabase caps responses at 1,000 rows; page through month-wide attendance. */
 async function fetchMonthAttendance(start: string, end: string) {
@@ -86,6 +98,8 @@ export const compensationApi = {
     otherAllowanceMonthly: number;
     tdsMonthly: number;
     pfApplicable: boolean;
+    payType?: PayType;
+    hourlyRate?: number;
     incrementPct?: number;
     newDesignation?: string;
     reason?: string;
@@ -105,6 +119,8 @@ export const compensationApi = {
         other_allowance_monthly: data.otherAllowanceMonthly,
         tds_monthly: data.tdsMonthly,
         pf_applicable: data.pfApplicable,
+        pay_type: data.payType ?? 'MONTHLY',
+        hourly_rate: data.payType === 'HOURLY' ? data.hourlyRate ?? null : null,
         increment_pct: data.incrementPct ?? null,
         new_designation: data.newDesignation || null,
         reason: data.reason || null,
@@ -236,7 +252,8 @@ export const compensationApi = {
 
     const rows: PayrollPreviewRow[] = employees.map(employee => {
       const revision = salaryMap.get(employee.id) ?? null;
-      const computation = computePayroll({
+      const existing = existingMap.get(employee.id);
+      const input: PayrollInput = {
         year,
         month,
         dateOfJoining: employee.dateOfJoining,
@@ -245,9 +262,12 @@ export const compensationApi = {
         attendance: attendanceByEmp.get(employee.id) ?? [],
         leaves: leavesByEmp.get(employee.id) ?? [],
         holidays,
-        overtimeDays: overtimeByEmp.get(employee.id) ?? 0
-      });
-      return { employee, revision, computation, existing: existingMap.get(employee.id) };
+        overtimeDays: overtimeByEmp.get(employee.id) ?? 0,
+        // Keep one-off amounts Accounts entered on a saved draft.
+        arrears: lineAmount(existing?.earnings, 'ARREARS'),
+        advance: lineAmount(existing?.deductions, 'ADVANCE')
+      };
+      return { employee, revision, input, computation: computePayroll(input), existing };
     });
 
     return { rows, warnings };
@@ -276,6 +296,9 @@ export const compensationApi = {
         gross_earnings: c.grossEarnings,
         total_deductions: c.totalDeductions,
         net_pay: c.netPay,
+        pay_type: c.payType,
+        worked_hours: c.workedHours,
+        hourly_rate: c.hourlyRate ?? null,
         status: 'DRAFT' as const,
         revision_id: revision?.id ?? null,
         computed_by: me.id,

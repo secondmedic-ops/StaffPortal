@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { compensationApi, hrApi } from '../../api';
-import type { Employee, SalaryRevision, SalaryRevisionType } from '../../types';
+import type { Employee, PayType, SalaryRevision, SalaryRevisionType } from '../../types';
 import { SALARY_SPLIT_POLICY } from '../../config/policy';
 import { splitCtc, formatInr } from '../../lib/payrollEngine';
 import { formatDate } from '../../utils/dateUtils';
@@ -29,9 +29,15 @@ function firstOfNextMonth(): string {
 const monthlyGross = (r: Pick<SalaryRevision, 'basicMonthly' | 'hraMonthly' | 'specialMonthly' | 'otherAllowanceMonthly'>) =>
   r.basicMonthly + r.hraMonthly + r.specialMonthly + r.otherAllowanceMonthly;
 
+/** "₹4,80,000 p.a." for monthly salaries, "₹60.00 / hr" for part-time. */
+export const salaryLabel = (r: Pick<SalaryRevision, 'payType' | 'hourlyRate' | 'ctcAnnual'>) =>
+  r.payType === 'HOURLY' ? `${formatInr(r.hourlyRate ?? 0)} / hr` : `${formatInr(r.ctcAnnual)} p.a.`;
+
 interface ProposalForm {
   employeeId: number | '';
   revisionType: SalaryRevisionType;
+  payType: PayType;
+  hourlyRate: string;
   effectiveFrom: string;
   incrementPct: string;
   ctcAnnual: string;
@@ -49,6 +55,8 @@ interface ProposalForm {
 const blankForm = (): ProposalForm => ({
   employeeId: '',
   revisionType: 'INCREMENT',
+  payType: 'MONTHLY',
+  hourlyRate: '',
   effectiveFrom: firstOfNextMonth(),
   incrementPct: '',
   ctcAnnual: '',
@@ -135,6 +143,7 @@ export const IncrementsRevisions: React.FC = () => {
       if (cur) {
         base.pfApplicable = cur.pfApplicable;
         base.tdsMonthly = String(cur.tdsMonthly);
+        base.payType = cur.payType;
       }
     }
     setForm(base);
@@ -149,6 +158,8 @@ export const IncrementsRevisions: React.FC = () => {
       revisionType: cur ? (prev.revisionType === 'JOINING' ? 'INCREMENT' : prev.revisionType) : 'JOINING',
       pfApplicable: cur?.pfApplicable ?? prev.pfApplicable,
       tdsMonthly: cur ? String(cur.tdsMonthly) : prev.tdsMonthly,
+      payType: cur?.payType ?? prev.payType,
+      hourlyRate: '',
       incrementPct: '',
       ctcAnnual: ''
     }));
@@ -169,13 +180,19 @@ export const IncrementsRevisions: React.FC = () => {
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.employeeId) return;
-    const ctc = Number(form.ctcAnnual);
-    if (!(ctc > 0)) {
+    const hourly = form.payType === 'HOURLY';
+    const rate = Number(form.hourlyRate);
+    if (hourly && !(rate > 0)) {
+      showToast('Hourly rate required', 'Enter the hourly rate for this part-time employee.', 'error');
+      return;
+    }
+    const ctc = hourly ? 0 : Number(form.ctcAnnual);
+    if (!hourly && !(ctc > 0)) {
       showToast('CTC required', 'Enter the revised annual CTC or an increment %.', 'error');
       return;
     }
-    const basic = Number(form.basicMonthly);
-    if (!(basic > 0)) {
+    const basic = hourly ? 0 : Number(form.basicMonthly);
+    if (!hourly && !(basic > 0)) {
       showToast('Basic required', 'Monthly basic must be greater than zero.', 'error');
       return;
     }
@@ -187,11 +204,13 @@ export const IncrementsRevisions: React.FC = () => {
         effectiveFrom: form.effectiveFrom,
         ctcAnnual: ctc,
         basicMonthly: basic,
-        hraMonthly: Number(form.hraMonthly) || 0,
-        specialMonthly: Number(form.specialMonthly) || 0,
-        otherAllowanceMonthly: Number(form.otherAllowanceMonthly) || 0,
+        hraMonthly: hourly ? 0 : Number(form.hraMonthly) || 0,
+        specialMonthly: hourly ? 0 : Number(form.specialMonthly) || 0,
+        otherAllowanceMonthly: hourly ? 0 : Number(form.otherAllowanceMonthly) || 0,
         tdsMonthly: Number(form.tdsMonthly) || 0,
         pfApplicable: form.pfApplicable,
+        payType: form.payType,
+        hourlyRate: hourly ? rate : undefined,
         incrementPct: form.incrementPct !== '' ? Number(form.incrementPct) : undefined,
         newDesignation: form.revisionType === 'PROMOTION' ? form.newDesignation : undefined,
         reason: form.reason
@@ -305,8 +324,8 @@ export const IncrementsRevisions: React.FC = () => {
                         {r.reason && <div className="text-xs text-slate-600 dark:text-slate-400 mt-1 italic">“{r.reason}”</div>}
                       </div>
                       <div className="text-right">
-                        <div className="text-[12.5px] text-slate-500">{prev ? `${formatInr(prev.ctcAnnual)} →` : 'New CTC'}</div>
-                        <div className="text-lg font-bold text-slate-900 dark:text-slate-100">{formatInr(r.ctcAnnual)}</div>
+                        <div className="text-[12.5px] text-slate-500">{prev ? `${salaryLabel(prev)} →` : r.payType === 'HOURLY' ? 'Hourly rate' : 'New CTC'}</div>
+                        <div className="text-lg font-bold text-slate-900 dark:text-slate-100">{salaryLabel(r)}</div>
                         {r.incrementPct != null && (
                           <div className={`text-[12.5px] font-bold ${r.incrementPct >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
                             {r.incrementPct >= 0 ? '+' : ''}
@@ -316,16 +335,24 @@ export const IncrementsRevisions: React.FC = () => {
                       </div>
                     </div>
                     <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 mt-3 text-[12.5px]">
-                      {[
+                      {(r.payType === 'HOURLY'
+                        ? [
+                            ['Pay type', 'Hourly (part-time)'],
+                            ['Rate / hour', r.hourlyRate ?? 0],
+                            ['PF', r.pfApplicable ? '12% of gross' : 'No'],
+                            ['TDS / month', r.tdsMonthly]
+                          ]
+                        : [
                         ['Basic', r.basicMonthly],
                         ['HRA', r.hraMonthly],
                         ['Special', r.specialMonthly],
                         ['Gross / month', monthlyGross(r)],
                         ['TDS / month', r.tdsMonthly]
-                      ].map(([l, v]) => (
+                          ]
+                      ).map(([l, v]) => (
                         <div key={l as string} className="p-2 rounded bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800">
                           <div className="text-slate-500">{l}</div>
-                          <div className="font-bold text-slate-900 dark:text-slate-100">{formatInr(v as number)}</div>
+                          <div className="font-bold text-slate-900 dark:text-slate-100">{typeof v === 'number' ? formatInr(v) : v}</div>
                         </div>
                       ))}
                     </div>
@@ -375,7 +402,7 @@ export const IncrementsRevisions: React.FC = () => {
                             {e.empCode} · {e.designation}
                           </div>
                         </td>
-                        <td className="px-3 py-2.5 text-right font-mono">{cur ? formatInr(cur.ctcAnnual) : <span className="text-rose-600 font-sans font-semibold">Not set</span>}</td>
+                        <td className="px-3 py-2.5 text-right font-mono">{cur ? salaryLabel(cur) : <span className="text-rose-600 font-sans font-semibold">Not set</span>}</td>
                         <td className="px-3 py-2.5 text-right font-mono">{cur ? formatInr(monthlyGross(cur)) : '—'}</td>
                         <td className="px-3 py-2.5">{cur ? `${formatDate(cur.effectiveFrom)} (${cur.revisionType.toLowerCase()})` : '—'}</td>
                         <td className="px-3 py-2.5">{cur ? (cur.pfApplicable ? 'Yes' : 'No') : '—'}</td>
@@ -419,7 +446,7 @@ export const IncrementsRevisions: React.FC = () => {
                       </td>
                       <td className="px-3 py-2.5">{r.revisionType}</td>
                       <td className="px-3 py-2.5">{formatDate(r.effectiveFrom)}</td>
-                      <td className="px-3 py-2.5 text-right font-mono">{formatInr(r.ctcAnnual)}</td>
+                      <td className="px-3 py-2.5 text-right font-mono">{salaryLabel(r)}</td>
                       <td className="px-3 py-2.5 text-right">{r.incrementPct != null ? `${r.incrementPct}%` : '—'}</td>
                       <td className="px-3 py-2.5">
                         <StatusPill status={r.status} />
@@ -458,7 +485,7 @@ export const IncrementsRevisions: React.FC = () => {
               </select>
               {form.employeeId && (
                 <p className="text-[12.5px] text-slate-500 mt-1">
-                  Current: {selectedCurrent ? `${formatInr(selectedCurrent.ctcAnnual)} p.a. since ${formatDate(selectedCurrent.effectiveFrom)}` : 'no approved salary yet'}
+                  Current: {selectedCurrent ? `${salaryLabel(selectedCurrent)} since ${formatDate(selectedCurrent.effectiveFrom)}` : 'no approved salary yet'}
                 </p>
               )}
             </div>
@@ -475,16 +502,57 @@ export const IncrementsRevisions: React.FC = () => {
               <label className={labelClass}>Effective from *</label>
               <input type="date" required value={form.effectiveFrom} onChange={e => set('effectiveFrom', e.target.value)} className={inputClass} />
             </div>
-            {selectedCurrent && (
+            <div className="col-span-2">
+              <label className={labelClass}>Pay type</label>
+              <div className="grid grid-cols-2 gap-2">
+                {(
+                  [
+                    ['MONTHLY', 'Monthly salary', 'Prorated by paid days'],
+                    ['HOURLY', 'Hourly (part-time)', 'Hours worked × rate']
+                  ] as Array<[PayType, string, string]>
+                ).map(([value, label, hint]) => (
+                  <label
+                    key={value}
+                    className={`flex items-start gap-2 p-2.5 rounded-lg border cursor-pointer ${
+                      form.payType === value ? 'border-teal-500 bg-teal-50 dark:bg-teal-950/40' : 'border-slate-200 dark:border-slate-700'
+                    }`}
+                  >
+                    <input type="radio" name="payType" checked={form.payType === value} onChange={() => set('payType', value)} className="mt-0.5" />
+                    <span>
+                      <span className="block text-xs font-semibold text-slate-800 dark:text-slate-200">{label}</span>
+                      <span className="block text-[12.5px] text-slate-500">{hint}</span>
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </div>
+            {form.payType === 'HOURLY' && (
+              <div className="col-span-2 grid grid-cols-3 gap-3">
+                <div>
+                  <label className={labelClass}>Hourly rate (₹) *</label>
+                  <input type="number" min={0} step="0.01" value={form.hourlyRate} onChange={e => set('hourlyRate', e.target.value)} className={`${inputClass} font-mono`} placeholder="60" />
+                </div>
+                <div>
+                  <label className={labelClass}>TDS / month (₹)</label>
+                  <input type="number" min={0} value={form.tdsMonthly} onChange={e => set('tdsMonthly', e.target.value)} className={`${inputClass} font-mono`} />
+                </div>
+                <label className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300 mt-6">
+                  <input type="checkbox" checked={form.pfApplicable} onChange={e => set('pfApplicable', e.target.checked)} /> PF (12% of gross)
+                </label>
+              </div>
+            )}
+            {form.payType === 'MONTHLY' && selectedCurrent && selectedCurrent.payType === 'MONTHLY' && (
               <div>
                 <label className={labelClass}>Increment %</label>
                 <input type="number" step="0.01" value={form.incrementPct} onChange={e => onPctChange(e.target.value)} className={inputClass} placeholder="10" />
               </div>
             )}
-            <div className={selectedCurrent ? '' : 'col-span-2'}>
-              <label className={labelClass}>New annual CTC (₹) *</label>
-              <input type="number" min={0} value={form.ctcAnnual} onChange={e => onCtcChange(e.target.value)} className={inputClass} />
-            </div>
+            {form.payType === 'MONTHLY' && (
+              <div className={selectedCurrent?.payType === 'MONTHLY' ? '' : 'col-span-2'}>
+                <label className={labelClass}>New annual CTC (₹) *</label>
+                <input type="number" min={0} value={form.ctcAnnual} onChange={e => onCtcChange(e.target.value)} className={inputClass} />
+              </div>
+            )}
             {form.revisionType === 'PROMOTION' && (
               <div className="col-span-2">
                 <label className={labelClass}>New designation</label>
@@ -493,6 +561,7 @@ export const IncrementsRevisions: React.FC = () => {
             )}
           </div>
 
+          {form.payType === 'MONTHLY' && (
           <div className="p-3 rounded-lg border border-slate-200 dark:border-slate-800 space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-slate-800 dark:text-slate-200">Monthly components</span>
@@ -534,6 +603,7 @@ export const IncrementsRevisions: React.FC = () => {
               Gross / month: <strong className="text-slate-800 dark:text-slate-200">{formatInr(formGross)}</strong>
             </div>
           </div>
+          )}
 
           <div>
             <label className={labelClass}>Reason / appraisal note</label>

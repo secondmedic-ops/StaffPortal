@@ -7,8 +7,8 @@
  * entries, and employees see the same breakdown on their payslip, so the rule
  * that "salary follows attendance" is transparent to everyone.
  */
-import { ATTENDANCE_POLICY, OVERTIME_POLICY, PAYROLL_POLICY, SHIFT_POLICY } from '../config/policy';
-import type { AttendanceRecord, PayrollLine } from '../types';
+import { ATTENDANCE_POLICY, HOURLY_PAY_POLICY, OVERTIME_POLICY, PAYROLL_POLICY, SHIFT_POLICY, STATUTORY_DEDUCTIONS } from '../config/policy';
+import type { AttendanceRecord, PayrollLine, PayType } from '../types';
 import { toISODate } from '../utils/dateUtils';
 
 export type PayDayKind =
@@ -49,6 +49,8 @@ export interface PayrollSalary {
   otherAllowanceMonthly: number;
   tdsMonthly: number;
   pfApplicable: boolean;
+  payType?: PayType;
+  hourlyRate?: number;
 }
 
 export interface PayrollInput {
@@ -65,6 +67,9 @@ export interface PayrollInput {
   overtimeDays?: number;
   /** Override "today" for deterministic previews/tests. */
   today?: string;
+  /** One-off amounts Accounts enters for the month. */
+  arrears?: number;
+  advance?: number;
 }
 
 export interface PayrollComputation {
@@ -87,6 +92,10 @@ export interface PayrollComputation {
   holidayWorkedDays: number;
   overtimeDays: number;
   payFactor: number;
+  payType: PayType;
+  /** Hours worked in the month (hourly pay). */
+  workedHours: number;
+  hourlyRate?: number;
   earnings: PayrollLine[];
   deductions: PayrollLine[];
   employerContributions: PayrollLine[];
@@ -157,6 +166,18 @@ function workFraction(
 function professionalTax(gross: number): number {
   return gross > 0 ? PAYROLL_POLICY.professionalTaxMonthly : 0;
 }
+
+/** Hours on a punch record: stored worked hours, else punch-out minus punch-in. */
+function hoursOn(rec: AttendanceRecord): number | null {
+  if (rec.workedHours != null && rec.punchOut) return rec.workedHours;
+  if (rec.punchIn && rec.punchOut) {
+    const h = (new Date(rec.punchOut).getTime() - new Date(rec.punchIn).getTime()) / 3_600_000;
+    return h > 0 ? h : 0;
+  }
+  return null;
+}
+
+const round2 = (n: number) => Math.round(n * 100) / 100;
 
 export function computePayroll(input: PayrollInput): PayrollComputation {
   const { year, month } = input;
@@ -259,31 +280,31 @@ export function computePayroll(input: PayrollInput): PayrollComputation {
   const deductions: PayrollLine[] = [];
   const employerContributions: PayrollLine[] = [];
   const salary = input.salary;
+  const payType: PayType = salary?.payType === 'HOURLY' ? 'HOURLY' : 'MONTHLY';
+  const arrears = round(Math.max(0, input.arrears ?? 0));
+  const advance = round(Math.max(0, input.advance ?? 0));
 
-  if (!salary) {
-    warnings.push('No approved salary revision effective for this month.');
-  } else {
-    const basic = round(salary.basicMonthly * payFactor);
-    earnings.push({ code: 'BASIC', label: 'Basic Salary', amount: basic });
-    earnings.push({ code: 'HRA', label: 'House Rent Allowance', amount: round(salary.hraMonthly * payFactor) });
-    earnings.push({ code: 'SPECIAL', label: 'Special Allowance', amount: round(salary.specialMonthly * payFactor) });
-    if (salary.otherAllowanceMonthly > 0) {
-      earnings.push({ code: 'OTHER', label: 'Other Allowance', amount: round(salary.otherAllowanceMonthly * payFactor) });
+  // Hours worked on employed days, used for hourly pay and shown on every payslip.
+  let workedHours = 0;
+  let daysWithHours = 0;
+  const missingOut: string[] = [];
+  for (const d of days) {
+    if (d.kind === 'NOT_EMPLOYED') continue;
+    const rec = attByDate.get(d.date);
+    if (!rec?.punchIn && !rec?.isRegularized) continue;
+    const h = rec ? hoursOn(rec) : null;
+    if (h == null) {
+      if (rec?.punchIn && d.date < today) missingOut.push(d.date.slice(8));
+      continue;
     }
-    const fullGross =
-      salary.basicMonthly + salary.hraMonthly + salary.specialMonthly + salary.otherAllowanceMonthly;
-    const overtimeDays = input.overtimeDays ?? 0;
-    if (overtimeDays > 0) {
-      earnings.push({
-        code: 'OVERTIME',
-        label: `Overtime — holiday/Sunday work (${overtimeDays} day${overtimeDays === 1 ? '' : 's'})`,
-        amount: round((fullGross / calendarDays) * overtimeDays * OVERTIME_POLICY.payMultiplier)
-      });
-    }
-    const gross = sum(earnings);
+    workedHours += h;
+    if (h > 0) daysWithHours++;
+  }
+  workedHours = round2(workedHours);
 
-    if (salary.pfApplicable && basic > 0) {
-      const pfWage = Math.min(basic, PAYROLL_POLICY.pfWageCeiling);
+  const addStatutory = (gross: number, pfWageBase: number, fullGross: number, applyPt: boolean) => {
+    if (salary!.pfApplicable && pfWageBase > 0) {
+      const pfWage = Math.min(pfWageBase, PAYROLL_POLICY.pfWageCeiling);
       deductions.push({ code: 'PF', label: 'Provident Fund (Employee)', amount: round(pfWage * PAYROLL_POLICY.pfRate) });
       employerContributions.push({
         code: 'PF_ER',
@@ -299,13 +320,56 @@ export function computePayroll(input: PayrollInput): PayrollComputation {
         amount: Math.ceil(gross * PAYROLL_POLICY.esiEmployerRate),
       });
     }
-    const pt = professionalTax(gross);
-    if (pt > 0) deductions.push({ code: 'PT', label: 'Professional Tax', amount: pt });
-    if (salary.tdsMonthly > 0 && gross > 0) {
-      deductions.push({ code: 'TDS', label: 'Income Tax (TDS)', amount: round(Math.min(salary.tdsMonthly, gross)) });
+    if (applyPt) {
+      const pt = professionalTax(gross);
+      if (pt > 0) deductions.push({ code: 'PT', label: 'Professional Tax', amount: pt });
     }
+    if (STATUTORY_DEDUCTIONS.lwfEmployeeAmount > 0 && STATUTORY_DEDUCTIONS.lwfMonths.includes(month) && gross > 0) {
+      deductions.push({ code: 'LWF', label: 'Labour Welfare Fund', amount: STATUTORY_DEDUCTIONS.lwfEmployeeAmount });
+    }
+    if (advance > 0) deductions.push({ code: 'ADVANCE', label: 'Salary Advance Recovery', amount: advance });
+    if (salary!.tdsMonthly > 0 && gross > 0) {
+      deductions.push({ code: 'TDS', label: 'Income Tax (TDS)', amount: round(Math.min(salary!.tdsMonthly, gross)) });
+    }
+  };
 
-    const lopAmount = round(fullGross - (gross - (earnings.find(e => e.code === 'OVERTIME')?.amount ?? 0)));
+  if (!salary) {
+    warnings.push('No approved salary revision effective for this month.');
+  } else if (payType === 'HOURLY') {
+    const rate = salary.hourlyRate ?? 0;
+    if (!(rate > 0)) warnings.push('Hourly salary has no hourly rate.');
+    if (missingOut.length > 0) {
+      warnings.push(`No punch-out on day(s) ${missingOut.join(', ')}: those hours are not paid until a time update is approved.`);
+    }
+    earnings.push({ code: 'HOURLY', label: 'Hourly Pay', amount: round(workedHours * rate) });
+    if (arrears > 0) earnings.push({ code: 'ARREARS', label: 'Arrears', amount: arrears });
+    const gross = sum(earnings);
+    addStatutory(gross, HOURLY_PAY_POLICY.pfOnGross ? gross : 0, gross, HOURLY_PAY_POLICY.professionalTax);
+  } else {
+    const basic = round(salary.basicMonthly * payFactor);
+    earnings.push({ code: 'BASIC', label: 'Basic Salary', amount: basic });
+    earnings.push({ code: 'HRA', label: 'House Rent Allowance', amount: round(salary.hraMonthly * payFactor) });
+    earnings.push({ code: 'SPECIAL', label: 'Special Allowance', amount: round(salary.specialMonthly * payFactor) });
+    if (salary.otherAllowanceMonthly > 0) {
+      earnings.push({ code: 'OTHER', label: 'Other Allowance', amount: round(salary.otherAllowanceMonthly * payFactor) });
+    }
+    const fullGross =
+      salary.basicMonthly + salary.hraMonthly + salary.specialMonthly + salary.otherAllowanceMonthly;
+    const overtimeDays = input.overtimeDays ?? 0;
+    let overtimeAmount = 0;
+    if (overtimeDays > 0) {
+      overtimeAmount = round((fullGross / calendarDays) * overtimeDays * OVERTIME_POLICY.payMultiplier);
+      earnings.push({
+        code: 'OVERTIME',
+        label: `Overtime — holiday/Sunday work (${overtimeDays} day${overtimeDays === 1 ? '' : 's'})`,
+        amount: overtimeAmount
+      });
+    }
+    const proratedGross = sum(earnings) - overtimeAmount;
+    if (arrears > 0) earnings.push({ code: 'ARREARS', label: 'Arrears', amount: arrears });
+    addStatutory(sum(earnings), basic, fullGross, true);
+
+    const lopAmount = round(fullGross - proratedGross);
     if (lopAmount > 0) {
       // Informational: LOP is already applied through proration, not deducted twice.
       warnings.push(`Loss of pay: ${lopDays} day(s) ≈ ₹${lopAmount.toLocaleString('en-IN')} withheld.`);
@@ -314,13 +378,15 @@ export function computePayroll(input: PayrollInput): PayrollComputation {
 
   const grossEarnings = sum(earnings);
   const totalDeductions = sum(deductions);
+  // Hourly staff are paid for hours, so day-based paid/LOP counts do not apply.
+  const isHourly = payType === 'HOURLY' && Boolean(salary);
 
   return {
     days,
     calendarDays,
     employedDays,
-    payableDays,
-    presentDays: count('PRESENT') + count('HALF_DAY') * 0.5,
+    payableDays: isHourly ? daysWithHours : payableDays,
+    presentDays: isHourly ? daysWithHours : count('PRESENT') + count('HALF_DAY') * 0.5,
     halfDays: count('HALF_DAY'),
     paidLeaveDays: count('PAID_LEAVE'),
     unpaidLeaveDays: count('UNPAID_LEAVE'),
@@ -329,11 +395,14 @@ export function computePayroll(input: PayrollInput): PayrollComputation {
     absentDays: count('ABSENT'),
     projectedDays,
     lateMarks,
-    lateLopDays,
-    lopDays,
+    lateLopDays: isHourly ? 0 : lateLopDays,
+    lopDays: isHourly ? 0 : lopDays,
     holidayWorkedDays: days.filter(d => d.workedOnOffDay).length,
     overtimeDays: input.overtimeDays ?? 0,
     payFactor,
+    payType,
+    workedHours,
+    hourlyRate: payType === 'HOURLY' ? salary?.hourlyRate : undefined,
     earnings,
     deductions,
     employerContributions,
@@ -368,10 +437,10 @@ export function splitCtc(
   return { basicMonthly, hraMonthly, specialMonthly };
 }
 
-/** Convert a number to Indian-English words for payslips. */
-export function amountInWords(num: number): string {
+/** Whole number in Indian-English words, e.g. 5235 → "Five Thousand Two Hundred Thirty Five". */
+export function numberInWords(num: number): string {
   const n0 = Math.round(num);
-  if (n0 <= 0) return 'Zero Rupees Only';
+  if (n0 <= 0) return 'Zero';
   const a = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Eleven', 'Twelve',
     'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
   const b = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
@@ -383,8 +452,17 @@ export function amountInWords(num: number): string {
     if (n < 10000000) return words(Math.floor(n / 100000)) + ' Lakh' + (n % 100000 ? ' ' + words(n % 100000) : '');
     return words(Math.floor(n / 10000000)) + ' Crore' + (n % 10000000 ? ' ' + words(n % 10000000) : '');
   };
-  return `${words(n0)} Rupees Only`;
+  return words(n0);
 }
+
+/** Convert a number to Indian-English words for payslips. */
+export function amountInWords(num: number): string {
+  return Math.round(num) <= 0 ? 'Zero Rupees Only' : `${numberInWords(num)} Rupees Only`;
+}
+
+/** Payslip figure: 6000 → "6,000.00". */
+export const formatAmount = (n: number) =>
+  n.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 export const formatInr = (n: number) =>
   `₹${Math.round(n).toLocaleString('en-IN')}`;

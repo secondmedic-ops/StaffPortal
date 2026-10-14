@@ -2,7 +2,7 @@
  * Payroll engine checks — run with `npm test`.
  * Each case is hand-calculated so a policy change that alters pay shows up here.
  */
-import { computePayroll, splitCtc } from './payrollEngine';
+import { computePayroll, numberInWords, splitCtc } from './payrollEngine';
 const assert = (c: boolean, m: string) => { if (!c) { console.error('FAIL', m); process.exitCode = 1; } else console.log('ok  ', m); };
 const salary = { basicMonthly: 20000, hraMonthly: 8000, specialMonthly: 12000, otherAllowanceMonthly: 0, tdsMonthly: 1000, pfApplicable: true };
 // Sept 2026: 30 days, Sundays 6,13,20,27 (4). 26 working days.
@@ -117,3 +117,38 @@ const ot = r.earnings.find(e => e.code === 'OVERTIME');
 assert(ot?.amount === Math.round((40000 / 30) * 1.5), `overtime 1.5 days = ${Math.round((40000 / 30) * 1.5)} (got ${ot?.amount})`);
 assert(r.grossEarnings === 42000 && r.deductions.find(d => d.code === 'PF')!.amount === 1800, 'overtime raises gross but not PF');
 assert(!r.warnings.some(w => w.includes('Loss of pay')), 'overtime does not trigger a false LOP warning');
+
+// 21. Part-time hourly pay, as on the company part-time payslip:
+//     100 h × ₹60 = 6000; PF 12% = 720; ESI 0.75% = 45; total 765; net 5235; no PT.
+const hourly = { basicMonthly: 0, hraMonthly: 0, specialMonthly: 0, otherAllowanceMonthly: 0, tdsMonthly: 0, pfApplicable: true, payType: 'HOURLY' as const, hourlyRate: 60 };
+const att21 = workdays.slice(0, 20).map(d => punch(d, '10:00', 5)); // 20 days × 5h = 100h
+r = computePayroll({ year: 2026, month: 9, salary: hourly, attendance: att21, leaves: [], holidays: [], today });
+assert(r.payType === 'HOURLY' && r.workedHours === 100, `hourly worked 100h (got ${r.workedHours})`);
+assert(r.grossEarnings === 6000, `100h × 60 = 6000 (got ${r.grossEarnings})`);
+assert(r.deductions.find(d => d.code === 'PF')!.amount === 720, 'hourly PF = 12% of gross = 720');
+assert(r.deductions.find(d => d.code === 'ESI')!.amount === 45, 'hourly ESI = 0.75% of gross = 45');
+assert(!r.deductions.find(d => d.code === 'PT'), 'no Professional Tax on the part-time payslip');
+assert(r.totalDeductions === 765 && r.netPay === 5235, `total 765, net 5235 (got ${r.totalDeductions}/${r.netPay})`);
+assert(!r.warnings.some(w => w.includes('Loss of pay')), 'hourly pay shows no LOP warning');
+assert(r.presentDays === 20 && r.lopDays === 0, `hourly: 20 days worked, no LOP days (got ${r.presentDays}/${r.lopDays})`);
+
+// 22. Arrears add to gross; advance is recovered; missing punch-out hours are not paid
+const att22 = [...att21.slice(0, 19), { ...punch(workdays[19], '10:00', 5), punchOut: undefined, workedHours: undefined }];
+r = computePayroll({ year: 2026, month: 9, salary: hourly, attendance: att22, leaves: [], holidays: [], today, arrears: 500, advance: 1000 });
+assert(r.workedHours === 95 && r.earnings.find(e => e.code === 'HOURLY')!.amount === 5700, `95h paid (got ${r.workedHours})`);
+assert(r.earnings.find(e => e.code === 'ARREARS')!.amount === 500 && r.grossEarnings === 6200, 'arrears added to gross');
+assert(r.deductions.find(d => d.code === 'ADVANCE')!.amount === 1000, 'advance recovered');
+assert(r.warnings.some(w => w.includes('No punch-out')), 'missing punch-out warned');
+
+// 23. Hours are taken from punch times when worked hours were not stored
+const att23 = [{ ...punch(1, '10:00', 6), workedHours: undefined }];
+r = computePayroll({ year: 2026, month: 9, salary: hourly, attendance: att23, leaves: [], holidays: [], today });
+assert(r.workedHours === 6 && r.grossEarnings === 360, `hours from punch times (got ${r.workedHours})`);
+
+// 24. Monthly salary: arrears and advance flow through without touching LOP
+r = computePayroll({ year: 2026, month: 9, salary, attendance: workdays.map(d => punch(d, '09:20', 9)), leaves: [], holidays: [], today, arrears: 2000, advance: 3000 });
+assert(r.grossEarnings === 42000 && r.deductions.find(d => d.code === 'ADVANCE')!.amount === 3000, 'monthly arrears/advance applied');
+assert(!r.warnings.some(w => w.includes('Loss of pay')), 'arrears do not trigger a false LOP warning');
+
+// 25. Amount in words matches the payslip wording
+assert(numberInWords(5235) === 'Five Thousand Two Hundred Thirty Five', `5235 in words (got ${numberInWords(5235)})`);

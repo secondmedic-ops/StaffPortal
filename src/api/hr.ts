@@ -84,6 +84,7 @@ export const hrApi = {
     if (data.joiningDate !== undefined) updatePayload.date_of_joining = data.joiningDate;
     if (data.dateOfExit !== undefined) updatePayload.date_of_exit = data.dateOfExit;
     if (data.workLocation !== undefined) updatePayload.work_location = data.workLocation;
+    if (data.division !== undefined) updatePayload.division = data.division;
     if (data.status !== undefined) updatePayload.status = data.status;
     if (data.managerId !== undefined) updatePayload.manager_id = data.managerId;
     if (data.avatarUrl !== undefined) updatePayload.avatar_url = data.avatarUrl;

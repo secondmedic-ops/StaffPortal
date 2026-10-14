@@ -181,6 +181,7 @@ export const PayrollApproval: React.FC = () => {
         {viewing && (
           <PayslipView
             entry={viewing}
+            employeeId={viewing.employeeId}
             employee={{ name: viewing.employeeName ?? '', code: viewing.employeeCode ?? '', designation: viewing.designation, department: viewing.departmentName }}
             status={viewing.status}
           />
