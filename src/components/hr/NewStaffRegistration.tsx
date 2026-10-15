@@ -42,7 +42,7 @@ interface FormState {
   dateOfJoining: string;
   workLocation: string;
   division: string;
-  managerId: number | '';
+  managerId: number | '' | 'NONE';
   probation: boolean;
   dateOfBirth: string;
   gender: string;
@@ -150,7 +150,7 @@ export const NewStaffRegistration: React.FC = () => {
       if (!form.departmentId) return 'Select a department.';
       if (!form.designation.trim()) return 'Designation is required.';
       if (!form.dateOfJoining) return 'Date of joining is required.';
-      if (!form.managerId) return 'Select a reporting manager — leave & attendance approvals route to them.';
+      if (!form.managerId) return 'Select a reporting manager (or choose "None — Top Executive / Reports to Board").';
     }
     if (s === 1) {
       if (form.emergencyContactPhone && !MOBILE_RE.test(form.emergencyContactPhone.replace(/\s/g, ''))) return 'Emergency contact number looks invalid.';
@@ -189,7 +189,7 @@ export const NewStaffRegistration: React.FC = () => {
         dateOfJoining: form.dateOfJoining,
         workLocation: form.workLocation.trim() || undefined,
         division: form.division.trim() || undefined,
-        managerId: form.managerId ? Number(form.managerId) : undefined,
+        managerId: form.managerId && form.managerId !== 'NONE' ? Number(form.managerId) : undefined,
         probation: form.probation
       },
       profile: {
@@ -366,8 +366,16 @@ export const NewStaffRegistration: React.FC = () => {
             {field('Date of joining *', <input type="date" value={form.dateOfJoining} onChange={e => set('dateOfJoining', e.target.value)} className={inputClass} />)}
             {field(
               'Reporting manager * (approves leave & attendance)',
-              <select value={form.managerId} onChange={e => set('managerId', e.target.value ? Number(e.target.value) : '')} className={inputClass}>
+              <select
+                value={form.managerId}
+                onChange={e => {
+                  const val = e.target.value;
+                  set('managerId', val === 'NONE' ? 'NONE' : val ? Number(val) : '');
+                }}
+                className={inputClass}
+              >
                 <option value="">Select…</option>
+                <option value="NONE">None — Top-level executive / reports to Board (Approvals route to HR)</option>
                 {employees.map(e => (
                   <option key={e.id} value={e.id}>
                     {e.fullName} — {e.designation}
@@ -507,7 +515,7 @@ export const NewStaffRegistration: React.FC = () => {
                 ['Department', departments.find(d => d.id === form.departmentId)?.name],
                 ['Designation', form.designation],
                 ['Joining', form.dateOfJoining],
-                ['Reports to', employees.find(e => e.id === form.managerId)?.fullName],
+                ['Reports to', form.managerId === 'NONE' ? 'None (Reports to Board / HR Queue)' : employees.find(e => e.id === form.managerId)?.fullName || '—'],
                 ['Status', form.probation ? 'Probation' : 'Active']
               ]}
             />
