@@ -865,9 +865,17 @@ export interface Database {
           emergency_contact_name: string | null;
           emergency_contact_phone: string | null;
           emergency_contact_relation: string | null;
+          updated_at: string;
+        },
+        'employee_id',
+        [EmployeeFk<'employee_profiles_employee_id_fkey', 'employee_id'>]
+      >;
+      employee_financials: LifecycleTable<
+        {
+          employee_id: number;
           pan_number: string | null;
-          aadhaar_last4: string | null;
           aadhaar_number: string | null;
+          aadhaar_last4: string | null;
           uan_number: string | null;
           esic_number: string | null;
           bank_name: string | null;
@@ -876,7 +884,7 @@ export interface Database {
           updated_at: string;
         },
         'employee_id',
-        [EmployeeFk<'employee_profiles_employee_id_fkey', 'employee_id'>]
+        [EmployeeFk<'employee_financials_employee_id_fkey', 'employee_id'>]
       >;
       assets: LifecycleTable<
         {

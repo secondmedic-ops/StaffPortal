@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { getTodayIsoString } from '../../utils/dateUtils';
-import { teamApi } from '../../api';
-import { Employee, AttendanceRecord } from '../../types';
+import { teamApi, compensationApi } from '../../api';
+import { Employee, AttendanceRecord, SalaryRevision } from '../../types';
+import { salaryLabel } from '../accounts/IncrementsRevisions';
 import { formatTime } from '../../utils/dateUtils';
 import { Users, CheckCircle2, Clock, AlertCircle, Calendar, ChevronRight, MapPin } from 'lucide-react';
 import { StatusPill } from '../common/StatusPill';
@@ -12,12 +13,15 @@ export const TeamDashboard: React.FC = () => {
   const { currentUser, setActiveNav, showToast } = useAuth();
   const [loading, setLoading] = useState(true);
   const [teamMembers, setTeamMembers] = useState<Array<{ employee: Employee; attendance?: AttendanceRecord }>>([]);
+  const [salaries, setSalaries] = useState<Map<number, SalaryRevision>>(new Map());
 
   const fetchTeamData = async () => {
     try {
       setLoading(true);
       const data = await teamApi.getTeamAttendance(getTodayIsoString());
       setTeamMembers(data);
+      // Approved CTC of the team; failure here should not hide attendance.
+      compensationApi.getTeamSalaries().then(setSalaries).catch(() => setSalaries(new Map()));
     } catch (err: any) {
       showToast('Error', err.message || 'Failed to load team data', 'error');
     } finally {
@@ -96,6 +100,7 @@ export const TeamDashboard: React.FC = () => {
                 <tr>
                   <th className="px-5 py-3">Employee</th>
                   <th className="px-5 py-3">Role & Type</th>
+                  <th className="px-5 py-3">Current CTC</th>
                   <th className="px-5 py-3">Shift Status</th>
                   <th className="px-5 py-3">Punch In</th>
                   <th className="px-5 py-3">Punch Out</th>
@@ -114,6 +119,9 @@ export const TeamDashboard: React.FC = () => {
                       <span className="text-[11.5px] text-slate-500 dark:text-slate-400 uppercase font-semibold">
                         {employee.employmentType}
                       </span>
+                    </td>
+                    <td className="px-5 py-4 font-mono whitespace-nowrap">
+                      {salaries.get(employee.id) ? salaryLabel(salaries.get(employee.id)!) : <span className="text-slate-400">—</span>}
                     </td>
                     <td className="px-5 py-4">
                       <StatusPill status={attendance?.status || 'ABSENT'} />

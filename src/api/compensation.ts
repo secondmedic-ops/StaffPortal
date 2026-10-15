@@ -86,6 +86,13 @@ export const compensationApi = {
     return (data ?? []).map(mapSalaryRevision);
   },
 
+  /** Current approved salary of each person in my reporting line (row-level security limits the rows). */
+  async getTeamSalaries(): Promise<Map<number, SalaryRevision>> {
+    const { data, error } = await supabase.from('salary_revisions').select('*').eq('status', 'APPROVED');
+    if (error) throw new Error(`Failed to load team salaries: ${error.message}`);
+    return pickEffective((data ?? []).map(mapSalaryRevision), new Date().toISOString().split('T')[0]);
+  },
+
   async getCurrentSalaries(asOf: string = new Date().toISOString().split('T')[0]): Promise<Map<number, SalaryRevision>> {
     return pickEffective(await this.getRevisions(), asOf);
   },
@@ -195,7 +202,7 @@ export const compensationApi = {
       supabase.from('holidays').select('holiday_date, is_restricted, is_optional').gte('holiday_date', start).lte('holiday_date', end),
       this.getRevisions(),
       supabase.from('payroll_entries').select(ENTRY_SELECT).eq('year', year).eq('month', month),
-      supabase.from('employee_profiles').select('employee_id, bank_name, bank_account_number')
+      supabase.from('employee_financials').select('employee_id, bank_name, bank_account_number')
     ]);
 
     for (const [label, res] of [

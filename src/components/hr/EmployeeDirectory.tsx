@@ -3,11 +3,10 @@ import { useAuth } from '../../context/AuthContext';
 import { hrApi } from '../../api';
 import { Employee, Department, EmploymentType } from '../../types';
 import { formatDate } from '../../utils/dateUtils';
-import { Users, Search, Plus, Edit2, Filter, Mail, Phone, Building2, ChevronRight, Landmark } from 'lucide-react';
+import { Users, Search, Plus, Edit2, Filter, Mail, Phone, Building2, ChevronRight } from 'lucide-react';
 import { StatusPill } from '../common/StatusPill';
 import { Modal } from '../common/Modal';
 import { SkeletonLoader } from '../common/SkeletonLoader';
-import { BankDetailsModal } from './BankDetailsModal';
 
 export const EmployeeDirectory: React.FC = () => {
   const { currentUser, showToast } = useAuth();
@@ -21,7 +20,6 @@ export const EmployeeDirectory: React.FC = () => {
   // Add / Edit Modal
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingEmp, setEditingEmp] = useState<Employee | null>(null);
-  const [bankEmp, setBankEmp] = useState<Employee | null>(null);
 
   // Form State
   const [empCode, setEmpCode] = useState('');
@@ -236,14 +234,6 @@ export const EmployeeDirectory: React.FC = () => {
                     </td>
                     <td className="px-5 py-3.5 text-right whitespace-nowrap">
                       <button
-                        onClick={() => setBankEmp(emp)}
-                        className="p-1.5 rounded-lg text-slate-400 dark:text-slate-500 hover:text-teal-700 dark:hover:text-teal-300 hover:bg-teal-50 dark:hover:bg-teal-950/40 transition-colors"
-                        title="Bank & ID details"
-                        aria-label={`Bank and ID details for ${emp.fullName}`}
-                      >
-                        <Landmark className="w-4 h-4" />
-                      </button>
-                      <button
                         onClick={() => openEditModal(emp)}
                         className="p-1.5 rounded-lg text-slate-400 dark:text-slate-500 hover:text-teal-700 dark:hover:text-teal-300 hover:bg-teal-50 dark:hover:bg-teal-950/40 transition-colors"
                         title="Edit Details & Manager"
@@ -398,7 +388,6 @@ export const EmployeeDirectory: React.FC = () => {
           </form>
         </Modal>
       )}
-      <BankDetailsModal employee={bankEmp} onClose={() => setBankEmp(null)} />
     </div>
   );
 };

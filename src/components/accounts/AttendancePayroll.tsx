@@ -15,12 +15,15 @@ import {
   IndianRupee,
   CalendarX,
   Download,
-  Info
+  Info,
+  Landmark
 } from 'lucide-react';
 import { Modal } from '../common/Modal';
 import { SkeletonLoader } from '../common/SkeletonLoader';
 import { StatusPill } from '../common/StatusPill';
 import { PayslipView } from '../common/PayslipView';
+import { BankDetailsModal } from './BankDetailsModal';
+import type { Employee } from '../../types';
 import { PageHeader, StatCard, EmptyState, inputClass, compactInputClass, primaryBtn, secondaryBtn, cardClass, tableHeadClass } from '../common/PageHeader';
 
 function defaultPeriod() {
@@ -43,6 +46,7 @@ export const AttendancePayroll: React.FC = () => {
   const [search, setSearch] = useState('');
 
   const [viewing, setViewing] = useState<PayrollPreviewRow | null>(null);
+  const [bankEmp, setBankEmp] = useState<Employee | null>(null);
   const [adjust, setAdjust] = useState({ arrears: '', advance: '' });
 
   const compute = async () => {
@@ -289,7 +293,21 @@ export const AttendancePayroll: React.FC = () => {
                     return (
                       <tr key={r.employee.id} onClick={() => openPayslip(r)} className="cursor-pointer hover:bg-slate-50/80 dark:hover:bg-slate-800/40">
                         <td className="px-4 py-2.5">
-                          <div className="font-semibold text-slate-900 dark:text-slate-100">{r.employee.fullName}</div>
+                          <div className="font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
+                            {r.employee.fullName}
+                            <button
+                              type="button"
+                              onClick={e => {
+                                e.stopPropagation();
+                                setBankEmp(r.employee);
+                              }}
+                              className="p-1 rounded text-slate-400 hover:text-teal-700 dark:hover:text-teal-300 hover:bg-teal-50 dark:hover:bg-teal-950/40"
+                              title="Bank & ID details"
+                              aria-label={`Bank and ID details for ${r.employee.fullName}`}
+                            >
+                              <Landmark className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
                           <div className="text-[12.5px] text-slate-500">
                             {r.employee.empCode} · {r.employee.departmentName}
                           </div>
@@ -320,9 +338,17 @@ export const AttendancePayroll: React.FC = () => {
                               <AlertTriangle className="w-3 h-3" /> No salary
                             </span>
                           ) : r.bankMissing && r.existing?.status !== 'PUBLISHED' ? (
-                            <span className="text-[11.5px] font-semibold text-amber-700 dark:text-amber-400 flex items-center gap-1" title="HR must add bank details under Staff directory → Bank & ID">
-                              <AlertTriangle className="w-3 h-3" /> No bank details
-                            </span>
+                            <button
+                              type="button"
+                              onClick={e => {
+                                e.stopPropagation();
+                                setBankEmp(r.employee);
+                              }}
+                              className="text-[11.5px] font-semibold text-amber-700 dark:text-amber-400 flex items-center gap-1 hover:underline"
+                              title="Add bank details"
+                            >
+                              <AlertTriangle className="w-3 h-3" /> Add bank details
+                            </button>
                           ) : r.existing ? (
                             <StatusPill status={r.existing.status} />
                           ) : (
@@ -407,6 +433,8 @@ export const AttendancePayroll: React.FC = () => {
           </div>
         </div>
       </Modal>
+
+      <BankDetailsModal employee={bankEmp} onClose={() => setBankEmp(null)} onSaved={compute} />
     </div>
   );
 };
