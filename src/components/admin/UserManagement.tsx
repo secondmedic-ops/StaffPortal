@@ -38,7 +38,7 @@ export const UserManagement: React.FC = () => {
 
   useEffect(() => {
     fetchUsers();
-  }, [currentUser]);
+  }, [currentUser?.id]);
 
   const openProposeModal = (user: SystemUser) => {
     setSelectedUser(user);

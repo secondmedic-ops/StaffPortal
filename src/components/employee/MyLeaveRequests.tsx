@@ -39,7 +39,7 @@ export const MyLeaveRequests: React.FC = () => {
 
   useEffect(() => {
     fetchRequests();
-  }, [currentUser]);
+  }, [currentUser?.id]);
 
   const handleWithdraw = async (requestId: number) => {
     if (!confirm('Are you sure you want to withdraw this leave request? Reserved days will be credited back.')) {

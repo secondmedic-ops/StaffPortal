@@ -26,7 +26,7 @@ export const AuditLog: React.FC = () => {
 
   useEffect(() => {
     fetchAuditLogs();
-  }, [currentUser]);
+  }, [currentUser?.id]);
 
   const handleExport = () => {
     showToast('Export Complete', 'Downloaded tamper-evident ISO 27001 audit journal.', 'info');

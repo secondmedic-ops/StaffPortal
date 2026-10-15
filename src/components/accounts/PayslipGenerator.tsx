@@ -50,7 +50,7 @@ export const PayslipGenerator: React.FC = () => {
 
   useEffect(() => {
     fetchPayslips();
-  }, [month, year, currentUser]);
+  }, [month, year, currentUser?.id]);
 
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();

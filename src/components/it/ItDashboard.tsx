@@ -28,7 +28,7 @@ export const ItDashboard: React.FC = () => {
         setLoading(false);
       }
     })();
-  }, [currentUser]);
+  }, [currentUser?.id]);
 
   if (loading) {
     return (

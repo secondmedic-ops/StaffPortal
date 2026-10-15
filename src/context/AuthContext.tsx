@@ -213,6 +213,13 @@ async function loadEmployeeForUser(user: User): Promise<{ employee: Employee; ro
   };
 }
 
+function getInitialNav(): string {
+  if (typeof window === 'undefined') return 'dashboard';
+  const path = window.location.pathname.replace(/^\/+/, '').replace(/\/+$/, '');
+  if (!path || path === 'login') return 'dashboard';
+  return path;
+}
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [employee, setEmployee] = useState<Employee | null>(null);
@@ -220,8 +227,43 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [directReportCount, setDirectReportCount] = useState(0);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeNav, setActiveNav] = useState<string>('dashboard');
+  const [activeNav, setActiveNavState] = useState<string>(getInitialNav);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
+
+  const setActiveNav = (nav: string) => {
+    setActiveNavState(nav);
+    if (typeof window !== 'undefined') {
+      const currentPath = window.location.pathname.replace(/^\/+/, '').replace(/\/+$/, '');
+      if (currentPath !== nav) {
+        window.history.pushState({ nav }, '', `/${nav}`);
+      }
+    }
+  };
+
+  useEffect(() => {
+    const onPopState = () => {
+      const path = typeof window !== 'undefined' ? window.location.pathname.replace(/^\/+/, '').replace(/\/+$/, '') : '';
+      if (!session || !employee) {
+        if (typeof window !== 'undefined' && path !== '' && path !== 'login') {
+          window.history.replaceState(null, '', '/');
+        }
+        return;
+      }
+      setActiveNavState(!path || path === 'login' ? 'dashboard' : path);
+    };
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, [session, employee]);
+
+  // Sync address bar when authenticated and landing on login or root
+  useEffect(() => {
+    if (session && employee && typeof window !== 'undefined') {
+      const path = window.location.pathname.replace(/^\/+/, '').replace(/\/+$/, '');
+      if (path === 'login' || path === '') {
+        window.history.replaceState({ nav: activeNav }, '', `/${activeNav}`);
+      }
+    }
+  }, [session, employee, activeNav]);
 
   // Login form state for unauthenticated view
   const [loginEmail, setLoginEmail] = useState('');
@@ -431,6 +473,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setEmployee(null);
       setRoles([]);
       setError(null);
+      if (typeof window !== 'undefined') {
+        window.history.replaceState(null, '', '/');
+      }
     } finally {
       setLoading(false);
     }

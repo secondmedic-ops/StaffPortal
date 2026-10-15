@@ -86,7 +86,7 @@ export const OrgChart: React.FC = () => {
       }
     };
     fetch();
-  }, [currentUser]);
+  }, [currentUser?.id]);
 
   // Root is CEO (managerId is null/undefined)
   const rootEmployees = employees.filter(e => !e.managerId);

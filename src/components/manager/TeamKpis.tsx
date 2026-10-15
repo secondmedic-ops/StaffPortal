@@ -47,7 +47,7 @@ export const TeamKpis: React.FC = () => {
 
   useEffect(() => {
     fetchKpis();
-  }, [currentUser]);
+  }, [currentUser?.id]);
 
   const handleDefineSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

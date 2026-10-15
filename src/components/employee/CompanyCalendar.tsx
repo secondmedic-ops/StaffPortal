@@ -31,7 +31,7 @@ export const CompanyCalendar: React.FC = () => {
 
   useEffect(() => {
     fetchCalendar();
-  }, [month, year, currentUser]);
+  }, [month, year, currentUser?.id]);
 
   const handlePrevMonth = () => {
     if (month === 1) {

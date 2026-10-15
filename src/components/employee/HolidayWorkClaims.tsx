@@ -35,7 +35,7 @@ export const HolidayWorkClaims: React.FC = () => {
 
   useEffect(() => {
     load();
-  }, [currentUser]);
+  }, [currentUser?.id]);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();

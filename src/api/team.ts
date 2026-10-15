@@ -186,16 +186,22 @@ export const teamApi = {
       level === 1 &&
       Number(req.total_days ?? 0) > LEAVE_APPROVAL_POLICY.skipLevelThresholdDays &&
       emp.manager_id != null &&
-      emp.manager_id !== req.employee_id;
+      emp.manager_id !== req.employee_id &&
+      emp.manager_id !== emp.id;
 
     if (needsSkipLevel) {
       const { data: nextApprover } = await supabase
         .from('employees')
-        .select('id, full_name')
+        .select('id, full_name, status')
         .eq('id', emp.manager_id as number)
         .maybeSingle();
 
-      if (nextApprover) {
+      if (
+        nextApprover &&
+        nextApprover.status !== 'EXITED' &&
+        nextApprover.id !== req.employee_id &&
+        nextApprover.id !== emp.id
+      ) {
         const { error } = await supabase
           .from('leave_requests')
           .update({

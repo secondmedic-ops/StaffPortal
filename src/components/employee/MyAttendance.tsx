@@ -47,7 +47,7 @@ export const MyAttendance: React.FC = () => {
 
   useEffect(() => {
     fetchAttendance();
-  }, [month, year, currentUser]);
+  }, [month, year, currentUser?.id]);
 
   const handlePrevMonth = () => {
     if (month === 1) {

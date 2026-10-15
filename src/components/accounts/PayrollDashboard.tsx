@@ -49,7 +49,7 @@ export const PayrollDashboard: React.FC = () => {
 
   useEffect(() => {
     fetchPayrollRuns();
-  }, [year, currentUser]);
+  }, [year, currentUser?.id]);
 
   const handleExecutePayroll = async () => {
     setProcessing(true);

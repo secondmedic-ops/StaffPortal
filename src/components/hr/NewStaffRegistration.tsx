@@ -140,7 +140,7 @@ export const NewStaffRegistration: React.FC = () => {
 
   useEffect(() => {
     loadRefs();
-  }, [currentUser]);
+  }, [currentUser?.id]);
 
   const set = <K extends keyof FormState>(key: K, value: FormState[K]) => setForm(prev => ({ ...prev, [key]: value }));
 

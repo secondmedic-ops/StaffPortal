@@ -46,7 +46,7 @@ export const ItRequests: React.FC = () => {
 
   useEffect(() => {
     load();
-  }, [currentUser]);
+  }, [currentUser?.id]);
 
   const visible = useMemo(
     () =>

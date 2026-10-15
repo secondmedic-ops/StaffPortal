@@ -41,7 +41,7 @@ export const MyPayslips: React.FC = () => {
 
   useEffect(() => {
     fetchPayslips();
-  }, [year, currentUser]);
+  }, [year, currentUser?.id]);
 
   const handleOpenPayslip = async (id: number) => {
     setViewingId(id);

@@ -44,7 +44,7 @@ export const AttendanceRegister: React.FC = () => {
 
   useEffect(() => {
     fetchSummaries();
-  }, [month, year, currentUser]);
+  }, [month, year, currentUser?.id]);
 
   const isMonthLocked = summaries.length > 0 && summaries.every(s => s.locked);
   const totalLopDays = summaries.reduce((acc, s) => acc + s.lopDays, 0);

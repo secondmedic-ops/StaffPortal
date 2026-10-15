@@ -33,7 +33,7 @@ export const SalaryStructures: React.FC = () => {
 
   useEffect(() => {
     fetchStructures();
-  }, [currentUser]);
+  }, [currentUser?.id]);
 
   // Real-time calculation helpers
   const monthlyGross = Math.round(annualCtc / 12);

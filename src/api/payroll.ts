@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase';
+import { assertPayrollAccess } from './session';
 import type {
   SalaryStructure,
   Payslip,
@@ -9,6 +10,7 @@ import type {
 } from '../types';
 
 async function invokePayroll(action: string, args: Record<string, any> = {}) {
+  await assertPayrollAccess();
   const { data, error } = await supabase.functions.invoke('payroll', {
     body: { action, ...args }
   });

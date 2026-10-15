@@ -50,7 +50,7 @@ export const CeoDashboard: React.FC = () => {
 
   useEffect(() => {
     fetchCeoData();
-  }, [currentUser]);
+  }, [currentUser?.id]);
 
   const handleActionProposal = async (id: number, action: 'APPROVE' | 'REJECT') => {
     setActioningId(id);

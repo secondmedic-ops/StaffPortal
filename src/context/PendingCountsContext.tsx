@@ -44,46 +44,70 @@ async function safeCount(query: PromiseLike<{ count: number | null; error: unkno
 export const PendingCountsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { currentUser, activeNav, isManager, isHr, isIt, isAccounts, isCeo, roles } = useAuth();
   const [counts, setCounts] = useState<PendingCounts>(EMPTY);
+  const inFlightRef = React.useRef(false);
+  const rolesStr = roles.join(',');
+  const currentUserId = currentUser?.id;
 
   const refresh = useCallback(async () => {
-    if (!currentUser || !isSupabaseConfigured) return;
-    const me = currentUser.id;
-    const head = { count: 'exact' as const, head: true };
+    if (!currentUserId || !isSupabaseConfigured || inFlightRef.current) return;
+    inFlightRef.current = true;
+    try {
+      const me = currentUserId;
+      const head = { count: 'exact' as const, head: true };
 
-    const ownerRoles = roles.filter(r => ['HR', 'IT', 'ACCOUNTS'].includes(r));
-    const [leaveMine, leaveHr, regs, it, revisions, assets, tasks, claims, payroll] = await Promise.all([
-      isManager || isHr
-        ? safeCount(supabase.from('leave_requests').select('id', head).eq('status', 'PENDING').eq('current_approver_id', me))
-        : 0,
-      isHr ? safeCount(supabase.from('leave_requests').select('id', head).eq('status', 'PENDING').is('current_approver_id', null)) : 0,
-      isManager ? safeCount(supabase.from('attendance_regularizations').select('id', head).eq('status', 'PENDING').eq('approver_id', me)) : 0,
-      isIt ? safeCount(supabase.from('it_requests').select('id', head).in('status', ['OPEN', 'IN_PROGRESS'])) : 0,
-      isAccounts || isCeo ? safeCount(supabase.from('salary_revisions').select('id', head).eq('status', 'PROPOSED').neq('proposed_by', me)) : 0,
-      safeCount(supabase.from('assets').select('id', head).eq('assigned_to', me).is('acknowledged_at', null)),
-      ownerRoles.length > 0
-        ? safeCount(supabase.from('lifecycle_tasks').select('id', head).eq('done', false).in('owner_role', ownerRoles as any))
-        : 0,
-      // RLS limits managers to their reporting line; HR sees all.
-      isManager || isHr
-        ? safeCount(supabase.from('holiday_work_claims').select('id', head).eq('status', 'PENDING').neq('employee_id', me))
-        : 0,
-      // Drafts visible to a manager are ones computed by someone in their reporting line.
-      isManager || isCeo
-        ? safeCount(supabase.from('payroll_entries').select('id', head).eq('status', 'DRAFT').neq('computed_by', me))
-        : 0
-    ]);
+      const ownerRoles = roles.filter(r => ['HR', 'IT', 'ACCOUNTS'].includes(r));
+      const [leaveMine, leaveHr, regs, it, revisions, assets, tasks, claims, payroll] = await Promise.all([
+        isManager || isHr
+          ? safeCount(supabase.from('leave_requests').select('id', head).eq('status', 'PENDING').eq('current_approver_id', me))
+          : 0,
+        isHr ? safeCount(supabase.from('leave_requests').select('id', head).eq('status', 'PENDING').is('current_approver_id', null)) : 0,
+        isManager ? safeCount(supabase.from('attendance_regularizations').select('id', head).eq('status', 'PENDING').eq('approver_id', me)) : 0,
+        isIt ? safeCount(supabase.from('it_requests').select('id', head).in('status', ['OPEN', 'IN_PROGRESS'])) : 0,
+        isAccounts || isCeo ? safeCount(supabase.from('salary_revisions').select('id', head).eq('status', 'PROPOSED').neq('proposed_by', me)) : 0,
+        safeCount(supabase.from('assets').select('id', head).eq('assigned_to', me).is('acknowledged_at', null)),
+        ownerRoles.length > 0
+          ? safeCount(supabase.from('lifecycle_tasks').select('id', head).eq('done', false).in('owner_role', ownerRoles as any))
+          : 0,
+        // RLS limits managers to their reporting line; HR sees all.
+        isManager || isHr
+          ? safeCount(supabase.from('holiday_work_claims').select('id', head).eq('status', 'PENDING').neq('employee_id', me))
+          : 0,
+        // Drafts visible to a manager are ones computed by someone in their reporting line.
+        isManager || isCeo
+          ? safeCount(supabase.from('payroll_entries').select('id', head).eq('status', 'DRAFT').neq('computed_by', me))
+          : 0
+      ]);
 
-    setCounts({
-      leaveApprovals: leaveMine + leaveHr,
-      regularizations: regs,
-      itRequests: it,
-      salaryRevisions: revisions,
-      myUnacknowledgedAssets: assets,
-      myLifecycleTasks: tasks,
-      holidayWorkClaims: claims,
-      payrollApprovals: payroll
-    });
-  }, [currentUser, isManager, isHr, isIt, isAccounts, isCeo, roles]);
+      const nextCounts: PendingCounts = {
+        leaveApprovals: leaveMine + leaveHr,
+        regularizations: regs,
+        itRequests: it,
+        salaryRevisions: revisions,
+        myUnacknowledgedAssets: assets,
+        myLifecycleTasks: tasks,
+        holidayWorkClaims: claims,
+        payrollApprovals: payroll
+      };
+
+      setCounts(prev => {
+        if (
+          prev.leaveApprovals === nextCounts.leaveApprovals &&
+          prev.regularizations === nextCounts.regularizations &&
+          prev.itRequests === nextCounts.itRequests &&
+          prev.salaryRevisions === nextCounts.salaryRevisions &&
+          prev.myUnacknowledgedAssets === nextCounts.myUnacknowledgedAssets &&
+          prev.myLifecycleTasks === nextCounts.myLifecycleTasks &&
+          prev.holidayWorkClaims === nextCounts.holidayWorkClaims &&
+          prev.payrollApprovals === nextCounts.payrollApprovals
+        ) {
+          return prev;
+        }
+        return nextCounts;
+      });
+    } finally {
+      inFlightRef.current = false;
+    }
+  }, [currentUserId, isManager, isHr, isIt, isAccounts, isCeo, rolesStr]);
 
   // Re-check whenever the user navigates (cheap HEAD counts) and every 2 minutes.
   useEffect(() => {

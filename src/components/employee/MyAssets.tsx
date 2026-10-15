@@ -40,7 +40,7 @@ export const MyAssets: React.FC = () => {
 
   useEffect(() => {
     load();
-  }, [currentUser]);
+  }, [currentUser?.id]);
 
   const acknowledge = async (a: Asset) => {
     setAcking(a.id);

@@ -493,6 +493,7 @@ export const EmployeeDashboard: React.FC = () => {
   const todayRecord = monthRecords.find(a => a.workDate === todayIso) ?? null;
 
   const handlePunch = async (type: 'IN' | 'OUT') => {
+    if (punching) return;
     setPunching(true);
     let lat: number | undefined;
     let lng: number | undefined;

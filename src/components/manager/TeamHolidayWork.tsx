@@ -32,7 +32,7 @@ export const TeamHolidayWork: React.FC = () => {
 
   useEffect(() => {
     load();
-  }, [currentUser]);
+  }, [currentUser?.id]);
 
   const act = async (c: HolidayWorkClaim, action: 'APPROVE' | 'REJECT', note?: string) => {
     setActing(c.id);

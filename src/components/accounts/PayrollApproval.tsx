@@ -39,7 +39,7 @@ export const PayrollApproval: React.FC = () => {
 
   useEffect(() => {
     loadMonths();
-  }, [currentUser]);
+  }, [currentUser?.id]);
 
   useEffect(() => {
     if (!period) return;
@@ -49,7 +49,7 @@ export const PayrollApproval: React.FC = () => {
       .catch(err => showToast('Error', err.message, 'error'));
   }, [period]);
 
-  const pending = useMemo(() => entries.filter(e => e.status === 'DRAFT' && e.computedById !== currentUser?.id), [entries, currentUser]);
+  const pending = useMemo(() => entries.filter(e => e.status === 'DRAFT' && e.computedById !== currentUser?.id), [entries, currentUser?.id]);
   const approved = entries.filter(e => e.status === 'APPROVED');
   const computedBy = Array.from(new Set(pending.map(e => e.computedByName).filter(Boolean))).join(', ');
 

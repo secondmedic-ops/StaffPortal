@@ -46,7 +46,7 @@ export const StaffLifecycle: React.FC = () => {
 
   useEffect(() => {
     load();
-  }, [currentUser]);
+  }, [currentUser?.id]);
 
   const managerOf = useMemo(() => new Map(employees.map(e => [e.id, e.managerId])), [employees]);
 

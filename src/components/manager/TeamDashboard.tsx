@@ -27,7 +27,7 @@ export const TeamDashboard: React.FC = () => {
 
   useEffect(() => {
     fetchTeamData();
-  }, [currentUser]);
+  }, [currentUser?.id]);
 
   const presentCount = teamMembers.filter(m => m.attendance?.status === 'PRESENT').length;
   const onLeaveCount = teamMembers.filter(m => m.attendance?.status === 'ON_LEAVE').length;

@@ -9,26 +9,53 @@ import { SkeletonLoader } from '../common/SkeletonLoader';
 export const TeamCalendar: React.FC = () => {
   const { currentUser, showToast } = useAuth();
   const [loading, setLoading] = useState(true);
-  const [month, setMonth] = useState(9);
-  const [year, setYear] = useState(2026);
+  const now = new Date();
+  const [month, setMonth] = useState(now.getMonth() + 1);
+  const [year, setYear] = useState(now.getFullYear());
   const [reports, setReports] = useState<Employee[]>([]);
   const [teamLeaves, setTeamLeaves] = useState<LeaveRequest[]>([]);
 
+  const handlePrevMonth = () => {
+    if (month === 1) {
+      setMonth(12);
+      setYear(y => y - 1);
+    } else {
+      setMonth(m => m - 1);
+    }
+  };
+
+  const handleNextMonth = () => {
+    if (month === 12) {
+      setMonth(1);
+      setYear(y => y + 1);
+    } else {
+      setMonth(m => m + 1);
+    }
+  };
+
   useEffect(() => {
+    let cancelled = false;
     const fetchData = async () => {
       try {
         setLoading(true);
         const data = await teamApi.getTeamCalendar(month, year);
-        setReports(data.directReports);
-        setTeamLeaves(data.leaves);
+        if (!cancelled) {
+          setReports(data.directReports);
+          setTeamLeaves(data.leaves);
+        }
       } catch (err: any) {
-        showToast('Error', err.message || 'Failed to load team calendar', 'error');
+        if (!cancelled) {
+          showToast('Error', err.message || 'Failed to load team calendar', 'error');
+        }
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
     fetchData();
-  }, [month, year, currentUser]);
+    return () => {
+      cancelled = true;
+    };
+  }, [month, year, currentUser?.id]);
 
   const daysInMonth = new Date(year, month, 0).getDate();
 
@@ -43,9 +70,23 @@ export const TeamCalendar: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-2">
+          <button
+            onClick={handlePrevMonth}
+            aria-label="Previous month"
+            className="p-2 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 text-slate-600 dark:text-slate-400 transition-colors"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </button>
           <div className="px-4 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 font-bold text-xs text-slate-800 dark:text-slate-200 min-w-36 text-center">
             {getMonthName(month)} {year}
           </div>
+          <button
+            onClick={handleNextMonth}
+            aria-label="Next month"
+            className="p-2 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 text-slate-600 dark:text-slate-400 transition-colors"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </button>
         </div>
       </div>
 

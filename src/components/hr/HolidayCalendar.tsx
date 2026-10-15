@@ -58,7 +58,7 @@ export const HolidayCalendar: React.FC = () => {
 
   useEffect(() => {
     fetchHolidays();
-  }, [currentUser]);
+  }, [currentUser?.id]);
 
   const yearHolidays = useMemo(
     () => holidays.filter(h => h.holidayDate.startsWith(String(year))).sort((a, b) => a.holidayDate.localeCompare(b.holidayDate)),

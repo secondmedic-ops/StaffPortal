@@ -118,7 +118,7 @@ export const AssetRegister: React.FC = () => {
 
   useEffect(() => {
     load();
-  }, [currentUser]);
+  }, [currentUser?.id]);
 
   const visible = useMemo(() => {
     const f = FILTERS.find(x => x.id === filter) ?? FILTERS[0];

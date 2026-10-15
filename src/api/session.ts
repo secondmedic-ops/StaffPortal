@@ -61,6 +61,37 @@ export async function getSessionEmployee(): Promise<SessionEmployee> {
   throw new Error('Your login is not linked to a staff record — contact HR');
 }
 
+export async function getSessionRoles(empId: number): Promise<string[]> {
+  try {
+    const raw = typeof localStorage !== 'undefined' ? localStorage.getItem('staffportal_demo_session') : null;
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed?.employee?.id === empId && Array.isArray(parsed?.roles)) {
+        return parsed.roles;
+      }
+    }
+  } catch {}
+
+  const { data } = await supabase
+    .from('employee_roles')
+    .select('role')
+    .eq('employee_id', empId);
+  return (data ?? []).map((r: any) => r.role);
+}
+
+/** Asserts that the signed-in user has ACCOUNTS, CEO, or SYSTEM_ADMIN role, throwing 403 otherwise. */
+export async function assertPayrollAccess(): Promise<SessionEmployee> {
+  const me = await getSessionEmployee();
+  const roles = await getSessionRoles(me.id);
+  const authorized = roles.some(r => ['ACCOUNTS', 'CEO', 'SYSTEM_ADMIN'].includes(r));
+  if (!authorized) {
+    const err: any = new Error('403 Forbidden: You do not have access to payroll data');
+    err.status = 403;
+    throw err;
+  }
+  return me;
+}
+
 type AuditModule = 'AUTH' | 'EMPLOYEE' | 'ATTENDANCE' | 'LEAVE' | 'KPI' | 'PAYROLL' | 'ROLES';
 
 /** Best-effort audit trail entry; never blocks the business action. */

@@ -27,7 +27,7 @@ export const TeamRegularization: React.FC = () => {
 
   useEffect(() => {
     fetchRegularizations();
-  }, [currentUser]);
+  }, [currentUser?.id]);
 
   const handleAction = async (id: number, action: 'APPROVE' | 'REJECT') => {
     setActingId(id);

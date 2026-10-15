@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabase';
-import { getSessionEmployee, logAudit, monthBounds } from './session';
+import { assertPayrollAccess, getSessionEmployee, logAudit, monthBounds } from './session';
 import {
   mapAttendanceRecord,
   mapEmployee,
@@ -77,6 +77,7 @@ export const compensationApi = {
   // ---- Salary revisions / increments ----------------------------------------
 
   async getRevisions(): Promise<SalaryRevision[]> {
+    await assertPayrollAccess();
     const { data, error } = await supabase
       .from('salary_revisions')
       .select(REVISION_SELECT)
@@ -106,7 +107,7 @@ export const compensationApi = {
     newDesignation?: string;
     reason?: string;
   }): Promise<SalaryRevision> {
-    const me = await getSessionEmployee();
+    const me = await assertPayrollAccess();
     if (data.employeeId === me.id) throw new Error('You cannot propose a revision to your own salary.');
     const { data: created, error } = await supabase
       .from('salary_revisions')
@@ -141,7 +142,7 @@ export const compensationApi = {
 
   /** Maker-checker approval. Returns a warning when the designation could not be updated. */
   async actionRevision(revision: SalaryRevision, action: 'APPROVE' | 'REJECT'): Promise<{ warning?: string }> {
-    const me = await getSessionEmployee();
+    const me = await assertPayrollAccess();
     if (revision.proposedById === me.id) {
       throw new Error('Maker-checker: a different Accounts/CEO user must approve a revision you proposed.');
     }
@@ -177,6 +178,7 @@ export const compensationApi = {
 
   /** Gather attendance, leave, holidays and salaries, then compute every employee's pay. */
   async previewMonth(year: number, month: number): Promise<{ rows: PayrollPreviewRow[]; warnings: string[] }> {
+    await assertPayrollAccess();
     const { start, end } = monthBounds(year, month);
     const warnings: string[] = [];
 
@@ -289,7 +291,7 @@ export const compensationApi = {
 
   /** Save computed rows as DRAFT entries (published entries are never overwritten). */
   async saveDrafts(year: number, month: number, rows: PayrollPreviewRow[]): Promise<number> {
-    const me = await getSessionEmployee();
+    const me = await assertPayrollAccess();
     const payload = rows
       .filter(r => r.revision && !r.bankMissing && r.existing?.status !== 'PUBLISHED')
       .map(({ employee, revision, computation: c }) => ({
@@ -364,6 +366,7 @@ export const compensationApi = {
   },
 
   async getEntries(year: number, month: number): Promise<PayrollEntry[]> {
+    await assertPayrollAccess();
     const { data, error } = await supabase
       .from('payroll_entries')
       .select(ENTRY_SELECT)

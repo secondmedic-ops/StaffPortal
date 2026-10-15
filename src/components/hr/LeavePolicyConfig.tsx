@@ -36,7 +36,7 @@ export const LeavePolicyConfig: React.FC = () => {
 
   useEffect(() => {
     fetchLeavePolicies();
-  }, [currentUser]);
+  }, [currentUser?.id]);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();

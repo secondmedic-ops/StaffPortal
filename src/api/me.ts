@@ -45,7 +45,12 @@ export const meApi = {
 
   async punch(data: { type: 'IN' | 'OUT'; lat?: number; lng?: number; source?: string }): Promise<AttendanceRecord> {
     const emp = await getCurrentEmployee();
-    const today = new Date().toISOString().split('T')[0];
+    const today = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Asia/Kolkata',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    }).format(new Date());
     const nowIso = new Date().toISOString();
 
     const { data: existing, error: findError } = await supabase
@@ -59,6 +64,10 @@ export const meApi = {
 
     if (data.type === 'IN') {
       if (existing) {
+        // Idempotency: if already punched in, keep original punch_in timestamp
+        if (existing.punch_in) {
+          return mapAttendanceRecord(existing);
+        }
         const { data: updated, error: updateError } = await supabase
           .from('attendance_records')
           .update({
@@ -95,6 +104,10 @@ export const meApi = {
         return mapAttendanceRecord(created);
       }
     } else {
+      // Idempotency: if already punched out, keep original punch_out
+      if (existing?.punch_out) {
+        return mapAttendanceRecord(existing);
+      }
       let workedHours: number | null = null;
       if (existing?.punch_in) {
         const diffMs = new Date(nowIso).getTime() - new Date(existing.punch_in).getTime();
@@ -224,9 +237,9 @@ export const meApi = {
       throw new Error(`You already have a ${o.status.toLowerCase()} leave from ${o.from_date} to ${o.to_date} overlapping these dates.`);
     }
 
-    // Route to the reporting manager; with no manager the request goes to the HR queue.
-    const approverId = emp.manager_id ?? null;
-    const approverName = (emp.manager as any)?.full_name ?? undefined;
+    // Route to the reporting manager; with no manager or self-reporting manager the request goes to the HR queue.
+    const approverId = emp.manager_id != null && emp.manager_id !== emp.id ? emp.manager_id : null;
+    const approverName = approverId ? (emp.manager as any)?.full_name ?? undefined : undefined;
 
     const { data: created, error } = await supabase
       .from('leave_requests')

@@ -98,7 +98,7 @@ export const IncrementsRevisions: React.FC = () => {
 
   useEffect(() => {
     load();
-  }, [currentUser]);
+  }, [currentUser?.id]);
 
   const today = new Date().toLocaleDateString('en-CA');
   const current = useMemo(() => {

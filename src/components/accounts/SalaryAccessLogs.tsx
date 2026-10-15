@@ -27,7 +27,7 @@ export const SalaryAccessLogs: React.FC = () => {
 
   useEffect(() => {
     fetchLogs();
-  }, [currentUser]);
+  }, [currentUser?.id]);
 
   const handleExport = () => {
     showToast('Audit Exported', 'Immutable log exported for statutory compliance & PwC audit.', 'info');

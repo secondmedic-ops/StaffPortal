@@ -53,7 +53,7 @@ export const EmployeeDirectory: React.FC = () => {
 
   useEffect(() => {
     fetchEmployees();
-  }, [currentUser]);
+  }, [currentUser?.id]);
 
   const openAddModal = () => {
     setEditingEmp(null);

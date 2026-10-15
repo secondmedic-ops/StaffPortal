@@ -34,7 +34,7 @@ export const AttendancePayslips: React.FC = () => {
         setLoaded(true);
       }
     })();
-  }, [currentUser]);
+  }, [currentUser?.id]);
 
   const open = async (entry: PayrollEntry) => {
     setViewing(entry);

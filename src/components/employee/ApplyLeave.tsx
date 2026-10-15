@@ -67,7 +67,7 @@ export const ApplyLeave: React.FC = () => {
       }
     };
     fetchData();
-  }, [currentUser]);
+  }, [currentUser?.id]);
 
   // Calculate live breakdown
   const currentType = leaveTypes.find(t => t.id === selectedTypeId);

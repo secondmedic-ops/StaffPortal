@@ -35,7 +35,7 @@ export const TeamApprovals: React.FC = () => {
 
   useEffect(() => {
     fetchPendingLeaves();
-  }, [currentUser, scope]);
+  }, [currentUser?.id, scope]);
 
   const asHr = (req: LeaveRequest) => isHr && req.currentApproverId !== currentUser?.id;
 

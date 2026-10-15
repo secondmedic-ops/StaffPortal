@@ -34,7 +34,7 @@ export const MyKpis: React.FC = () => {
 
   useEffect(() => {
     fetchKpis();
-  }, [currentUser]);
+  }, [currentUser?.id]);
 
   const openReviewModal = (kpi: KpiDefinition) => {
     setEditingKpi(kpi);
