@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase';
+import { withManagerNames } from './managerNames';
 import { monthBounds, getSessionEmployee } from './session';
 import { LEAVE_APPROVAL_POLICY } from '../config/policy';
 import {
@@ -41,19 +42,19 @@ export const teamApi = {
     const emp = await getCurrentEmployee();
     const { data, error } = await supabase
       .from('employees')
-      .select('*, department:departments!employees_department_id_fkey(name), manager:employees!employees_manager_id_fkey(full_name)')
+      .select('*, department:departments!employees_department_id_fkey(name)')
       .eq('manager_id', emp.id)
       .order('full_name');
 
     if (error) throw new Error(`Failed to load team members: ${error.message}`);
-    return (data ?? []).map(mapEmployee);
+    return (await withManagerNames(data ?? [])).map(mapEmployee);
   },
 
   async getTeamAttendance(date: string): Promise<Array<{ employee: Employee; attendance?: AttendanceRecord }>> {
     const emp = await getCurrentEmployee();
     const { data: members, error: membersError } = await supabase
       .from('employees')
-      .select('*, department:departments!employees_department_id_fkey(name), manager:employees!employees_manager_id_fkey(full_name)')
+      .select('*, department:departments!employees_department_id_fkey(name)')
       .eq('manager_id', emp.id)
       .order('full_name');
 
@@ -325,11 +326,11 @@ export const teamApi = {
     const emp = await getCurrentEmployee();
     const { data: reportsData, error: reportsError } = await supabase
       .from('employees')
-      .select('*, department:departments!employees_department_id_fkey(name), manager:employees!employees_manager_id_fkey(full_name)')
+      .select('*, department:departments!employees_department_id_fkey(name)')
       .eq('manager_id', emp.id);
 
     if (reportsError) throw new Error(`Failed to load team reports: ${reportsError.message}`);
-    const directReports = (reportsData ?? []).map(mapEmployee);
+    const directReports = (await withManagerNames(reportsData ?? [])).map(mapEmployee);
     const reportIds = directReports.map(r => r.id);
 
     if (reportIds.length === 0) {
@@ -360,11 +361,11 @@ export const teamApi = {
     const emp = await getCurrentEmployee();
     const { data: reportsData, error: reportsError } = await supabase
       .from('employees')
-      .select('*, department:departments!employees_department_id_fkey(name), manager:employees!employees_manager_id_fkey(full_name)')
+      .select('*, department:departments!employees_department_id_fkey(name)')
       .eq('manager_id', emp.id);
 
     if (reportsError) throw new Error(`Failed to load team members for KPIs: ${reportsError.message}`);
-    const reports = (reportsData ?? []).map(mapEmployee);
+    const reports = (await withManagerNames(reportsData ?? [])).map(mapEmployee);
     const reportIds = reports.map(r => r.id);
 
     const { data: cycleData, error: cycleError } = await supabase

@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase';
+import { withManagerName } from './managerNames';
 import { mapEmployee } from './mappers';
 import type { AuthResponse, Employee, RoleType } from '../types';
 
@@ -20,7 +21,7 @@ export const authApi = {
 
     const { data: empData, error: empError } = await supabase
       .from('employees')
-      .select('*, department:departments!employees_department_id_fkey(name), manager:employees!employees_manager_id_fkey(full_name)')
+      .select('*, department:departments!employees_department_id_fkey(name)')
       .or(`auth_user_id.eq.${user.id},official_email.eq.${officialEmail}`)
       .single();
 
@@ -42,7 +43,7 @@ export const authApi = {
     return {
       token: authData.session?.access_token ?? '',
       refreshToken: authData.session?.refresh_token ?? '',
-      employee: mapEmployee(empData),
+      employee: mapEmployee(await withManagerName(empData)),
       roles
     };
   },
@@ -67,7 +68,7 @@ export const authApi = {
 
     const { data: empData, error: empError } = await supabase
       .from('employees')
-      .select('*, department:departments!employees_department_id_fkey(name), manager:employees!employees_manager_id_fkey(full_name)')
+      .select('*, department:departments!employees_department_id_fkey(name)')
       .or(`auth_user_id.eq.${session.user.id},official_email.eq.${session.user.email ?? ''}`)
       .single();
 
@@ -87,7 +88,7 @@ export const authApi = {
     const roles = (rolesData ?? []).map((r: { role: string }) => r.role as RoleType);
 
     return {
-      employee: mapEmployee(empData),
+      employee: mapEmployee(await withManagerName(empData)),
       roles
     };
   }

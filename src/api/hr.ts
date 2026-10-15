@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase';
+import { withManagerName, withManagerNames } from './managerNames';
 import type { Database } from '../types/database';
 import {
   mapEmployee,
@@ -24,11 +25,11 @@ export const hrApi = {
   async getEmployees(): Promise<Employee[]> {
     const { data, error } = await supabase
       .from('employees')
-      .select('*, department:departments!employees_department_id_fkey(name), manager:employees!employees_manager_id_fkey(full_name)')
+      .select('*, department:departments!employees_department_id_fkey(name)')
       .order('full_name');
 
     if (error) throw new Error(`Failed to load employees: ${error.message}`);
-    return (data ?? []).map(mapEmployee);
+    return (await withManagerNames(data ?? [])).map(mapEmployee);
   },
 
   async createEmployee(data: Omit<Employee, 'id' | 'departmentName' | 'managerName'>): Promise<Employee> {
@@ -52,7 +53,7 @@ export const hrApi = {
         manager_id: data.managerId ?? null,
         avatar_url: data.avatarUrl ?? null
       })
-      .select('*, department:departments!employees_department_id_fkey(name), manager:employees!employees_manager_id_fkey(full_name)')
+      .select('*, department:departments!employees_department_id_fkey(name)')
       .single();
 
     if (error || !created) throw new Error(`Failed to create employee: ${error?.message}`);
@@ -66,7 +67,7 @@ export const hrApi = {
 
     await supabase.from('leave_balances').insert(standardBalances);
 
-    return mapEmployee(created);
+    return mapEmployee(await withManagerName(created));
   },
 
   async updateEmployee(id: number, data: Partial<Employee>): Promise<Employee> {
@@ -93,11 +94,11 @@ export const hrApi = {
       .from('employees')
       .update(updatePayload)
       .eq('id', id)
-      .select('*, department:departments!employees_department_id_fkey(name), manager:employees!employees_manager_id_fkey(full_name)')
+      .select('*, department:departments!employees_department_id_fkey(name)')
       .single();
 
     if (error || !updated) throw new Error(`Failed to update employee: ${error?.message}`);
-    return mapEmployee(updated);
+    return mapEmployee(await withManagerName(updated));
   },
 
   async getAttendanceSummary(month: number, year: number): Promise<MonthlyAttendanceSummary[]> {

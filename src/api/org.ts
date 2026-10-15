@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase';
+import { withManagerNames } from './managerNames';
 import {
   mapEmployee,
   mapAuditLog
@@ -228,9 +229,12 @@ export const adminApi = {
   async getUsers(): Promise<Array<{ user: AppUser; employee: Employee }>> {
     const { data: usersData, error } = await supabase
       .from('system_users')
-      .select('*, employee:employees(*, department:departments!employees_department_id_fkey(name), manager:employees!employees_manager_id_fkey(full_name)), employee_roles:employee_roles(role)');
+      .select('*, employee:employees(*, department:departments!employees_department_id_fkey(name)), employee_roles:employee_roles(role)');
 
     if (error) throw new Error(`Failed to load users: ${error.message}`);
+
+    const employees = await withManagerNames((usersData ?? []).map((u: any) => u.employee).filter(Boolean));
+    const employeeById = new Map(employees.map((e: any) => [e.id, e]));
 
     return (usersData ?? []).map((u: any) => {
       const roles = (u.employee_roles ?? []).map((r: any) => r.role as RoleType);
@@ -241,7 +245,7 @@ export const adminApi = {
         lastLogin: u.last_login ?? undefined,
         isLocked: Boolean(u.is_locked)
       };
-      const employee = mapEmployee(u.employee);
+      const employee = mapEmployee(employeeById.get(u.employee?.id) ?? u.employee);
       return { user: appUser, employee };
     });
   },
