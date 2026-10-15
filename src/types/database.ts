@@ -981,8 +981,8 @@ export interface Database {
           other_allowance_monthly: number;
           tds_monthly: number;
           pf_applicable: boolean;
-          pay_type: 'MONTHLY' | 'HOURLY';
-          hourly_rate: number | null;
+          pay_type: 'MONTHLY' | 'DAILY';
+          daily_rate: number | null;
           increment_pct: number | null;
           new_designation: string | null;
           reason: string | null;
@@ -1019,9 +1019,9 @@ export interface Database {
           gross_earnings: number;
           total_deductions: number;
           net_pay: number;
-          pay_type: 'MONTHLY' | 'HOURLY';
+          pay_type: 'MONTHLY' | 'DAILY';
           worked_hours: number | null;
-          hourly_rate: number | null;
+          daily_rate: number | null;
           status: 'DRAFT' | 'APPROVED' | 'PUBLISHED';
           revision_id: number | null;
           computed_by: number | null;

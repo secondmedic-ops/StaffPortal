@@ -7,7 +7,7 @@
  * entries, and employees see the same breakdown on their payslip, so the rule
  * that "salary follows attendance" is transparent to everyone.
  */
-import { ATTENDANCE_POLICY, HOURLY_PAY_POLICY, OVERTIME_POLICY, PAYROLL_POLICY, SHIFT_POLICY, STATUTORY_DEDUCTIONS } from '../config/policy';
+import { ATTENDANCE_POLICY, PART_TIME_PAY_POLICY, OVERTIME_POLICY, PAYROLL_POLICY, SHIFT_POLICY, STATUTORY_DEDUCTIONS } from '../config/policy';
 import type { AttendanceRecord, PayrollLine, PayType } from '../types';
 import { toISODate } from '../utils/dateUtils';
 
@@ -50,7 +50,7 @@ export interface PayrollSalary {
   tdsMonthly: number;
   pfApplicable: boolean;
   payType?: PayType;
-  hourlyRate?: number;
+  dailyRate?: number;
 }
 
 export interface PayrollInput {
@@ -93,9 +93,9 @@ export interface PayrollComputation {
   overtimeDays: number;
   payFactor: number;
   payType: PayType;
-  /** Hours worked in the month (hourly pay). */
+  /** Hours worked in the month (shown for information). */
   workedHours: number;
-  hourlyRate?: number;
+  dailyRate?: number;
   earnings: PayrollLine[];
   deductions: PayrollLine[];
   employerContributions: PayrollLine[];
@@ -280,11 +280,11 @@ export function computePayroll(input: PayrollInput): PayrollComputation {
   const deductions: PayrollLine[] = [];
   const employerContributions: PayrollLine[] = [];
   const salary = input.salary;
-  const payType: PayType = salary?.payType === 'HOURLY' ? 'HOURLY' : 'MONTHLY';
+  const payType: PayType = salary?.payType === 'DAILY' ? 'DAILY' : 'MONTHLY';
   const arrears = round(Math.max(0, input.arrears ?? 0));
   const advance = round(Math.max(0, input.advance ?? 0));
 
-  // Hours worked on employed days, used for hourly pay and shown on every payslip.
+  // Days (and hours) worked on employed days: per-day pay counts days with a complete punch.
   let workedHours = 0;
   let daysWithHours = 0;
   const missingOut: string[] = [];
@@ -335,16 +335,16 @@ export function computePayroll(input: PayrollInput): PayrollComputation {
 
   if (!salary) {
     warnings.push('No approved salary revision effective for this month.');
-  } else if (payType === 'HOURLY') {
-    const rate = salary.hourlyRate ?? 0;
-    if (!(rate > 0)) warnings.push('Hourly salary has no hourly rate.');
+  } else if (payType === 'DAILY') {
+    const rate = salary.dailyRate ?? 0;
+    if (!(rate > 0)) warnings.push('Per-day salary has no daily rate.');
     if (missingOut.length > 0) {
-      warnings.push(`No punch-out on day(s) ${missingOut.join(', ')}: those hours are not paid until a time update is approved.`);
+      warnings.push(`No punch-out on day(s) ${missingOut.join(', ')}: those days are not paid until a time update is approved.`);
     }
-    earnings.push({ code: 'HOURLY', label: 'Hourly Pay', amount: round(workedHours * rate) });
+    earnings.push({ code: 'DAILY', label: 'Daily Pay', amount: round(daysWithHours * rate) });
     if (arrears > 0) earnings.push({ code: 'ARREARS', label: 'Arrears', amount: arrears });
     const gross = sum(earnings);
-    addStatutory(gross, HOURLY_PAY_POLICY.pfOnGross ? gross : 0, gross, HOURLY_PAY_POLICY.professionalTax);
+    addStatutory(gross, PART_TIME_PAY_POLICY.pfOnGross ? gross : 0, gross, PART_TIME_PAY_POLICY.professionalTax);
   } else {
     const basic = round(salary.basicMonthly * payFactor);
     earnings.push({ code: 'BASIC', label: 'Basic Salary', amount: basic });
@@ -378,15 +378,15 @@ export function computePayroll(input: PayrollInput): PayrollComputation {
 
   const grossEarnings = sum(earnings);
   const totalDeductions = sum(deductions);
-  // Hourly staff are paid for hours, so day-based paid/LOP counts do not apply.
-  const isHourly = payType === 'HOURLY' && Boolean(salary);
+  // Per-day staff are paid only for days worked, so LOP/paid-leave counts do not apply.
+  const isDaily = payType === 'DAILY' && Boolean(salary);
 
   return {
     days,
     calendarDays,
     employedDays,
-    payableDays: isHourly ? daysWithHours : payableDays,
-    presentDays: isHourly ? daysWithHours : count('PRESENT') + count('HALF_DAY') * 0.5,
+    payableDays: isDaily ? daysWithHours : payableDays,
+    presentDays: isDaily ? daysWithHours : count('PRESENT') + count('HALF_DAY') * 0.5,
     halfDays: count('HALF_DAY'),
     paidLeaveDays: count('PAID_LEAVE'),
     unpaidLeaveDays: count('UNPAID_LEAVE'),
@@ -395,14 +395,14 @@ export function computePayroll(input: PayrollInput): PayrollComputation {
     absentDays: count('ABSENT'),
     projectedDays,
     lateMarks,
-    lateLopDays: isHourly ? 0 : lateLopDays,
-    lopDays: isHourly ? 0 : lopDays,
+    lateLopDays: isDaily ? 0 : lateLopDays,
+    lopDays: isDaily ? 0 : lopDays,
     holidayWorkedDays: days.filter(d => d.workedOnOffDay).length,
     overtimeDays: input.overtimeDays ?? 0,
     payFactor,
     payType,
     workedHours,
-    hourlyRate: payType === 'HOURLY' ? salary?.hourlyRate : undefined,
+    dailyRate: payType === 'DAILY' ? salary?.dailyRate : undefined,
     earnings,
     deductions,
     employerContributions,

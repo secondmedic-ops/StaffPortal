@@ -539,9 +539,9 @@ export interface SalaryRevision {
   otherAllowanceMonthly: number;
   tdsMonthly: number;
   pfApplicable: boolean;
-  /** MONTHLY: salary prorated by paid days. HOURLY: worked hours x hourlyRate. */
+  /** MONTHLY: salary prorated by paid days. DAILY: days worked x dailyRate (part-time). */
   payType: PayType;
-  hourlyRate?: number;
+  dailyRate?: number;
   incrementPct?: number;
   newDesignation?: string;
   reason?: string;
@@ -553,7 +553,7 @@ export interface SalaryRevision {
   createdAt?: string;
 }
 
-export type PayType = 'MONTHLY' | 'HOURLY';
+export type PayType = 'MONTHLY' | 'DAILY';
 
 export type PayrollEntryStatus = 'DRAFT' | 'APPROVED' | 'PUBLISHED';
 
@@ -588,7 +588,7 @@ export interface PayrollEntry {
   netPay: number;
   payType: PayType;
   workedHours?: number;
-  hourlyRate?: number;
+  dailyRate?: number;
   status: PayrollEntryStatus;
   revisionId?: number;
   computedById?: number;

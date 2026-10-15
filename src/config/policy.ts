@@ -81,9 +81,12 @@ export const ASSET_POLICY = {
   warrantyAlertDays: 60,
 } as const;
 
-/** Part-time staff are paid worked hours × hourly rate (no paid leave or holidays). */
-export const HOURLY_PAY_POLICY = {
-  /** PF for hourly staff is a share of gross pay (capped at the PF wage ceiling), as on the part-time payslip. */
+/**
+ * Part-time staff are paid per day: days worked × daily rate (no paid leave or holidays).
+ * A day counts when it has a punch-in and punch-out (or an approved time update).
+ */
+export const PART_TIME_PAY_POLICY = {
+  /** PF for part-time staff is a share of gross pay (capped at the PF wage ceiling), as on the part-time payslip. */
   pfOnGross: true,
   /** The part-time payslip carries no Professional Tax line. */
   professionalTax: false,

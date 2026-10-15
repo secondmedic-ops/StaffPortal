@@ -120,15 +120,15 @@ export const AttendancePayroll: React.FC = () => {
   const locked = viewing?.existing?.status === 'PUBLISHED';
 
   const exportCsv = () => {
-    const header = ['Emp Code', 'Name', 'Department', 'Pay Type', 'Worked Hrs', 'Rate', 'Month Days', 'Paid Days', 'LOP Days', 'Late Marks', 'Arrears', 'Gross', 'LWF', 'Advance', 'ESI', 'PF', 'PT', 'TDS', 'Total Deductions', 'Net Pay'];
+    const header = ['Emp Code', 'Name', 'Department', 'Pay Type', 'Days Worked', 'Daily Rate', 'Month Days', 'Paid Days', 'LOP Days', 'Late Marks', 'Arrears', 'Gross', 'LWF', 'Advance', 'ESI', 'PF', 'PT', 'TDS', 'Total Deductions', 'Net Pay'];
     const find = (r: PayrollPreviewRow, code: string) => r.computation.deductions.find(d => d.code === code)?.amount ?? 0;
     const lines = (rows ?? []).map(r => [
       r.employee.empCode,
       r.employee.fullName,
       r.employee.departmentName,
-      r.computation.payType === 'HOURLY' ? 'Hourly' : 'Monthly',
-      r.computation.workedHours,
-      r.computation.hourlyRate ?? '',
+      r.computation.payType === 'DAILY' ? 'Per day' : 'Monthly',
+      r.computation.payType === 'DAILY' ? r.computation.presentDays : '',
+      r.computation.dailyRate ?? '',
       r.computation.calendarDays,
       r.computation.payableDays,
       r.computation.lopDays,
@@ -189,7 +189,7 @@ export const AttendancePayroll: React.FC = () => {
             {PAYROLL_POLICY.pfRate * 100}% of basic (ceiling {formatInr(PAYROLL_POLICY.pfWageCeiling)}) · ESI if gross ≤ {formatInr(PAYROLL_POLICY.esiGrossThreshold)} · PT {formatInr(PAYROLL_POLICY.professionalTaxMonthly)}/month · TDS from salary revision · approved time updates replace punch times · approved holiday/Sunday work chosen as overtime is paid at {OVERTIME_POLICY.payMultiplier}× a day's gross.
           </div>
           <div>
-            Part-time (hourly): hours worked × hourly rate · PF {PAYROLL_POLICY.pfRate * 100}% of gross · ESI {PAYROLL_POLICY.esiEmployeeRate * 100}% of gross · no PT · LWF{' '}
+            Part-time (per day): days worked × daily rate (a day counts when punched in and out) · PF {PAYROLL_POLICY.pfRate * 100}% of gross · ESI {PAYROLL_POLICY.esiEmployeeRate * 100}% of gross · no PT · LWF{' '}
             {STATUTORY_DEDUCTIONS.lwfEmployeeAmount > 0
               ? `${formatInr(STATUTORY_DEDUCTIONS.lwfEmployeeAmount)} in ${STATUTORY_DEDUCTIONS.lwfMonths.map(m => getMonthName(m, true)).join(' & ')}`
               : 'rate not set (prints as 0.00)'}{' '}
@@ -271,7 +271,7 @@ export const AttendancePayroll: React.FC = () => {
                 <thead className={tableHeadClass}>
                   <tr>
                     <th className="px-4 py-3">Employee</th>
-                    <th className="px-3 py-3 text-center" title="Paid days of the month, or hours worked for part-time staff">Paid / Month</th>
+                    <th className="px-3 py-3 text-center" title="Paid days of the month, or days worked for part-time staff">Paid / Month</th>
                     <th className="px-3 py-3 text-center">Worked</th>
                     <th className="px-3 py-3 text-center">Leave</th>
                     <th className="px-3 py-3 text-center">Late</th>
@@ -295,8 +295,8 @@ export const AttendancePayroll: React.FC = () => {
                           </div>
                         </td>
                         <td className="px-3 py-2.5 text-center font-mono">
-                          {c.payType === 'HOURLY' ? (
-                            <span title={`Hourly: ${c.workedHours} h × ${formatInr(c.hourlyRate ?? 0)}`}>{c.workedHours} h</span>
+                          {c.payType === 'DAILY' ? (
+                            <span title={`Per day: ${c.presentDays} days × ${formatInr(c.dailyRate ?? 0)}`}>{c.presentDays} days</span>
                           ) : (
                             <>
                               {c.payableDays}/{c.calendarDays}
@@ -343,7 +343,7 @@ export const AttendancePayroll: React.FC = () => {
         isOpen={!!viewing}
         onClose={() => setViewing(null)}
         title={viewing ? `${viewing.employee.fullName} · ${getMonthName(month)} ${year}` : ''}
-        subtitle={viewing?.revision ? `Salary revision effective ${viewing.revision.effectiveFrom} · ${viewing.revision.payType === 'HOURLY' ? `hourly rate ${formatInr(viewing.revision.hourlyRate ?? 0)}` : `CTC ${formatInr(viewing.revision.ctcAnnual)}`}` : 'No approved salary revision'}
+        subtitle={viewing?.revision ? `Salary revision effective ${viewing.revision.effectiveFrom} · ${viewing.revision.payType === 'DAILY' ? `daily rate ${formatInr(viewing.revision.dailyRate ?? 0)}` : `CTC ${formatInr(viewing.revision.ctcAnnual)}`}` : 'No approved salary revision'}
         maxWidth="2xl"
       >
         {viewing && (

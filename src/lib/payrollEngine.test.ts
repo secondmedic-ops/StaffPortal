@@ -118,32 +118,33 @@ assert(ot?.amount === Math.round((40000 / 30) * 1.5), `overtime 1.5 days = ${Mat
 assert(r.grossEarnings === 42000 && r.deductions.find(d => d.code === 'PF')!.amount === 1800, 'overtime raises gross but not PF');
 assert(!r.warnings.some(w => w.includes('Loss of pay')), 'overtime does not trigger a false LOP warning');
 
-// 21. Part-time hourly pay, as on the company part-time payslip:
-//     100 h × ₹60 = 6000; PF 12% = 720; ESI 0.75% = 45; total 765; net 5235; no PT.
-const hourly = { basicMonthly: 0, hraMonthly: 0, specialMonthly: 0, otherAllowanceMonthly: 0, tdsMonthly: 0, pfApplicable: true, payType: 'HOURLY' as const, hourlyRate: 60 };
-const att21 = workdays.slice(0, 20).map(d => punch(d, '10:00', 5)); // 20 days × 5h = 100h
-r = computePayroll({ year: 2026, month: 9, salary: hourly, attendance: att21, leaves: [], holidays: [], today });
-assert(r.payType === 'HOURLY' && r.workedHours === 100, `hourly worked 100h (got ${r.workedHours})`);
-assert(r.grossEarnings === 6000, `100h × 60 = 6000 (got ${r.grossEarnings})`);
-assert(r.deductions.find(d => d.code === 'PF')!.amount === 720, 'hourly PF = 12% of gross = 720');
-assert(r.deductions.find(d => d.code === 'ESI')!.amount === 45, 'hourly ESI = 0.75% of gross = 45');
+// 21. Part-time per-day pay, as on the company part-time payslip totals:
+//     20 days × ₹300 = 6000; PF 12% = 720; ESI 0.75% = 45; total 765; net 5235; no PT.
+const daily = { basicMonthly: 0, hraMonthly: 0, specialMonthly: 0, otherAllowanceMonthly: 0, tdsMonthly: 0, pfApplicable: true, payType: 'DAILY' as const, dailyRate: 300 };
+const att21 = workdays.slice(0, 20).map(d => punch(d, '10:00', 5)); // 20 part-time days of 5h
+r = computePayroll({ year: 2026, month: 9, salary: daily, attendance: att21, leaves: [], holidays: [], today });
+assert(r.payType === 'DAILY' && r.presentDays === 20, `per-day: 20 days worked (got ${r.presentDays})`);
+assert(r.grossEarnings === 6000, `20 days × 300 = 6000 (got ${r.grossEarnings})`);
+assert(r.deductions.find(d => d.code === 'PF')!.amount === 720, 'per-day PF = 12% of gross = 720');
+assert(r.deductions.find(d => d.code === 'ESI')!.amount === 45, 'per-day ESI = 0.75% of gross = 45');
 assert(!r.deductions.find(d => d.code === 'PT'), 'no Professional Tax on the part-time payslip');
 assert(r.totalDeductions === 765 && r.netPay === 5235, `total 765, net 5235 (got ${r.totalDeductions}/${r.netPay})`);
-assert(!r.warnings.some(w => w.includes('Loss of pay')), 'hourly pay shows no LOP warning');
-assert(r.presentDays === 20 && r.lopDays === 0, `hourly: 20 days worked, no LOP days (got ${r.presentDays}/${r.lopDays})`);
+assert(!r.warnings.some(w => w.includes('Loss of pay')) && r.lopDays === 0, 'per-day pay shows no LOP');
+assert(r.workedHours === 100, `hours still recorded for information (got ${r.workedHours})`);
 
-// 22. Arrears add to gross; advance is recovered; missing punch-out hours are not paid
-const att22 = [...att21.slice(0, 19), { ...punch(workdays[19], '10:00', 5), punchOut: undefined, workedHours: undefined }];
-r = computePayroll({ year: 2026, month: 9, salary: hourly, attendance: att22, leaves: [], holidays: [], today, arrears: 500, advance: 1000 });
-assert(r.workedHours === 95 && r.earnings.find(e => e.code === 'HOURLY')!.amount === 5700, `95h paid (got ${r.workedHours})`);
+// 22. Short part-time days still count as a full day; arrears add, advance recovered;
+//     a day without punch-out is not paid until a time update is approved
+const att22 = [...att21.slice(0, 18), punch(workdays[18], '10:00', 2), { ...punch(workdays[19], '10:00', 5), punchOut: undefined, workedHours: undefined }];
+r = computePayroll({ year: 2026, month: 9, salary: daily, attendance: att22, leaves: [], holidays: [], today, arrears: 500, advance: 1000 });
+assert(r.presentDays === 19 && r.earnings.find(e => e.code === 'DAILY')!.amount === 5700, `19 days paid (got ${r.presentDays})`);
 assert(r.earnings.find(e => e.code === 'ARREARS')!.amount === 500 && r.grossEarnings === 6200, 'arrears added to gross');
 assert(r.deductions.find(d => d.code === 'ADVANCE')!.amount === 1000, 'advance recovered');
 assert(r.warnings.some(w => w.includes('No punch-out')), 'missing punch-out warned');
 
-// 23. Hours are taken from punch times when worked hours were not stored
+// 23. A day counts from punch times when worked hours were not stored
 const att23 = [{ ...punch(1, '10:00', 6), workedHours: undefined }];
-r = computePayroll({ year: 2026, month: 9, salary: hourly, attendance: att23, leaves: [], holidays: [], today });
-assert(r.workedHours === 6 && r.grossEarnings === 360, `hours from punch times (got ${r.workedHours})`);
+r = computePayroll({ year: 2026, month: 9, salary: daily, attendance: att23, leaves: [], holidays: [], today });
+assert(r.presentDays === 1 && r.grossEarnings === 300, `day from punch times (got ${r.presentDays})`);
 
 // 24. Monthly salary: arrears and advance flow through without touching LOP
 r = computePayroll({ year: 2026, month: 9, salary, attendance: workdays.map(d => punch(d, '09:20', 9)), leaves: [], holidays: [], today, arrears: 2000, advance: 3000 });
@@ -155,7 +156,7 @@ assert(numberInWords(5235) === 'Five Thousand Two Hundred Thirty Five', `5235 in
 
 // 26. LWF ₹25 in June and December only
 const lwf = (month: number) =>
-  computePayroll({ year: 2026, month, salary: hourly, attendance: [], leaves: [], holidays: [], today: '2027-01-15', arrears: 1000 })
+  computePayroll({ year: 2026, month, salary: daily, attendance: [], leaves: [], holidays: [], today: '2027-01-15', arrears: 1000 })
     .deductions.find(d => d.code === 'LWF')?.amount ?? 0;
 assert(lwf(6) === 25 && lwf(12) === 25 && lwf(11) === 0, `LWF 25 in Jun/Dec, none in Nov (got ${lwf(6)}/${lwf(12)}/${lwf(11)})`);
 r = computePayroll({ year: 2026, month: 12, salary, attendance: [], leaves: [], holidays: [], today: '2026-12-01' });

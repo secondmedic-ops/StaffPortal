@@ -100,7 +100,7 @@ interface PayslipViewProps {
     | 'totalDeductions'
     | 'netPay'
   > &
-    Partial<Pick<PayrollEntry, 'payType' | 'workedHours' | 'hourlyRate'>>;
+    Partial<Pick<PayrollEntry, 'payType' | 'workedHours' | 'dailyRate'>>;
   /** Loads division, location, ID and bank details for the slip. */
   employeeId?: number;
   employee: { name: string; code: string; designation?: string; department?: string };
@@ -129,11 +129,11 @@ export const PayslipView: React.FC<PayslipViewProps> = ({ entry, employeeId, emp
   }, [employeeId]);
 
   const profile = details?.profile ?? null;
-  const hourly = entry.payType === 'HOURLY';
+  const daily = entry.payType === 'DAILY';
   const arrears = entry.earnings.find(e => e.code === 'ARREARS')?.amount ?? 0;
   const earningLines = entry.earnings.filter(e => e.code !== 'ARREARS');
   const dRows = deductionRows(entry.deductions);
-  const earningRows = hourly ? 1 : earningLines.length;
+  const earningRows = daily ? 1 : earningLines.length;
   const bodyRows = Math.max(earningRows, dRows.length);
 
   const idLine = [aadhaarText(profile), profile?.panNumber].filter(Boolean).join(' / ');
@@ -197,7 +197,7 @@ export const PayslipView: React.FC<PayslipViewProps> = ({ entry, employeeId, emp
                   <table className="w-full">
                     <tbody>
                       {(
-                        hourly
+                        daily
                           ? [
                               ['Days worked', String(entry.presentDays)],
                               ['UAN', profile?.uanNumber]
@@ -224,8 +224,8 @@ export const PayslipView: React.FC<PayslipViewProps> = ({ entry, employeeId, emp
           <table className="w-full border-collapse border-b border-black">
             <thead>
               <tr className="border-b border-black">
-                <th className={`${cell} font-normal text-left`}>{hourly ? 'Total Working Hrs' : 'Earnings'}</th>
-                <th className={`${cell} font-normal ${num}`}>{hourly ? 'Rate' : 'Paid Days'}</th>
+                <th className={`${cell} font-normal text-left`}>{daily ? 'Days Worked' : 'Earnings'}</th>
+                <th className={`${cell} font-normal ${num}`}>{daily ? 'Rate / Day' : 'Paid Days'}</th>
                 <th className={`${cell} font-normal ${num}`}>Earning</th>
                 <th className={`${cell} font-normal ${num} border-r`}>Arrears</th>
                 <th className={`${cell} font-normal text-left`}>Deduction</th>
@@ -236,16 +236,16 @@ export const PayslipView: React.FC<PayslipViewProps> = ({ entry, employeeId, emp
               {Array.from({ length: bodyRows }).map((_, i) => {
                 const d = dRows[i];
                 let left: React.ReactNode = null;
-                if (hourly && i === 0) {
+                if (daily && i === 0) {
                   left = (
                     <>
-                      <td className={`${cell} text-center`}>{formatAmount(entry.workedHours ?? 0).replace(/\.00$/, '')}</td>
-                      <td className={`${cell} ${num}`}>{formatAmount(entry.hourlyRate ?? 0)}</td>
+                      <td className={`${cell} text-center`}>{String(entry.presentDays)}</td>
+                      <td className={`${cell} ${num}`}>{formatAmount(entry.dailyRate ?? 0)}</td>
                       <td className={`${cell} ${num}`}>{formatAmount(earningLines[0]?.amount ?? 0)}</td>
                       <td className={`${cell} ${num} border-r`}>{arrears ? formatAmount(arrears) : ''}</td>
                     </>
                   );
-                } else if (!hourly && earningLines[i]) {
+                } else if (!daily && earningLines[i]) {
                   left = (
                     <>
                       <td className={cell}>{earningLines[i].label}</td>
@@ -302,7 +302,7 @@ export const PayslipView: React.FC<PayslipViewProps> = ({ entry, employeeId, emp
         </div>
       </div>
 
-      {!hourly && days && days.length > 0 && (
+      {!daily && days && days.length > 0 && (
         <div className="no-print rounded-lg border border-slate-200 dark:border-slate-800 p-3">
           <div className="text-[12.5px] font-semibold text-slate-700 dark:text-slate-300 mb-2">How each day was counted</div>
           <AttendanceStrip days={days} />
