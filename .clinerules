@@ -1,0 +1,27 @@
+# SecondMedic Staff Portal — Roo Code Project Rules
+
+## Architecture Overview
+- **Frontend**: React 18, Vite, TypeScript, Tailwind CSS, Lucide Icons.
+- **Backend / Host**: Cloudflare Worker (`src/worker.ts`), deployed via Wrangler.
+- **Database / Auth**: Supabase (PostgreSQL with RLS), REST APIs in `src/api/`.
+- **Live URL**: https://staffportal.secondmedic.workers.dev/
+
+## Key Rules & Patterns
+
+### 1. React State & Hooks
+- Always guard against re-render loops: use primitive identifiers (e.g. `currentUser?.id`) instead of entire user objects in `useEffect` dependency arrays.
+- For async data fetching in contexts, use in-flight request deduplication/guards (see `src/context/PendingCountsContext.tsx`).
+
+### 2. Time & Attendance
+- SecondMedic operates in Indian Standard Time (IST, `Asia/Kolkata`, UTC+5:30).
+- Always use `getISTDateString()` / `getISTTimeString()` from `src/lib/dateUtils.ts` for attendance punch dates and records. Do NOT use UTC `toISOString().split('T')[0]` which causes previous-day bugs before 05:30 AM IST.
+
+### 3. Role-Based Access Control (RBAC) & Payroll
+- Roles: `employee`, `team_lead`, `manager`, `hr`, `management`, `super_admin`.
+- Confidential operations (especially Payroll and Compensation) MUST enforce `assertPayrollAccess(user)` before processing or returning data. Unauthorized requests must return HTTP 403.
+- Leave approval flows must guard against self-approval cycles (an employee approving their own request).
+
+### 4. Build & Deployment
+- Package manager: npm (`npm run build`, `npm run preview`).
+- Deploy command: `npx wrangler deploy`.
+- Cloudflare configuration: `wrangler.toml`.
