@@ -46,3 +46,6 @@ insert into employees(emp_code, full_name, official_email, department_id, auth_u
  ('SM006','AccB','accb@sm.com',1,null,1),
  ('SM007','IT','it@sm.com',1,'00000000-0000-0000-0000-000000000007',1);
 insert into employee_roles(employee_id, role) values (1,'CEO'),(2,'MANAGER'),(4,'HR'),(5,'ACCOUNTS'),(6,'ACCOUNTS');
+-- Mirrors the core schema: role rows are protected by RLS (write policy comes from the migrations).
+alter table employee_roles enable row level security;
+create policy employee_roles_read on employee_roles for select to authenticated using (true);

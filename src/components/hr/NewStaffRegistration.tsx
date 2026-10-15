@@ -9,7 +9,6 @@ import { getTodayIsoString } from '../../utils/dateUtils';
 import {
   Briefcase,
   User,
-  Landmark,
   KeyRound,
   ClipboardCheck,
   ChevronLeft,
@@ -25,13 +24,10 @@ import { PageHeader, inputClass, labelClass, primaryBtn, secondaryBtn, cardClass
 const STEPS = [
   { id: 'job', label: 'Job & Reporting', icon: Briefcase },
   { id: 'personal', label: 'Personal', icon: User },
-  { id: 'bank', label: 'Statutory & Bank', icon: Landmark },
   { id: 'access', label: 'Access & Salary', icon: KeyRound },
   { id: 'review', label: 'Review', icon: ClipboardCheck }
 ] as const;
 
-const PAN_RE = /^[A-Z]{5}[0-9]{4}[A-Z]$/;
-const IFSC_RE = /^[A-Z]{4}0[A-Z0-9]{6}$/;
 const MOBILE_RE = /^(\+91[\s-]?)?[6-9]\d{9}$/;
 
 interface FormState {
@@ -59,14 +55,6 @@ interface FormState {
   emergencyContactName: string;
   emergencyContactPhone: string;
   emergencyContactRelation: string;
-  panNumber: string;
-  aadhaarNumber: string;
-  uanNumber: string;
-  esicNumber: string;
-  bankName: string;
-  bankAccountNumber: string;
-  bankAccountConfirm: string;
-  bankIfsc: string;
   extraRoles: RoleType[];
   provisioning: ProvisioningItem[];
   offeredCtc: string;
@@ -99,14 +87,6 @@ const initialState = (): FormState => ({
   emergencyContactName: '',
   emergencyContactPhone: '',
   emergencyContactRelation: '',
-  panNumber: '',
-  aadhaarNumber: '',
-  uanNumber: '',
-  esicNumber: '',
-  bankName: '',
-  bankAccountNumber: '',
-  bankAccountConfirm: '',
-  bankIfsc: '',
   extraRoles: [],
   provisioning: ['EMAIL', 'LAPTOP', 'ID_CARD'],
   offeredCtc: '',
@@ -115,7 +95,9 @@ const initialState = (): FormState => ({
 });
 
 export const NewStaffRegistration: React.FC = () => {
-  const { currentUser, showToast, setActiveNav } = useAuth();
+  const { currentUser, showToast, setActiveNav, isCeo, isAdmin } = useAuth();
+  // Only the CEO / system admin may hand out Accounts access (it unlocks salaries and bank details).
+  const assignableRoles: RoleType[] = isCeo || isAdmin ? ['MANAGER', 'HR', 'ACCOUNTS', 'IT'] : ['MANAGER', 'HR', 'IT'];
   const [loading, setLoading] = useState(true);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
@@ -173,15 +155,6 @@ export const NewStaffRegistration: React.FC = () => {
     if (s === 1) {
       if (form.emergencyContactPhone && !MOBILE_RE.test(form.emergencyContactPhone.replace(/\s/g, ''))) return 'Emergency contact number looks invalid.';
     }
-    if (s === 2) {
-      if (form.panNumber && !PAN_RE.test(form.panNumber.toUpperCase())) return 'PAN must look like ABCDE1234F.';
-      if (form.aadhaarNumber && !/^\d{12}$/.test(form.aadhaarNumber)) return 'Aadhaar must be 12 digits.';
-      if (!form.bankName.trim()) return 'Bank name is required — salary is paid into this account.';
-      if (!form.bankIfsc.trim()) return 'IFSC is required.';
-      if (!IFSC_RE.test(form.bankIfsc.toUpperCase())) return 'IFSC must look like HDFC0001234.';
-      if (!/^\d{6,18}$/.test(form.bankAccountNumber)) return 'Enter a valid bank account number (6–18 digits).';
-      if (form.bankAccountNumber !== form.bankAccountConfirm) return 'Bank account numbers do not match.';
-    }
     return null;
   };
 
@@ -195,7 +168,7 @@ export const NewStaffRegistration: React.FC = () => {
   };
 
   const submit = async () => {
-    for (let s = 0; s < 3; s++) {
+    for (let s = 0; s < 2; s++) {
       const err = validate(s);
       if (err) {
         setStep(s);
@@ -229,14 +202,7 @@ export const NewStaffRegistration: React.FC = () => {
         permanentAddress: (form.sameAddress ? form.currentAddress : form.permanentAddress) || undefined,
         emergencyContactName: form.emergencyContactName || undefined,
         emergencyContactPhone: form.emergencyContactPhone || undefined,
-        emergencyContactRelation: form.emergencyContactRelation || undefined,
-        panNumber: form.panNumber || undefined,
-        aadhaarNumber: form.aadhaarNumber || undefined,
-        uanNumber: form.uanNumber || undefined,
-        esicNumber: form.esicNumber || undefined,
-        bankName: form.bankName || undefined,
-        bankAccountNumber: form.bankAccountNumber || undefined,
-        bankIfsc: form.bankIfsc || undefined
+        emergencyContactRelation: form.emergencyContactRelation || undefined
       },
       extraRoles: form.extraRoles,
       provisioning: form.provisioning,
@@ -464,30 +430,14 @@ export const NewStaffRegistration: React.FC = () => {
         )}
 
         {step === 2 && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {field('PAN', <input value={form.panNumber} onChange={e => set('panNumber', e.target.value.toUpperCase())} maxLength={10} className={`${inputClass} font-mono`} placeholder="ABCDE1234F" />)}
-            {field('Aadhaar number', <input value={form.aadhaarNumber} onChange={e => set('aadhaarNumber', e.target.value.replace(/\D/g, '').slice(0, 12))} inputMode="numeric" className={`${inputClass} font-mono`} placeholder="12 digits" />)}
-            {field('UAN (PF)', <input value={form.uanNumber} onChange={e => set('uanNumber', e.target.value)} className={`${inputClass} font-mono`} />)}
-            {field('ESIC number', <input value={form.esicNumber} onChange={e => set('esicNumber', e.target.value)} className={`${inputClass} font-mono`} />)}
-            {field('Bank name *', <input value={form.bankName} onChange={e => set('bankName', e.target.value)} className={inputClass} placeholder="HDFC Bank" />)}
-            {field('IFSC *', <input value={form.bankIfsc} onChange={e => set('bankIfsc', e.target.value.toUpperCase())} maxLength={11} className={`${inputClass} font-mono`} placeholder="HDFC0001234" />)}
-            {field('Account number *', <input value={form.bankAccountNumber} onChange={e => set('bankAccountNumber', e.target.value.replace(/\s/g, ''))} className={`${inputClass} font-mono`} />)}
-            {field('Confirm account number *', <input value={form.bankAccountConfirm} onChange={e => set('bankAccountConfirm', e.target.value.replace(/\s/g, ''))} onPaste={e => e.preventDefault()} className={`${inputClass} font-mono`} />)}
-            <p className="sm:col-span-2 text-[12.5px] text-slate-500">
-              Bank details are required: payslips show the account salary is paid into. Visible only to the employee, HR and Accounts.
-            </p>
-          </div>
-        )}
-
-        {step === 3 && (
           <div className="space-y-5">
             <div>
               <h3 className="text-xs font-bold text-slate-800 dark:text-slate-200 mb-2">Portal access</h3>
               <p className="text-[12.5px] text-slate-500 mb-2">
-                Everyone gets Employee self-service. Manager approvals switch on automatically once someone reports to them.
+                Everyone gets Employee self-service. Manager approvals switch on automatically once someone reports to them. Bank and ID details are added later by Accounts.
               </p>
               <div className="flex flex-wrap gap-2">
-                {(['MANAGER', 'HR', 'ACCOUNTS', 'IT'] as RoleType[]).map(r => (
+                {assignableRoles.map(r => (
                   <label
                     key={r}
                     className={`px-3 py-1.5 rounded-lg border text-xs font-semibold cursor-pointer ${
@@ -546,7 +496,7 @@ export const NewStaffRegistration: React.FC = () => {
           </div>
         )}
 
-        {step === 4 && (
+        {step === 3 && (
           <div className="space-y-4 text-xs">
             <ReviewBlock
               title="Job"
@@ -559,15 +509,6 @@ export const NewStaffRegistration: React.FC = () => {
                 ['Joining', form.dateOfJoining],
                 ['Reports to', employees.find(e => e.id === form.managerId)?.fullName],
                 ['Status', form.probation ? 'Probation' : 'Active']
-              ]}
-            />
-            <ReviewBlock
-              title="Statutory & bank"
-              rows={[
-                ['PAN', form.panNumber],
-                ['UAN', form.uanNumber],
-                ['Bank', form.bankName && `${form.bankName} · ${form.bankIfsc}`],
-                ['Account', form.bankAccountNumber && `••••${form.bankAccountNumber.slice(-4)}`]
               ]}
             />
             <ReviewBlock

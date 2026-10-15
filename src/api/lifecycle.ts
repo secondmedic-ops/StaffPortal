@@ -151,7 +151,7 @@ export const lifecycleApi = {
     completed.push('Employee record created');
     const employeeId = created.id;
 
-    // Personal, statutory & bank profile
+    // Personal profile (bank & statutory IDs are added by Accounts)
     const p = payload.profile;
     const { error: profileError } = await supabase.from('employee_profiles').upsert({
       employee_id: employeeId,
@@ -165,18 +165,10 @@ export const lifecycleApi = {
       emergency_contact_name: p.emergencyContactName || null,
       emergency_contact_phone: p.emergencyContactPhone || null,
       emergency_contact_relation: p.emergencyContactRelation || null,
-      pan_number: p.panNumber ? p.panNumber.toUpperCase() : null,
-      aadhaar_last4: p.aadhaarNumber ? p.aadhaarNumber.slice(-4) : p.aadhaarLast4 || null,
-      aadhaar_number: p.aadhaarNumber || null,
-      uan_number: p.uanNumber || null,
-      esic_number: p.esicNumber || null,
-      bank_name: p.bankName || null,
-      bank_account_number: p.bankAccountNumber || null,
-      bank_ifsc: p.bankIfsc ? p.bankIfsc.toUpperCase() : null,
       updated_at: new Date().toISOString()
     });
     if (profileError) warnings.push(`Profile not saved: ${profileError.message}`);
-    else completed.push('Personal, statutory & bank details saved');
+    else completed.push('Personal details saved — Accounts adds bank & ID details');
 
     // Roles & system user
     const roles = Array.from(new Set<RoleType>(['EMPLOYEE', ...payload.extraRoles]));
@@ -311,21 +303,21 @@ export const lifecycleApi = {
 
   /**
    * Details printed on a payslip. Bank and ID numbers are visible only to the
-   * employee, HR and Accounts (row-level security); others get nulls.
+   * employee and Accounts (row-level security); others get nulls.
    */
   async getPayslipDetails(employeeId: number): Promise<{ profile: EmployeeProfile | null; division?: string; workLocation?: string }> {
-    const [profileRes, empRes] = await Promise.all([
-      supabase.from('employee_profiles').select('*').eq('employee_id', employeeId).maybeSingle(),
+    const [profile, empRes] = await Promise.all([
+      this.getProfile(employeeId).catch(() => null),
       supabase.from('employees').select('division, work_location').eq('id', employeeId).maybeSingle()
     ]);
     return {
-      profile: profileRes.data ? mapEmployeeProfile(profileRes.data) : null,
+      profile,
       division: empRes.data?.division ?? undefined,
       workLocation: empRes.data?.work_location ?? undefined
     };
   },
 
-  /** HR saves an employee's statutory IDs and bank account (bank details are mandatory). */
+  /** Accounts saves an employee's statutory IDs and bank account (bank details are mandatory). */
   async saveStatutoryDetails(
     employeeId: number,
     d: Pick<EmployeeProfile, 'panNumber' | 'aadhaarNumber' | 'uanNumber' | 'esicNumber'> & {
@@ -334,7 +326,7 @@ export const lifecycleApi = {
       bankIfsc: string;
     }
   ): Promise<void> {
-    const { error } = await supabase.from('employee_profiles').upsert(
+    const { error } = await supabase.from('employee_financials').upsert(
       {
         employee_id: employeeId,
         pan_number: d.panNumber ? d.panNumber.toUpperCase() : null,
@@ -357,14 +349,15 @@ export const lifecycleApi = {
     });
   },
 
+  /** Personal profile merged with bank & ID details; the latter are null unless you are the employee or Accounts. */
   async getProfile(employeeId: number): Promise<EmployeeProfile | null> {
-    const { data, error } = await supabase
-      .from('employee_profiles')
-      .select('*')
-      .eq('employee_id', employeeId)
-      .maybeSingle();
-    if (error) throw new Error(`Failed to load profile: ${error.message}`);
-    return data ? mapEmployeeProfile(data) : null;
+    const [profileRes, finRes] = await Promise.all([
+      supabase.from('employee_profiles').select('*').eq('employee_id', employeeId).maybeSingle(),
+      supabase.from('employee_financials').select('*').eq('employee_id', employeeId).maybeSingle()
+    ]);
+    if (profileRes.error) throw new Error(`Failed to load profile: ${profileRes.error.message}`);
+    if (!profileRes.data && !finRes.data) return null;
+    return mapEmployeeProfile({ employee_id: employeeId, ...profileRes.data, ...finRes.data });
   },
 
   async getTasks(kind?: LifecycleTask['kind']): Promise<LifecycleTask[]> {

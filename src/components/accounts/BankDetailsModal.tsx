@@ -16,7 +16,7 @@ interface Props {
 
 const blank = { panNumber: '', aadhaarNumber: '', uanNumber: '', esicNumber: '', bankName: '', bankIfsc: '', bankAccountNumber: '', bankAccountConfirm: '' };
 
-/** HR edits an employee's statutory IDs and salary bank account. Bank details are mandatory for payroll. */
+/** Accounts edits an employee's statutory IDs and salary bank account. Bank details are mandatory for payroll. */
 export const BankDetailsModal: React.FC<Props> = ({ employee, onClose, onSaved }) => {
   const { showToast } = useAuth();
   const [form, setForm] = useState(blank);
@@ -98,7 +98,7 @@ export const BankDetailsModal: React.FC<Props> = ({ employee, onClose, onSaved }
       isOpen={!!employee}
       onClose={onClose}
       title={employee ? `Bank & ID details · ${employee.fullName}` : ''}
-      subtitle="Bank details are required before payroll can produce a payslip. Visible only to the employee, HR and Accounts."
+      subtitle="Bank details are required before payroll can produce a payslip. Visible only to the employee and Accounts."
       maxWidth="xl"
     >
       <form onSubmit={save} className="space-y-4">
