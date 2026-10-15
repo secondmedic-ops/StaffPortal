@@ -389,6 +389,23 @@ export const NewStaffRegistration: React.FC = () => {
               <input type="checkbox" checked={form.probation} onChange={e => set('probation', e.target.checked)} />
               Starts on probation (probation-ineligible leave types won't be credited)
             </label>
+
+            <div className="sm:col-span-2 p-3 rounded-lg border border-teal-200 dark:border-teal-800/80 bg-teal-50/50 dark:bg-teal-950/30">
+              <label className="flex items-start gap-2.5 text-xs text-slate-800 dark:text-slate-200 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={form.extraRoles.includes('MANAGER')}
+                  onChange={() => toggleList('extraRoles', 'MANAGER')}
+                  className="mt-0.5 rounded text-teal-700 focus:ring-teal-700 w-4 h-4"
+                />
+                <div>
+                  <span className="font-bold text-teal-950 dark:text-teal-200">Register as a Manager / Team Lead</span>
+                  <p className="text-[11.5px] text-slate-500 dark:text-slate-400 mt-0.5">
+                    Grants access to the <strong>"My Team"</strong> workspace (approving team leave, attendance regularization, holiday work claims, and team KPIs).
+                  </p>
+                </div>
+              </label>
+            </div>
           </div>
         )}
 
