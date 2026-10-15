@@ -1,7 +1,7 @@
 import puppeteer from 'puppeteer-core';
 
 const EDGE_PATH = 'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe';
-const BASE_URL = 'http://localhost:4173';
+const BASE_URL = (process.argv[2] || 'http://localhost:4173').replace(/\/+$/, '');
 
 const results = [];
 
