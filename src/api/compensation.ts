@@ -102,7 +102,7 @@ export const compensationApi = {
     tdsMonthly: number;
     pfApplicable: boolean;
     payType?: PayType;
-    hourlyRate?: number;
+    dailyRate?: number;
     incrementPct?: number;
     newDesignation?: string;
     reason?: string;
@@ -123,7 +123,7 @@ export const compensationApi = {
         tds_monthly: data.tdsMonthly,
         pf_applicable: data.pfApplicable,
         pay_type: data.payType ?? 'MONTHLY',
-        hourly_rate: data.payType === 'HOURLY' ? data.hourlyRate ?? null : null,
+        daily_rate: data.payType === 'DAILY' ? data.dailyRate ?? null : null,
         increment_pct: data.incrementPct ?? null,
         new_designation: data.newDesignation || null,
         reason: data.reason || null,
@@ -314,7 +314,7 @@ export const compensationApi = {
         net_pay: c.netPay,
         pay_type: c.payType,
         worked_hours: c.workedHours,
-        hourly_rate: c.hourlyRate ?? null,
+        daily_rate: c.dailyRate ?? null,
         status: 'DRAFT' as const,
         revision_id: revision?.id ?? null,
         computed_by: me.id,

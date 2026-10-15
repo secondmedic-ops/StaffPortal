@@ -29,15 +29,15 @@ function firstOfNextMonth(): string {
 const monthlyGross = (r: Pick<SalaryRevision, 'basicMonthly' | 'hraMonthly' | 'specialMonthly' | 'otherAllowanceMonthly'>) =>
   r.basicMonthly + r.hraMonthly + r.specialMonthly + r.otherAllowanceMonthly;
 
-/** "₹4,80,000 p.a." for monthly salaries, "₹60.00 / hr" for part-time. */
-export const salaryLabel = (r: Pick<SalaryRevision, 'payType' | 'hourlyRate' | 'ctcAnnual'>) =>
-  r.payType === 'HOURLY' ? `${formatInr(r.hourlyRate ?? 0)} / hr` : `${formatInr(r.ctcAnnual)} p.a.`;
+/** "₹4,80,000 p.a." for monthly salaries, "₹300 / day" for part-time. */
+export const salaryLabel = (r: Pick<SalaryRevision, 'payType' | 'dailyRate' | 'ctcAnnual'>) =>
+  r.payType === 'DAILY' ? `${formatInr(r.dailyRate ?? 0)} / day` : `${formatInr(r.ctcAnnual)} p.a.`;
 
 interface ProposalForm {
   employeeId: number | '';
   revisionType: SalaryRevisionType;
   payType: PayType;
-  hourlyRate: string;
+  dailyRate: string;
   effectiveFrom: string;
   incrementPct: string;
   ctcAnnual: string;
@@ -56,7 +56,7 @@ const blankForm = (): ProposalForm => ({
   employeeId: '',
   revisionType: 'INCREMENT',
   payType: 'MONTHLY',
-  hourlyRate: '',
+  dailyRate: '',
   effectiveFrom: firstOfNextMonth(),
   incrementPct: '',
   ctcAnnual: '',
@@ -159,7 +159,7 @@ export const IncrementsRevisions: React.FC = () => {
       pfApplicable: cur?.pfApplicable ?? prev.pfApplicable,
       tdsMonthly: cur ? String(cur.tdsMonthly) : prev.tdsMonthly,
       payType: cur?.payType ?? prev.payType,
-      hourlyRate: '',
+      dailyRate: '',
       incrementPct: '',
       ctcAnnual: ''
     }));
@@ -180,19 +180,19 @@ export const IncrementsRevisions: React.FC = () => {
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.employeeId) return;
-    const hourly = form.payType === 'HOURLY';
-    const rate = Number(form.hourlyRate);
-    if (hourly && !(rate > 0)) {
-      showToast('Hourly rate required', 'Enter the hourly rate for this part-time employee.', 'error');
+    const daily = form.payType === 'DAILY';
+    const rate = Number(form.dailyRate);
+    if (daily && !(rate > 0)) {
+      showToast('Daily rate required', 'Enter the per-day rate for this part-time employee.', 'error');
       return;
     }
-    const ctc = hourly ? 0 : Number(form.ctcAnnual);
-    if (!hourly && !(ctc > 0)) {
+    const ctc = daily ? 0 : Number(form.ctcAnnual);
+    if (!daily && !(ctc > 0)) {
       showToast('CTC required', 'Enter the revised annual CTC or an increment %.', 'error');
       return;
     }
-    const basic = hourly ? 0 : Number(form.basicMonthly);
-    if (!hourly && !(basic > 0)) {
+    const basic = daily ? 0 : Number(form.basicMonthly);
+    if (!daily && !(basic > 0)) {
       showToast('Basic required', 'Monthly basic must be greater than zero.', 'error');
       return;
     }
@@ -204,13 +204,13 @@ export const IncrementsRevisions: React.FC = () => {
         effectiveFrom: form.effectiveFrom,
         ctcAnnual: ctc,
         basicMonthly: basic,
-        hraMonthly: hourly ? 0 : Number(form.hraMonthly) || 0,
-        specialMonthly: hourly ? 0 : Number(form.specialMonthly) || 0,
-        otherAllowanceMonthly: hourly ? 0 : Number(form.otherAllowanceMonthly) || 0,
+        hraMonthly: daily ? 0 : Number(form.hraMonthly) || 0,
+        specialMonthly: daily ? 0 : Number(form.specialMonthly) || 0,
+        otherAllowanceMonthly: daily ? 0 : Number(form.otherAllowanceMonthly) || 0,
         tdsMonthly: Number(form.tdsMonthly) || 0,
         pfApplicable: form.pfApplicable,
         payType: form.payType,
-        hourlyRate: hourly ? rate : undefined,
+        dailyRate: daily ? rate : undefined,
         incrementPct: form.incrementPct !== '' ? Number(form.incrementPct) : undefined,
         newDesignation: form.revisionType === 'PROMOTION' ? form.newDesignation : undefined,
         reason: form.reason
@@ -324,7 +324,7 @@ export const IncrementsRevisions: React.FC = () => {
                         {r.reason && <div className="text-xs text-slate-600 dark:text-slate-400 mt-1 italic">“{r.reason}”</div>}
                       </div>
                       <div className="text-right">
-                        <div className="text-[12.5px] text-slate-500">{prev ? `${salaryLabel(prev)} →` : r.payType === 'HOURLY' ? 'Hourly rate' : 'New CTC'}</div>
+                        <div className="text-[12.5px] text-slate-500">{prev ? `${salaryLabel(prev)} →` : r.payType === 'DAILY' ? 'Daily rate' : 'New CTC'}</div>
                         <div className="text-lg font-bold text-slate-900 dark:text-slate-100">{salaryLabel(r)}</div>
                         {r.incrementPct != null && (
                           <div className={`text-[12.5px] font-bold ${r.incrementPct >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
@@ -335,10 +335,10 @@ export const IncrementsRevisions: React.FC = () => {
                       </div>
                     </div>
                     <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 mt-3 text-[12.5px]">
-                      {(r.payType === 'HOURLY'
+                      {(r.payType === 'DAILY'
                         ? [
-                            ['Pay type', 'Hourly (part-time)'],
-                            ['Rate / hour', r.hourlyRate ?? 0],
+                            ['Pay type', 'Per day (part-time)'],
+                            ['Rate / day', r.dailyRate ?? 0],
                             ['PF', r.pfApplicable ? '12% of gross' : 'No'],
                             ['TDS / month', r.tdsMonthly]
                           ]
@@ -508,7 +508,7 @@ export const IncrementsRevisions: React.FC = () => {
                 {(
                   [
                     ['MONTHLY', 'Monthly salary', 'Prorated by paid days'],
-                    ['HOURLY', 'Hourly (part-time)', 'Hours worked × rate']
+                    ['DAILY', 'Per day (part-time)', 'Days worked × daily rate']
                   ] as Array<[PayType, string, string]>
                 ).map(([value, label, hint]) => (
                   <label
@@ -526,11 +526,11 @@ export const IncrementsRevisions: React.FC = () => {
                 ))}
               </div>
             </div>
-            {form.payType === 'HOURLY' && (
+            {form.payType === 'DAILY' && (
               <div className="col-span-2 grid grid-cols-3 gap-3">
                 <div>
-                  <label className={labelClass}>Hourly rate (₹) *</label>
-                  <input type="number" min={0} step="0.01" value={form.hourlyRate} onChange={e => set('hourlyRate', e.target.value)} className={`${inputClass} font-mono`} placeholder="60" />
+                  <label className={labelClass}>Rate per day (₹) *</label>
+                  <input type="number" min={0} step="0.01" value={form.dailyRate} onChange={e => set('dailyRate', e.target.value)} className={`${inputClass} font-mono`} placeholder="300" />
                 </div>
                 <div>
                   <label className={labelClass}>TDS / month (₹)</label>

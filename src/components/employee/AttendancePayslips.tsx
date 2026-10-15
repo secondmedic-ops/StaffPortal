@@ -127,7 +127,7 @@ export const AttendancePayslips: React.FC = () => {
                     {h.newDesignation && ` · ${h.newDesignation}`}
                   </span>
                   <span className="font-mono font-bold text-slate-900 dark:text-slate-100">
-                    {h.payType === 'HOURLY' ? `${formatInr(h.hourlyRate ?? 0)} / hr` : `${formatInr(h.ctcAnnual)} p.a.`}
+                    {h.payType === 'DAILY' ? `${formatInr(h.dailyRate ?? 0)} / day` : `${formatInr(h.ctcAnnual)} p.a.`}
                     {h.incrementPct != null && <span className="ml-2 text-emerald-600">+{h.incrementPct}%</span>}
                   </span>
                 </li>
