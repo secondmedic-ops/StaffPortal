@@ -18,6 +18,7 @@ import { StatusPill } from '../common/StatusPill';
 import { Modal } from '../common/Modal';
 import { SkeletonLoader } from '../common/SkeletonLoader';
 import { AttendancePayslips } from './AttendancePayslips';
+import { PayslipView } from '../common/PayslipView';
 
 export const MyPayslips: React.FC = () => {
   const { currentUser, showToast } = useAuth();
@@ -184,177 +185,44 @@ export const MyPayslips: React.FC = () => {
           subtitle={`Confidential to ${activePayslipDoc.employeeName} (${activePayslipDoc.employeeCode})`}
           maxWidth="2xl"
         >
-          <div className="space-y-6 print:p-0">
-            {/* Payslip Header with Company Branding */}
-            <div className="border-b border-slate-300 dark:border-slate-700 pb-4 flex items-start justify-between">
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="font-bold text-lg text-teal-800 dark:text-teal-300 tracking-tight">SECOND MEDIC</span>
-                  <span className="text-[11.5px] uppercase font-bold text-slate-500 dark:text-slate-400 border border-slate-300 dark:border-slate-700 px-1 rounded">
-                    Healthcare
-                  </span>
-                </div>
-                <div className="text-[12.5px] text-slate-600 dark:text-slate-400 mt-1 font-medium leading-tight">
-                  SecondMedic Health Services Pvt Ltd
-                </div>
-                <div className="text-[11.5px] text-slate-400 dark:text-slate-500">
-                  CIN: U85110PN2020PTC192841 • Baner Bio-Tech Park, Pune - 411045
-                </div>
-              </div>
-              <div className="text-right">
-                <span className="text-xs font-bold uppercase text-slate-700 dark:text-slate-300 block">
-                  Payslip for {getMonthName(activePayslipDoc.month).toUpperCase()} {activePayslipDoc.year}
-                </span>
-                <span className="text-[11.5px] font-mono text-slate-500 dark:text-slate-400">
-                  Ref: {activePayslipDoc.employeeCode}-{activePayslipDoc.year}-{String(activePayslipDoc.month).padStart(2, '0')}
-                </span>
-              </div>
-            </div>
-
-            {/* Employee Metadata Matrix */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs bg-slate-50 dark:bg-slate-800/50 p-3 rounded-lg border border-slate-200 dark:border-slate-800">
-              <div>
-                <span className="text-slate-400 dark:text-slate-500 text-[11.5px] block">Employee Name</span>
-                <span className="font-bold text-slate-900 dark:text-slate-100">{activePayslipDoc.employeeName}</span>
-              </div>
-              <div>
-                <span className="text-slate-400 dark:text-slate-500 text-[11.5px] block">Employee Code</span>
-                <span className="font-bold text-slate-900 dark:text-slate-100 font-mono">{activePayslipDoc.employeeCode}</span>
-              </div>
-              <div>
-                <span className="text-slate-400 dark:text-slate-500 text-[11.5px] block">Designation</span>
-                <span className="font-medium text-slate-800 dark:text-slate-200">{activePayslipDoc.designation}</span>
-              </div>
-              <div>
-                <span className="text-slate-400 dark:text-slate-500 text-[11.5px] block">Department</span>
-                <span className="font-medium text-slate-800 dark:text-slate-200">{activePayslipDoc.departmentName}</span>
-              </div>
-              <div>
-                <span className="text-slate-400 dark:text-slate-500 text-[11.5px] block">PAN Number</span>
-                <span className="font-mono font-medium text-slate-800 dark:text-slate-200">{activePayslipDoc.panNumber || 'ABCDE1234F'}</span>
-              </div>
-              <div>
-                <span className="text-slate-400 dark:text-slate-500 text-[11.5px] block">Bank Account</span>
-                <span className="font-mono text-slate-800 dark:text-slate-200">{activePayslipDoc.bankAccount || 'HDFC Bank - 5010049281'}</span>
-              </div>
-              <div>
-                <span className="text-slate-400 dark:text-slate-500 text-[11.5px] block">Paid Days</span>
-                <span className="font-bold text-slate-900 dark:text-slate-100">{activePayslipDoc.paidDays} Days</span>
-              </div>
-              <div>
-                <span className="text-slate-400 dark:text-slate-500 text-[11.5px] block">Loss of Pay (LOP)</span>
-                <span className="font-bold text-rose-700 dark:text-rose-300">{activePayslipDoc.lopDays} Days</span>
-              </div>
-            </div>
-
-            {/* Earnings & Deductions Table */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-              {/* Earnings */}
-              <div className="border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden">
-                <div className="bg-slate-100 dark:bg-slate-800 font-bold px-3 py-2 text-slate-800 dark:text-slate-200 flex justify-between border-b border-slate-200 dark:border-slate-800">
-                  <span>Earnings (A)</span>
-                  <span>Amount (INR)</span>
-                </div>
-                <div className="divide-y divide-slate-100 dark:divide-slate-800">
-                  <div className="px-3 py-2 flex justify-between">
-                    <span className="text-slate-600 dark:text-slate-400">Basic Salary</span>
-                    <span className="font-mono font-medium">₹{activePayslipDoc.components.basic.toLocaleString('en-IN')}</span>
-                  </div>
-                  <div className="px-3 py-2 flex justify-between">
-                    <span className="text-slate-600 dark:text-slate-400">House Rent Allowance (HRA)</span>
-                    <span className="font-mono font-medium">₹{activePayslipDoc.components.hra.toLocaleString('en-IN')}</span>
-                  </div>
-                  <div className="px-3 py-2 flex justify-between">
-                    <span className="text-slate-600 dark:text-slate-400">Special / Medical Allowance</span>
-                    <span className="font-mono font-medium">₹{activePayslipDoc.components.specialAllowance.toLocaleString('en-IN')}</span>
-                  </div>
-                  <div className="px-3 py-2 bg-slate-50 dark:bg-slate-800/50 font-bold text-slate-900 dark:text-slate-100 flex justify-between border-t border-slate-200 dark:border-slate-800">
-                    <span>Gross Earnings</span>
-                    <span className="font-mono text-teal-800 dark:text-teal-300">₹{activePayslipDoc.grossAmount.toLocaleString('en-IN')}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Deductions */}
-              <div className="border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden">
-                <div className="bg-slate-100 dark:bg-slate-800 font-bold px-3 py-2 text-slate-800 dark:text-slate-200 flex justify-between border-b border-slate-200 dark:border-slate-800">
-                  <span>Deductions (B)</span>
-                  <span>Amount (INR)</span>
-                </div>
-                <div className="divide-y divide-slate-100 dark:divide-slate-800">
-                  <div className="px-3 py-2 flex justify-between">
-                    <span className="text-slate-600 dark:text-slate-400">Provident Fund (PF)</span>
-                    <span className="font-mono font-medium">₹{activePayslipDoc.components.pf.toLocaleString('en-IN')}</span>
-                  </div>
-                  <div className="px-3 py-2 flex justify-between">
-                    <span className="text-slate-600 dark:text-slate-400">Professional Tax (PT)</span>
-                    <span className="font-mono font-medium">₹{activePayslipDoc.components.pt.toLocaleString('en-IN')}</span>
-                  </div>
-                  <div className="px-3 py-2 flex justify-between">
-                    <span className="text-slate-600 dark:text-slate-400">Income Tax (TDS)</span>
-                    <span className="font-mono font-medium">₹{activePayslipDoc.components.tds.toLocaleString('en-IN')}</span>
-                  </div>
-                  {activePayslipDoc.components.lopDeduction > 0 && (
-                    <div className="px-3 py-2 flex justify-between text-rose-700 dark:text-rose-300 bg-rose-50/50 dark:bg-rose-950/40">
-                      <span>LOP Deduction ({activePayslipDoc.lopDays} days)</span>
-                      <span className="font-mono font-medium">₹{activePayslipDoc.components.lopDeduction.toLocaleString('en-IN')}</span>
-                    </div>
-                  )}
-                  <div className="px-3 py-2 bg-slate-50 dark:bg-slate-800/50 font-bold text-slate-900 dark:text-slate-100 flex justify-between border-t border-slate-200 dark:border-slate-800">
-                    <span>Total Deductions</span>
-                    <span className="font-mono text-rose-800 dark:text-rose-300">₹{activePayslipDoc.totalDeductions.toLocaleString('en-IN')}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Net Pay Bar */}
-            <div className="p-4 rounded-xl bg-teal-900 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-md">
-              <div>
-                <span className="text-[11.5px] text-teal-300 font-bold">
-                  Net Salary Payable (A - B)
-                </span>
-                <div className="text-2xl font-extrabold font-mono mt-0.5">
-                  ₹{activePayslipDoc.netAmount.toLocaleString('en-IN')}
-                </div>
-                <div className="text-[12.5px] text-teal-200 mt-1 italic">
-                  In Words: {numberToWords(activePayslipDoc.netAmount)}
-                </div>
-              </div>
-              <div className="text-right text-[12.5px] text-teal-300 sm:border-l sm:border-teal-800 sm:pl-4">
-                <div className="flex items-center gap-1.5 justify-end">
-                  <ShieldCheck className="w-4 h-4 text-teal-400" />
-                  <span className="font-mono font-bold">Accounts Signed</span>
-                </div>
-                <div className="text-[11.5px] text-teal-400/80 font-mono mt-0.5">
-                  Sha256: {activePayslipDoc.fileSha256 ? activePayslipDoc.fileSha256.substring(0, 16) + '...' : 'Signed'}
-                </div>
-              </div>
-            </div>
-
-            {/* Print / Close Footer */}
-            <div className="flex items-center justify-between pt-2 border-t border-slate-200 dark:border-slate-800 text-xs">
-              <span className="text-[11.5px] text-slate-400 dark:text-slate-500">
-                This is a computer-generated document requiring no physical signature.
-              </span>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => window.print()}
-                  className="px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-1.5 font-medium"
-                >
-                  <Printer className="w-3.5 h-3.5" /> Print
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setActivePayslipDoc(null)}
-                  className="px-4 py-1.5 rounded-lg bg-teal-700 text-white hover:bg-teal-800 font-semibold"
-                >
-                  Done
-                </button>
-              </div>
-            </div>
-          </div>
+          <PayslipView
+            entry={{
+              year: activePayslipDoc.year,
+              month: activePayslipDoc.month,
+              calendarDays: new Date(activePayslipDoc.year, activePayslipDoc.month, 0).getDate(),
+              payableDays: activePayslipDoc.paidDays,
+              presentDays: activePayslipDoc.paidDays,
+              paidLeaveDays: 0,
+              holidayDays: 0,
+              weekOffDays: 0,
+              lopDays: activePayslipDoc.lopDays,
+              lateMarks: 0,
+              earnings: [
+                { code: 'BASIC', label: 'Basic Salary', amount: activePayslipDoc.components.basic },
+                { code: 'HRA', label: 'House Rent Allowance (HRA)', amount: activePayslipDoc.components.hra },
+                { code: 'SPECIAL', label: 'Special / Medical Allowance', amount: activePayslipDoc.components.specialAllowance }
+              ],
+              deductions: [
+                { code: 'PF', label: 'Provident Fund (EPF)', amount: activePayslipDoc.components.pf },
+                { code: 'PT', label: 'Professional Tax (PT)', amount: activePayslipDoc.components.pt },
+                { code: 'TDS', label: 'Income Tax (TDS)', amount: activePayslipDoc.components.tds },
+                ...(activePayslipDoc.components.lopDeduction > 0
+                  ? [{ code: 'LOP', label: 'Loss of Pay Deduction', amount: activePayslipDoc.components.lopDeduction }]
+                  : [])
+              ],
+              grossEarnings: activePayslipDoc.grossAmount,
+              totalDeductions: activePayslipDoc.totalDeductions,
+              netPay: activePayslipDoc.netAmount
+            }}
+            employeeId={activePayslipDoc.employeeId}
+            employee={{
+              name: activePayslipDoc.employeeName,
+              code: activePayslipDoc.employeeCode,
+              designation: activePayslipDoc.designation,
+              department: activePayslipDoc.departmentName
+            }}
+            status={activePayslipDoc.status}
+          />
         </Modal>
       )}
     </div>
