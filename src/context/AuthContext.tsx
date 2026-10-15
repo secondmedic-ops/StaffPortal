@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { withManagerName } from '../api/managerNames';
 import type { Session, User } from '@supabase/supabase-js';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { mapEmployee } from '../api/mappers';
@@ -172,7 +173,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 async function loadEmployeeForUser(user: User): Promise<{ employee: Employee; roles: RoleType[]; directReportCount: number }> {
   const { data: emp, error: empError } = await supabase
     .from('employees')
-    .select('*, department:departments!employees_department_id_fkey(name), manager:employees!employees_manager_id_fkey(full_name)')
+    .select('*, department:departments!employees_department_id_fkey(name)')
     .or(`auth_user_id.eq.${user.id},official_email.eq.${user.email ?? ''}`)
     .maybeSingle();
 
@@ -207,7 +208,7 @@ async function loadEmployeeForUser(user: User): Promise<{ employee: Employee; ro
     .neq('status', 'EXITED');
 
   return {
-    employee: mapEmployee(emp),
+    employee: mapEmployee(await withManagerName(emp)),
     roles,
     directReportCount: count ?? 0
   };

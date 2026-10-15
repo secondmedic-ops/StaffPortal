@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { withManagerName } from './managerNames';
 import { supabase, isSupabaseConfigured, normalizeSupabaseUrl } from '../lib/supabase';
 import { getSessionEmployee, logAudit, financialYearLabel } from './session';
 import { mapEmployee, mapEmployeeProfile, mapLeaveType, mapLifecycleTask } from './mappers';
@@ -13,7 +14,7 @@ import type {
   RoleType
 } from '../types';
 
-const EMPLOYEE_SELECT = '*, department:departments!employees_department_id_fkey(name), manager:employees!employees_manager_id_fkey(full_name)';
+const EMPLOYEE_SELECT = '*, department:departments!employees_department_id_fkey(name)';
 const TASK_SELECT =
   '*, employee:employees!lifecycle_tasks_employee_id_fkey(full_name, emp_code), doer:employees!lifecycle_tasks_done_by_fkey(full_name)';
 
@@ -305,7 +306,7 @@ export const lifecycleApi = {
       id: employeeId
     });
 
-    return { employee: mapEmployee(created), completed, warnings };
+    return { employee: mapEmployee(await withManagerName(created)), completed, warnings };
   },
 
   /**
