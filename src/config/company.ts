@@ -7,7 +7,7 @@ export const COMPANY = {
   website: 'www.secondmedic.com',
   email: 'accounts@secondmedic.com',
   /** Served from /public. */
-  logoUrl: '/company-logo.jpg',
+  logoUrl: '/company-logo.webp',
   /** Printed as "Division" when an employee has none recorded. */
   defaultDivision: 'Maharashtra',
 } as const;
