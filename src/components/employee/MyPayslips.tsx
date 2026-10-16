@@ -212,6 +212,7 @@ export const MyPayslips: React.FC = () => {
               ],
               grossEarnings: activePayslipDoc.grossAmount,
               totalDeductions: activePayslipDoc.totalDeductions,
+              employerContributions: [],
               netPay: activePayslipDoc.netAmount
             }}
             employeeId={activePayslipDoc.employeeId}

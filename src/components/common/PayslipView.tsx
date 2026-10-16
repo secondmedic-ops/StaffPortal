@@ -80,13 +80,15 @@ const OTHER_DEDUCTION_LABELS: Record<string, string> = {
   OTHER: 'Other Statutory Recovery'
 };
 
+const ALWAYS_SHOWN_CODES = new Set(['PF', 'ESI', 'PT', 'LWF', 'ADVANCE']);
+
 function buildDeductionRows(deductions: PayrollLine[]): Array<{ code: string; label: string; amount: number }> {
   const byCode = new Map(deductions.map(d => [d.code, d]));
   const rows: Array<{ code: string; label: string; amount: number }> = [];
 
   for (const [code, standardLabel] of STANDARD_DEDUCTIONS) {
     const found = byCode.get(code);
-    if (found || code === 'PF' || code === 'PT') {
+    if (found || ALWAYS_SHOWN_CODES.has(code)) {
       rows.push({ code, label: standardLabel, amount: found?.amount ?? 0 });
     }
   }
@@ -108,7 +110,7 @@ const formatAadhaar = (p: EmployeeProfile | null) => {
   if (p?.aadhaarNumber) {
     const raw = p.aadhaarNumber.replace(/\s+/g, '');
     return raw.length === 12
-      ? `XXXX XXXX ${raw.slice(-4)}`
+      ? raw.replace(/(\d{4})(\d{4})(\d{4})/, '$1 $2 $3')
       : p.aadhaarNumber;
   }
   return p?.aadhaarLast4 ? `XXXX XXXX ${p.aadhaarLast4}` : '—';
@@ -134,7 +136,7 @@ interface PayslipViewProps {
     | 'totalDeductions'
     | 'netPay'
   > &
-    Partial<Pick<PayrollEntry, 'payType' | 'workedHours' | 'hourlyRate' | 'dailyRate'>>;
+    Partial<Pick<PayrollEntry, 'payType' | 'workedHours' | 'dailyRate'>>;
   /** Loads division, location, ID and bank details for the slip. */
   employeeId?: number;
   employee: { name: string; code: string; designation?: string; department?: string };
@@ -171,14 +173,13 @@ export const PayslipView: React.FC<PayslipViewProps> = ({ entry, employeeId, emp
   }, [printing]);
 
   const profile = details?.profile ?? null;
-  const hourly = entry.payType === 'HOURLY';
   const daily = entry.payType === 'DAILY';
   const arrears = entry.earnings.find(e => e.code === 'ARREARS')?.amount ?? 0;
   const earningLines = entry.earnings.filter(e => e.code !== 'ARREARS');
   const dRows = buildDeductionRows(entry.deductions);
 
   // Equalize table rows for a balanced look
-  const rowCount = Math.max(hourly || daily ? 1 : earningLines.length, dRows.length);
+  const rowCount = Math.max(daily ? 1 : earningLines.length, dRows.length);
 
   const payslipRef = `SMPAY-${entry.year}${String(entry.month).padStart(2, '0')}-${employee.code}`;
   const payPeriod = `${getMonthName(entry.month).toUpperCase()} ${entry.year}`;
@@ -275,10 +276,11 @@ export const PayslipView: React.FC<PayslipViewProps> = ({ entry, employeeId, emp
             <span className="text-slate-500">UAN / PF No:</span>
             <span className="font-mono text-slate-800">{profile?.uanNumber || '—'}</span>
 
-            <span className="text-slate-500">ESIC / Aadhaar:</span>
-            <span className="font-mono text-slate-800">
-              {profile?.esicNumber ? `ESI: ${profile.esicNumber}` : formatAadhaar(profile)}
-            </span>
+            <span className="text-slate-500">Aadhaar Number:</span>
+            <span className="font-mono font-medium text-slate-900">{formatAadhaar(profile)}</span>
+
+            <span className="text-slate-500">ESIC Number:</span>
+            <span className="font-mono text-slate-800">{profile?.esicNumber || '—'}</span>
           </div>
         </div>
       </div>
@@ -299,11 +301,11 @@ export const PayslipView: React.FC<PayslipViewProps> = ({ entry, employeeId, emp
           <div>
             <span className="text-slate-500">Payable Days:</span>{' '}
             <span className="font-bold text-emerald-700 bg-emerald-100/70 px-2 py-0.5 rounded">
-              {hourly ? `${entry.presentDays} days (${entry.workedHours ?? 0} hrs)` : `${entry.payableDays} Days`}
+              {daily ? `${entry.presentDays} days` : `${entry.payableDays} Days`}
             </span>
           </div>
 
-          {!hourly && (
+          {!daily && (
             <>
               <div>
                 <span className="text-slate-500">Present:</span>{' '}
@@ -348,7 +350,7 @@ export const PayslipView: React.FC<PayslipViewProps> = ({ entry, employeeId, emp
         <div className="border-r border-slate-300 flex flex-col justify-between">
           <div>
             <div className="bg-teal-700 text-white font-bold px-4 py-2.5 flex justify-between items-center text-xs uppercase tracking-wider">
-              <span>{daily ? 'Daily Pay Details' : hourly ? 'Hourly Services' : 'Earnings (A)'}</span>
+              <span>{daily ? 'Daily Pay Details' : 'Earnings (A)'}</span>
               <span>Amount (INR)</span>
             </div>
             <div className="divide-y divide-slate-100">
@@ -358,18 +360,6 @@ export const PayslipView: React.FC<PayslipViewProps> = ({ entry, employeeId, emp
                     <div className="font-semibold text-slate-800">Daily Services Remuneration</div>
                     <div className="text-[11px] text-slate-500 font-mono">
                       {entry.presentDays} days @ ₹{formatAmount(entry.dailyRate ?? 0)}/day
-                    </div>
-                  </div>
-                  <span className="font-mono font-bold text-slate-900">
-                    ₹{formatAmount(earningLines[0]?.amount ?? 0)}
-                  </span>
-                </div>
-              ) : hourly ? (
-                <div className="px-4 py-2.5 flex justify-between items-center text-xs">
-                  <div>
-                    <div className="font-semibold text-slate-800">Hourly Services Remuneration</div>
-                    <div className="text-[11px] text-slate-500 font-mono">
-                      {formatAmount(entry.workedHours ?? 0).replace(/\.00$/, '')} hrs @ ₹{formatAmount(entry.hourlyRate ?? 0)}/hr
                     </div>
                   </div>
                   <span className="font-mono font-bold text-slate-900">
@@ -549,7 +539,7 @@ export const PayslipView: React.FC<PayslipViewProps> = ({ entry, employeeId, emp
       </div>
 
       {/* Attendance Detail Strip below the slip (Interactive on screen, hidden in print) */}
-      {!hourly && !daily && days && days.length > 0 && (
+      {!daily && days && days.length > 0 && (
         <div className="no-print rounded-xl border border-slate-200 dark:border-slate-800 p-4 bg-white dark:bg-slate-900 shadow-xs">
           <div className="text-xs font-bold text-slate-800 dark:text-slate-200 mb-2.5 flex items-center gap-2">
             <CalendarCheck className="w-4 h-4 text-teal-700 dark:text-teal-400" />

@@ -8,121 +8,6 @@ import { BrandMark } from '../components/common/BrandMark';
 import type { Employee, RoleType } from '../types';
 import { AlertTriangle } from 'lucide-react';
 
-export const DEMO_PERSONAS: Record<string, { employee: Employee; roles: RoleType[] }> = {
-  'admin@secondmedic.com': {
-    employee: {
-      id: 999,
-      empCode: 'ADM-001',
-      fullName: 'Master Administrator',
-      officialEmail: 'admin@secondmedic.com',
-      departmentId: 1,
-      departmentName: 'Executive & Systems',
-      designation: 'System Administrator & Master Controller',
-      employmentType: 'FULL_TIME',
-      status: 'ACTIVE',
-      workLocation: 'Headquarters',
-      avatarUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150',
-    },
-    roles: ['SYSTEM_ADMIN', 'CEO', 'HR', 'ACCOUNTS', 'IT', 'MANAGER']
-  },
-  'admin@secondmedic': {
-    employee: {
-      id: 999,
-      empCode: 'ADM-001',
-      fullName: 'Master Administrator',
-      officialEmail: 'admin@secondmedic.com',
-      departmentId: 1,
-      departmentName: 'Executive & Systems',
-      designation: 'System Administrator & Master Controller',
-      employmentType: 'FULL_TIME',
-      status: 'ACTIVE',
-      workLocation: 'Headquarters',
-      avatarUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150',
-    },
-    roles: ['SYSTEM_ADMIN', 'CEO', 'HR', 'ACCOUNTS', 'IT', 'MANAGER']
-  },
-  'sunita.patil@secondmedic.com': {
-    employee: {
-      id: 101,
-      empCode: 'EXE-001',
-      fullName: 'Dr. Sunita Patil',
-      officialEmail: 'sunita.patil@secondmedic.com',
-      departmentId: 1,
-      departmentName: 'Management',
-      designation: 'Chief Executive Officer',
-      employmentType: 'FULL_TIME',
-      status: 'ACTIVE',
-      workLocation: 'Corporate HQ',
-      avatarUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150',
-    },
-    roles: ['CEO', 'MANAGER']
-  },
-  'anita.roy@secondmedic.com': {
-    employee: {
-      id: 102,
-      empCode: 'HR-001',
-      fullName: 'Anita Roy',
-      officialEmail: 'anita.roy@secondmedic.com',
-      departmentId: 2,
-      departmentName: 'Human Resources',
-      designation: 'Head of Human Resources',
-      employmentType: 'FULL_TIME',
-      status: 'ACTIVE',
-      workLocation: 'Corporate HQ',
-      avatarUrl: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150',
-    },
-    roles: ['HR', 'MANAGER']
-  },
-  'vikram.malhotra@secondmedic.com': {
-    employee: {
-      id: 103,
-      empCode: 'ACC-001',
-      fullName: 'Vikram Malhotra',
-      officialEmail: 'vikram.malhotra@secondmedic.com',
-      departmentId: 3,
-      departmentName: 'Accounts & Finance',
-      designation: 'Accounts Lead',
-      employmentType: 'FULL_TIME',
-      status: 'ACTIVE',
-      workLocation: 'Corporate HQ',
-      avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
-    },
-    roles: ['ACCOUNTS', 'MANAGER']
-  },
-  'amit.verma@secondmedic.com': {
-    employee: {
-      id: 104,
-      empCode: 'IT-001',
-      fullName: 'Amit Verma',
-      officialEmail: 'amit.verma@secondmedic.com',
-      departmentId: 4,
-      departmentName: 'IT',
-      designation: 'Lead Systems Architect & IT Lead',
-      employmentType: 'FULL_TIME',
-      status: 'ACTIVE',
-      workLocation: 'Corporate HQ',
-      avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150',
-    },
-    roles: ['SYSTEM_ADMIN', 'IT', 'MANAGER']
-  },
-  'rahul.sharma@secondmedic.com': {
-    employee: {
-      id: 105,
-      empCode: 'MED-001',
-      fullName: 'Dr. Rahul Sharma',
-      officialEmail: 'rahul.sharma@secondmedic.com',
-      departmentId: 5,
-      departmentName: 'Clinical',
-      designation: 'Staff Physician',
-      employmentType: 'FULL_TIME',
-      status: 'ACTIVE',
-      workLocation: 'Main Clinic',
-      avatarUrl: 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=150',
-    },
-    roles: ['EMPLOYEE']
-  }
-};
-
 export interface ToastMessage {
   id: string;
   title: string;
@@ -155,18 +40,7 @@ export interface AuthContextType {
   /** Number of people reporting directly to the signed-in employee. */
   directReportCount: number;
   isAdmin: boolean;
-  loginAsDemoAdmin?: () => void;
-  loginAsPersona?: (email: string) => void;
 }
-
-const DEMO_ACCOUNTS = [
-  { email: 'admin@secondmedic.com', name: 'Master Administrator', role: 'All roles' },
-  { email: 'rahul.sharma@secondmedic.com', name: 'Dr. Rahul Sharma', role: 'Staff doctor' },
-  { email: 'anita.roy@secondmedic.com', name: 'Anita Roy', role: 'HR head' },
-  { email: 'vikram.malhotra@secondmedic.com', name: 'Vikram Malhotra', role: 'Accounts lead' },
-  { email: 'sunita.patil@secondmedic.com', name: 'Dr. Sunita Patil', role: 'CEO' },
-  { email: 'amit.verma@secondmedic.com', name: 'Amit Verma', role: 'System admin' }
-];
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -318,33 +192,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setLoading(false);
           });
       } else {
-        const demoRaw = typeof localStorage !== 'undefined' ? localStorage.getItem('staffportal_demo_session') : null;
-        if (demoRaw && isMounted) {
-          try {
-            const parsed = JSON.parse(demoRaw);
-            if (parsed?.employee && parsed?.roles) {
-              setEmployee(parsed.employee);
-              setRoles(parsed.roles);
-              setDirectReportCount(parsed.roles.includes('CEO') ? 5 : parsed.roles.includes('MANAGER') ? 2 : 0);
-              setSession(parsed.session || {
-                access_token: 'demo-token',
-                refresh_token: 'demo-refresh',
-                expires_in: 3600,
-                token_type: 'bearer',
-                user: {
-                  id: `demo-${parsed.employee.id}`,
-                  aud: 'authenticated',
-                  role: 'authenticated',
-                  email: parsed.employee.officialEmail,
-                  app_metadata: {},
-                  user_metadata: { full_name: parsed.employee.fullName },
-                  created_at: new Date().toISOString()
-                }
-              } as Session);
-              setError(null);
-            }
-          } catch {}
-        }
         if (isMounted) setLoading(false);
       }
     });
@@ -372,14 +219,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           if (isMounted) setLoading(false);
         }
       } else {
-        // If Supabase signed out, only clear if we don't have an active demo session
-        const demoRaw = typeof localStorage !== 'undefined' ? localStorage.getItem('staffportal_demo_session') : null;
-        if (!demoRaw) {
-          setSession(null);
-          setEmployee(null);
-          setRoles([]);
-          setError(null);
-        }
+        setSession(null);
+        setEmployee(null);
+        setRoles([]);
+        setError(null);
         if (isMounted) setLoading(false);
       }
     });
@@ -390,69 +233,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, []);
 
-  const loginAsPersona = (email: string) => {
-    const key = email.trim().toLowerCase();
-    const persona = DEMO_PERSONAS[key] || DEMO_PERSONAS['admin@secondmedic.com'];
-    const mockSession = {
-      access_token: 'demo-token',
-      refresh_token: 'demo-refresh',
-      expires_in: 3600,
-      token_type: 'bearer',
-      user: {
-        id: `demo-${persona.employee.id}`,
-        aud: 'authenticated',
-        role: 'authenticated',
-        email: persona.employee.officialEmail,
-        app_metadata: {},
-        user_metadata: { full_name: persona.employee.fullName },
-        created_at: new Date().toISOString()
-      }
-    } as Session;
-
-    setEmployee(persona.employee);
-    setRoles(persona.roles);
-    setDirectReportCount(persona.roles.includes('CEO') ? 5 : persona.roles.includes('MANAGER') ? 2 : 0);
-    setSession(mockSession);
-    setError(null);
-    setLoginError(null);
-    try {
-      localStorage.setItem('staffportal_demo_session', JSON.stringify({
-        employee: persona.employee,
-        roles: persona.roles,
-        session: mockSession
-      }));
-    } catch {}
-    showToast(`Logged in as ${persona.employee.fullName}`, `Role: ${persona.roles.join(', ')}`, 'success');
-  };
-
-  const loginAsDemoAdmin = () => {
-    loginAsPersona('admin@secondmedic.com');
-  };
-
   const signIn = async (email: string, password?: string) => {
     setLoading(true);
     setError(null);
     setLoginError(null);
     const normalized = email.trim().toLowerCase();
 
-    // Check if matching demo persona credentials
-    if (DEMO_PERSONAS[normalized] && (!password || password === 'SecondMedic@2026' || password === 'admin' || password === 'admin@secondmedic')) {
-      loginAsPersona(normalized);
+    if (!normalized || !password) {
       setLoading(false);
-      return;
+      const msg = 'Please enter both email and password';
+      setLoginError(msg);
+      throw new Error(msg);
     }
 
     try {
       const { error: authError } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
-        password: password || 'SecondMedic@2026'
+        email: normalized,
+        password
       });
       if (authError) {
-        if (DEMO_PERSONAS[normalized]) {
-          loginAsPersona(normalized);
-          setLoading(false);
-          return;
-        }
         throw authError;
       }
     } catch (err: any) {
@@ -466,9 +265,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signOut = async () => {
     setLoading(true);
     try {
-      if (typeof localStorage !== 'undefined') {
-        localStorage.removeItem('staffportal_demo_session');
-      }
       await supabase.auth.signOut().catch(() => {});
       setSession(null);
       setEmployee(null);
@@ -571,8 +367,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         resetSent={resetSent}
         onSubmit={handleFormSubmit}
         onForgotPassword={handleForgotPassword}
-        demoAccounts={DEMO_ACCOUNTS}
-        onDemoAccount={loginAsPersona}
       />
     );
   }
@@ -603,8 +397,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isCeo,
         directReportCount,
         isAdmin,
-        loginAsDemoAdmin,
-        loginAsPersona,
       }}
     >
       {children}

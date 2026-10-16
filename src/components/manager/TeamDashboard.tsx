@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { getTodayIsoString } from '../../utils/dateUtils';
+import { getTodayIsoString, formatDate, formatTime } from '../../utils/dateUtils';
 import { teamApi, compensationApi } from '../../api';
 import { Employee, AttendanceRecord, SalaryRevision } from '../../types';
 import { salaryLabel } from '../accounts/IncrementsRevisions';
-import { formatTime } from '../../utils/dateUtils';
 import { Users, CheckCircle2, Clock, AlertCircle, Calendar, ChevronRight, MapPin } from 'lucide-react';
 import { StatusPill } from '../common/StatusPill';
 import { SkeletonLoader } from '../common/SkeletonLoader';
@@ -90,7 +89,7 @@ export const TeamDashboard: React.FC = () => {
       ) : (
         <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-xs">
           <div className="px-5 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
-            <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">Today's Shift Attendance (12 Sep 2026)</h3>
+            <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">Today's Shift Attendance ({formatDate(new Date())})</h3>
             <span className="text-xs text-slate-500 dark:text-slate-400">Auto-refreshed via biometrics & GPS punch</span>
           </div>
 

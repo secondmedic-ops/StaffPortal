@@ -1,14 +1,8 @@
 import React, { useState } from 'react';
-import { AlertTriangle, Eye, EyeOff, Loader2, ChevronRight } from 'lucide-react';
+import { AlertTriangle, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { BrandMark } from '../common/BrandMark';
 import { ThemeToggle } from '../common/ThemeToggle';
 import { SHIFT_POLICY, LEAVE_APPROVAL_POLICY } from '../../config/policy';
-
-export interface DemoAccount {
-  email: string;
-  name: string;
-  role: string;
-}
 
 interface LoginScreenProps {
   email: string;
@@ -20,8 +14,6 @@ interface LoginScreenProps {
   resetSent: string | null;
   onSubmit: (e: React.FormEvent) => void;
   onForgotPassword: () => void;
-  demoAccounts?: DemoAccount[];
-  onDemoAccount?: (email: string) => void;
 }
 
 const FACTS = [
@@ -48,9 +40,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
   error,
   resetSent,
   onSubmit,
-  onForgotPassword,
-  demoAccounts,
-  onDemoAccount
+  onForgotPassword
 }) => {
   const [showPassword, setShowPassword] = useState(false);
 
@@ -183,32 +173,6 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
                 {submitting ? 'Signing in' : 'Sign in'}
               </button>
             </form>
-
-            {demoAccounts && demoAccounts.length > 0 && onDemoAccount && (
-              <details className="group mt-10 border-t border-slate-200 dark:border-slate-800 pt-5">
-                <summary className="flex items-center gap-1.5 text-[13.5px] font-medium text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 list-none [&::-webkit-details-marker]:hidden">
-                  <ChevronRight className="h-4 w-4 transition-transform group-open:rotate-90" aria-hidden />
-                  Explore with a demo account
-                </summary>
-                <p className="mt-2 text-[12.5px] text-slate-500 dark:text-slate-400">
-                  Demo accounts show the screens for each role. They can't read or change real staff data.
-                </p>
-                <ul className="mt-3 divide-y divide-slate-100 dark:divide-slate-800 rounded-lg border border-slate-200 dark:border-slate-800">
-                  {demoAccounts.map(d => (
-                    <li key={d.email}>
-                      <button
-                        type="button"
-                        onClick={() => onDemoAccount(d.email)}
-                        className="w-full flex items-center justify-between gap-3 px-3.5 py-2.5 text-left hover:bg-slate-50 dark:hover:bg-slate-900"
-                      >
-                        <span className="text-sm font-medium text-slate-800 dark:text-slate-200">{d.name}</span>
-                        <span className="text-[12.5px] text-slate-500 dark:text-slate-400">{d.role}</span>
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </details>
-            )}
           </div>
         </div>
       </main>
