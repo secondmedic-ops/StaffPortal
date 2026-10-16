@@ -5,6 +5,7 @@ import {
   mapAttendanceRegularization,
   mapLeaveBalance,
   mapLeaveRequest,
+  mapLeaveType,
   mapHoliday,
   mapKpiCycle,
   mapKpiDefinition
@@ -14,6 +15,7 @@ import type {
   AttendanceRegularization,
   LeaveBalance,
   LeaveRequest,
+  LeaveType,
   Holiday,
   KpiCycle,
   KpiDefinition,
@@ -184,6 +186,28 @@ export const meApi = {
 
     if (error) throw new Error(`Failed to request attendance regularization: ${error.message}`);
     return mapAttendanceRegularization(reg);
+  },
+
+  async getLeaveTypes(): Promise<LeaveType[]> {
+    try {
+      const { data, error } = await supabase
+        .from('leave_types')
+        .select('*')
+        .order('id');
+
+      if (!error && data && data.length > 0) {
+        return data.map(mapLeaveType);
+      }
+    } catch {}
+
+    // Fallback standard leave types if table is empty or loading is interrupted
+    return [
+      { id: 1, code: 'CL', name: 'Casual Leave', annualQuota: 7, carryForwardMax: 0, requiresDocumentAfterDays: 0, allowHalfDay: true, sandwichRule: false, active: true },
+      { id: 2, code: 'SL', name: 'Sick Leave', annualQuota: 7, carryForwardMax: 0, requiresDocumentAfterDays: 2, allowHalfDay: true, sandwichRule: false, active: true },
+      { id: 3, code: 'EL', name: 'Earned Leave', annualQuota: 18, carryForwardMax: 30, requiresDocumentAfterDays: 0, allowHalfDay: true, sandwichRule: false, active: true },
+      { id: 4, code: 'COMP_OFF', name: 'Compensatory Off', annualQuota: 0, carryForwardMax: 0, requiresDocumentAfterDays: 0, allowHalfDay: true, sandwichRule: false, active: true },
+      { id: 5, code: 'LOP', name: 'Loss of Pay', annualQuota: 0, carryForwardMax: 0, requiresDocumentAfterDays: 0, allowHalfDay: true, sandwichRule: false, active: true }
+    ];
   },
 
   async getLeaveBalances(): Promise<LeaveBalance[]> {

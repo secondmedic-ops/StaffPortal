@@ -39,27 +39,32 @@ export const ApplyLeave: React.FC = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const [balData, calData] = await Promise.all([
-          meApi.getLeaveBalances(),
-          meApi.getCalendar(new Date().getMonth() + 1, new Date().getFullYear())
+        const [balData, calData, typesData] = await Promise.all([
+          meApi.getLeaveBalances().catch(() => []),
+          meApi.getCalendar(new Date().getMonth() + 1, new Date().getFullYear()).catch(() => ({ holidays: [] })),
+          meApi.getLeaveTypes().catch(() => [])
         ]);
         setBalances(balData);
-        setHolidays(calData.holidays);
+        setHolidays(calData.holidays || []);
 
-        // Map mock types from balances
-        const types: LeaveType[] = balData.map(b => ({
-          id: b.leaveTypeId,
-          code: b.leaveTypeCode,
-          name: b.leaveTypeName,
-          annualQuota: 18,
-          carryForwardMax: 45,
-          requiresDocumentAfterDays: b.leaveTypeCode === 'SL' ? 2 : 0,
-          allowHalfDay: true,
-          sandwichRule: false,
-          active: true
-        }));
+        let types = typesData;
+        if (!types || types.length === 0) {
+          if (balData.length > 0) {
+            types = balData.map(b => ({
+              id: b.leaveTypeId,
+              code: b.leaveTypeCode,
+              name: b.leaveTypeName,
+              annualQuota: 18,
+              carryForwardMax: 45,
+              requiresDocumentAfterDays: b.leaveTypeCode === 'SL' ? 2 : 0,
+              allowHalfDay: true,
+              sandwichRule: false,
+              active: true
+            }));
+          }
+        }
         setLeaveTypes(types);
-        if (types.length > 0) setSelectedTypeId(types[0].id);
+        if (types && types.length > 0) setSelectedTypeId(types[0].id);
       } catch (err: any) {
         showToast('Error', err.message || 'Failed to load leave configuration', 'error');
       } finally {
@@ -70,6 +75,7 @@ export const ApplyLeave: React.FC = () => {
   }, [currentUser?.id]);
 
   // Calculate live breakdown
+  const hasHrBalances = balances.length > 0;
   const currentType = leaveTypes.find(t => t.id === selectedTypeId);
   const currentBalance = balances.find(b => b.leaveTypeId === selectedTypeId);
 
@@ -85,7 +91,10 @@ export const ApplyLeave: React.FC = () => {
       )
     : { totalDays: 0, workingDays: 0, weekendDays: 0, holidayDays: 0 };
 
+  // Only enforce quota limits if HR has already configured balance allocations.
+  // If HR has not sent leaves data yet, applications are allowed through subject to manager approval.
   const isBalanceExceeded =
+    hasHrBalances &&
     currentBalance &&
     currentType?.code !== 'LOP' &&
     calculation.totalDays > currentBalance.available;
@@ -190,11 +199,22 @@ export const ApplyLeave: React.FC = () => {
                 const b = balances.find(item => item.leaveTypeId === t.id);
                 return (
                   <option key={t.id} value={t.id}>
-                    {t.name} ({t.code}) — Available: {b ? b.available : 0} days
+                    {t.name} ({t.code}){hasHrBalances && b ? ` — Available: ${b.available} days` : ''}
                   </option>
                 );
               })}
             </select>
+            {!hasHrBalances && (
+              <div className="mt-2.5 p-3 rounded-lg bg-amber-50/70 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 text-xs text-amber-800 dark:text-amber-300 flex items-start gap-2.5">
+                <Info className="w-4 h-4 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+                <div>
+                  <span className="font-bold">Opening Leave Balance Pending HR Setup</span>
+                  <p className="mt-0.5 text-[11.5px] leading-relaxed text-amber-700 dark:text-amber-400">
+                    Individual leave quotas have not been credited by HR yet. You can still apply for your required dates; your application will be routed directly to your reporting manager for approval.
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Date Pickers */}
@@ -414,31 +434,42 @@ export const ApplyLeave: React.FC = () => {
             <div className="flex justify-between items-center text-xs">
               <span className="text-slate-500 dark:text-slate-400">Current Balance:</span>
               <span className="font-bold text-slate-800 dark:text-slate-200">
-                {currentBalance?.available ?? 0} days
+                {hasHrBalances ? `${currentBalance?.available ?? 0} days` : 'Pending HR Setup'}
               </span>
             </div>
 
             <div className="flex justify-between items-center text-xs mt-2">
-              <span className="text-slate-500 dark:text-slate-400">Balance After Approval:</span>
+              <span className="text-slate-500 dark:text-slate-400">
+                {hasHrBalances ? 'Balance After Approval:' : 'Approval Status:'}
+              </span>
               <span
                 className={`font-bold ${
-                  isBalanceExceeded ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-700 dark:text-emerald-300'
+                  hasHrBalances
+                    ? isBalanceExceeded ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-700 dark:text-emerald-300'
+                    : 'text-amber-700 dark:text-amber-400'
                 }`}
               >
-                {currentBalance
-                  ? Math.max(0, currentBalance.available - calculation.totalDays)
-                  : 0}{' '}
-                days
+                {hasHrBalances
+                  ? `${currentBalance ? Math.max(0, currentBalance.available - calculation.totalDays) : 0} days`
+                  : 'Subject to Manager Approval'}
               </span>
             </div>
 
-            {/* Warning if exceeded */}
-            {isBalanceExceeded && (
+            {/* Warning if exceeded (when HR balances are loaded) */}
+            {hasHrBalances && isBalanceExceeded && (
               <div className="mt-3 p-2.5 rounded-lg bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/70 text-[12.5px] text-rose-800 dark:text-rose-300 flex items-start gap-2">
                 <AlertTriangle className="w-4 h-4 text-rose-600 dark:text-rose-400 flex-shrink-0 mt-0.5" />
                 <span>
                   Insufficient leave balance. Applying beyond quota will require HR conversion to LOP (Loss of Pay).
                 </span>
+              </div>
+            )}
+
+            {/* Info note when HR balances not yet loaded */}
+            {!hasHrBalances && (
+              <div className="mt-3 p-2 rounded bg-amber-50/60 dark:bg-amber-950/40 text-[11.5px] text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-900/60 flex items-center gap-1.5">
+                <Info className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 flex-shrink-0" />
+                <span>Quota allocation pending from HR.</span>
               </div>
             )}
           </div>
