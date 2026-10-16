@@ -1,5 +1,4 @@
 import React from 'react';
-import { Stethoscope } from 'lucide-react';
 
 interface BrandMarkProps {
   compact?: boolean;
@@ -7,22 +6,37 @@ interface BrandMarkProps {
   tone?: 'default' | 'onDark';
 }
 
-export const BrandMark: React.FC<BrandMarkProps> = ({ compact, tone = 'default' }) => (
-  <div className="flex items-center gap-2.5">
-    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-teal-500 to-teal-700 text-white shadow-primary">
-      <Stethoscope className="h-5 w-5" aria-hidden />
-    </div>
-    {!compact && (
+export const BrandMark: React.FC<BrandMarkProps> = ({ compact, tone = 'default' }) => {
+  if (compact) {
+    return (
+      <img
+        src="/favicon.png"
+        alt="SecondMedic"
+        className="h-8 w-8 shrink-0 object-contain"
+      />
+    );
+  }
+
+  return (
+    <div className="flex items-center gap-2.5">
+      <div className={`flex items-center rounded-lg ${tone === 'onDark' ? 'bg-white/95 p-1.5 shadow-xs' : ''}`}>
+        <img
+          src="/company-logo.webp"
+          alt="SecondMedic"
+          className="h-7 w-auto object-contain"
+        />
+      </div>
       <div className="leading-tight">
-        <div
-          className={`font-display text-[19px] font-bold tracking-tight ${
-            tone === 'onDark' ? 'text-white' : 'text-teal-600 dark:text-white'
+        <span
+          className={`text-[10.5px] font-bold tracking-wider uppercase px-1.5 py-0.5 rounded ${
+            tone === 'onDark'
+              ? 'bg-teal-500/20 text-teal-300 border border-teal-400/30'
+              : 'bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 border border-teal-200 dark:border-teal-800'
           }`}
         >
-          SecondMedic
-        </div>
-        <div className={`text-[12px] ${tone === 'onDark' ? 'text-slate-300' : 'text-slate-400'}`}>Staff portal</div>
+          Staff Portal
+        </span>
       </div>
-    )}
-  </div>
-);
+    </div>
+  );
+};
