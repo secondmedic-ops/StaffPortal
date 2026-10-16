@@ -1,0 +1,313 @@
+<html xmlns:o='urn:schemas-microsoft-com:office:office'
+      xmlns:w='urn:schemas-microsoft-com:office:word'
+      xmlns='http://www.w3.org/TR/REC-html40'>
+<head>
+<meta charset="utf-8">
+<title>SecondMedic Staff Portal — Policy Manual</title>
+<style>
+  body {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 11pt;
+    line-height: 1.5;
+    color: #1e293b;
+    margin: 40px;
+  }
+  h1 {
+    font-size: 20pt;
+    color: #0f766e;
+    margin-bottom: 4px;
+    border-bottom: 2px solid #0f766e;
+    padding-bottom: 6px;
+  }
+  h2 {
+    font-size: 14pt;
+    color: #0f766e;
+    margin-top: 24px;
+    margin-bottom: 8px;
+    border-bottom: 1px solid #cbd5e1;
+    padding-bottom: 4px;
+  }
+  h3 {
+    font-size: 12pt;
+    color: #334155;
+    margin-top: 16px;
+    margin-bottom: 6px;
+  }
+  p {
+    margin-top: 4px;
+    margin-bottom: 10px;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+    margin-bottom: 18px;
+    font-size: 10pt;
+  }
+  th {
+    background-color: #0f766e;
+    color: #ffffff;
+    font-weight: bold;
+    text-align: left;
+    padding: 8px 12px;
+    border: 1px solid #0d9488;
+  }
+  td {
+    padding: 7px 12px;
+    border: 1px solid #cbd5e1;
+    vertical-align: top;
+  }
+  tr:nth-child(even) td {
+    background-color: #f8fafc;
+  }
+  .header-box {
+    text-align: center;
+    background-color: #f0fdfa;
+    border: 1px solid #ccfbf1;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 30px;
+  }
+  .tag {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 9pt;
+    font-weight: bold;
+    background-color: #e2e8f0;
+    color: #334155;
+  }
+  ul {
+    margin-top: 4px;
+    margin-bottom: 12px;
+    padding-left: 20px;
+  }
+  li {
+    margin-bottom: 6px;
+  }
+</style>
+</head>
+<body>
+
+<div class="header-box">
+  <h1 style="border:none; margin:0; padding:0; color:#0f766e; font-size:24pt;">SecondMedic Staff Portal</h1>
+  <div style="font-size:14pt; font-weight:bold; color:#475569; margin-top:6px;">Company-Wide HR, Attendance &amp; Payroll Policy Manual</div>
+  <div style="font-size:10pt; color:#64748b; margin-top:6px;">
+    Document Version: 2026.1 &nbsp;|&nbsp; Applicable Country: India (IST, UTC+5:30) &nbsp;|&nbsp; Status: Active Production Policy
+  </div>
+</div>
+
+<h2>Executive Summary &amp; Scope</h2>
+<p>
+  This document sets forth the comprehensive operating rules, statutory compliance guidelines, attendance standards, leave administration, compensation mechanics, and access governance implemented within the <strong>SecondMedic Staff Portal</strong> (<code>https://staffportal.secondmedic.workers.dev/</code>).
+</p>
+<p>
+  All staff members, clinical personnel, managers, HR officers, and accounts executives are governed by these provisions to maintain equity, legal adherence under Indian Labour Laws, and operational efficiency.
+</p>
+
+<h2>1. Working Hours &amp; Shift Policy</h2>
+<p>
+  SecondMedic operates on Indian Standard Time (IST, UTC+5:30). Standard business operations require consistent presence to service clinical and operational workflows:
+</p>
+<table>
+  <thead>
+    <tr>
+      <th style="width:30%;">Parameter</th>
+      <th style="width:30%;">Configured Setting</th>
+      <th style="width:40%;">Operational Impact</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Standard Shift Start</strong></td>
+      <td>09:30 AM IST</td>
+      <td>Designated reporting time.</td>
+    </tr>
+    <tr>
+      <td><strong>Standard Shift End</strong></td>
+      <td>06:00 PM (18:00) IST</td>
+      <td>General shift completion time.</td>
+    </tr>
+    <tr>
+      <td><strong>Grace Window</strong></td>
+      <td>30 Minutes (till 10:00 AM)</td>
+      <td>Punches from 09:31 AM to 10:00 AM incur no penalty. Punch at 10:01 AM or later marks a <strong>Late Mark</strong>.</td>
+    </tr>
+    <tr>
+      <td><strong>Full-Day Minimum Hours</strong></td>
+      <td>8.0 Hours</td>
+      <td>Net work &ge; 8.0 hours qualifies for 1.0 Paid Day.</td>
+    </tr>
+    <tr>
+      <td><strong>Half-Day Minimum Hours</strong></td>
+      <td>4.0 Hours</td>
+      <td>Net work &ge; 4.0 hours and &lt; 8.0 hours qualifies for 0.5 Paid Day.</td>
+    </tr>
+    <tr>
+      <td><strong>Loss of Pay (LOP)</strong></td>
+      <td>Below 4.0 Hours</td>
+      <td>Work under 4.0 hours recorded as Loss of Pay (unpaid).</td>
+    </tr>
+    <tr>
+      <td><strong>Standard Weekly Off</strong></td>
+      <td>Sunday (Day 0)</td>
+      <td>Designated weekly rest day across standard staff rotations.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>2. Attendance &amp; Late Marks Policy</h2>
+<ul>
+  <li><strong>Late Mark Salary Deduction:</strong> For every <strong>three (3) late marks</strong> recorded within a calendar month, <strong>half a day of salary (0.5 LOP)</strong> is automatically deducted from that month's payroll.</li>
+  <li><strong>Missing Punch-Out:</strong> A shift with a punch-in but no punch-out (and no approved regularization) is credited and paid as <strong>half day (0.5)</strong>.</li>
+  <li><strong>Attendance Regularization:</strong> If an employee experiences technical issues, power cuts, or clinical field delays, they may submit a Regularization Request specifying actual times and justification. The request requires approval by their reporting manager.</li>
+  <li><strong>Idempotency &amp; Overwrite Prevention:</strong> Repeated or double punch attempts preserve the day's initial punch-in and latest punch-out.</li>
+</ul>
+
+<h2>3. Leave Policy &amp; Entitlement Engine</h2>
+<table>
+  <thead>
+    <tr>
+      <th>Code</th>
+      <th>Leave Category</th>
+      <th>Annual Quota</th>
+      <th>Max Carry Forward</th>
+      <th>Half-Day Allowed?</th>
+      <th>Medical Document</th>
+      <th>Sandwich Rule</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>CL</strong></td>
+      <td>Casual Leave</td>
+      <td>12 Days</td>
+      <td>0 (Lapses at FY end)</td>
+      <td>Yes</td>
+      <td>Not required</td>
+      <td>Disabled</td>
+    </tr>
+    <tr>
+      <td><strong>SL</strong></td>
+      <td>Sick Leave</td>
+      <td>10 Days</td>
+      <td>Lapses / Max 15 Days</td>
+      <td>Yes</td>
+      <td>Required if &gt; 2 days</td>
+      <td>Disabled</td>
+    </tr>
+    <tr>
+      <td><strong>EL / AL</strong></td>
+      <td>Earned / Annual Leave</td>
+      <td>15 Days</td>
+      <td>Up to 30 Days</td>
+      <td>No (Full day only)</td>
+      <td>Not required</td>
+      <td>Enforced</td>
+    </tr>
+    <tr>
+      <td><strong>ML</strong></td>
+      <td>Maternity Leave</td>
+      <td>182 Days (26 wks)</td>
+      <td>Nil</td>
+      <td>No</td>
+      <td>Doctor certificate required</td>
+      <td>Statutory</td>
+    </tr>
+    <tr>
+      <td><strong>COMP-OFF</strong></td>
+      <td>Compensatory Off</td>
+      <td>Earned from OT</td>
+      <td>60 days validity</td>
+      <td>Yes</td>
+      <td>Not required</td>
+      <td>Disabled</td>
+    </tr>
+    <tr>
+      <td><strong>LOP</strong></td>
+      <td>Loss of Pay</td>
+      <td>Unpaid / As taken</td>
+      <td>Nil</td>
+      <td>Yes</td>
+      <td>Manager approval</td>
+      <td>N/A</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>Leave Administration Rules</h3>
+<ul>
+  <li><strong>Sandwich Policy:</strong> If enabled for a leave category, intervening Sundays or public holidays between two leave dates are counted and deducted from the employee's balance.</li>
+  <li><strong>Mid-Year Joining Proration:</strong> Joiners during the financial year receive leave quotas prorated by the remaining months in the FY: <code>Quota = floor((Annual Quota &times; Months Remaining / 12) &times; 2) / 2</code>.</li>
+  <li><strong>Probationary Restrictions:</strong> Employees in probation status (<code>PROBATION</code>) are barred from taking Earned Leave (EL) until confirmed.</li>
+  <li><strong>Multi-Level Approval Hierarchy:</strong>
+    <ul>
+      <li>Requests &le; 3 days: Approved by direct Reporting Manager.</li>
+      <li>Requests &gt; 3 days: Requires secondary skip-level approval from the manager's reporting executive.</li>
+      <li>Self-Approval Guard: Strict prohibition of self-approvals. Fallback routes to HR Queue when no higher manager exists.</li>
+    </ul>
+  </li>
+</ul>
+
+<h2>4. Overtime &amp; Holiday Work Policy</h2>
+<ul>
+  <li><strong>Eligibility:</strong> Working on Sunday or an official declared public holiday earns credit:
+    <ul>
+      <li>Worked &ge; 8.0 hours: <strong>1.0 Day Credit</strong></li>
+      <li>Worked &ge; 4.0 hours: <strong>0.5 Day Credit</strong></li>
+      <li>Worked &lt; 4.0 hours: 0 Credit</li>
+    </ul>
+  </li>
+  <li><strong>Compensation Choice:</strong> The employee may select either <strong>Compensatory Off (Comp-off)</strong> or <strong>Overtime Pay</strong>.</li>
+  <li><strong>Overtime Pay Formula:</strong> <code>Overtime Pay = (Monthly Gross / Days in Month) &times; Days Worked &times; 1.0 Multiplier</code>.</li>
+  <li><strong>Claim Window:</strong> Must be claimed within <strong>60 days</strong> of the date worked.</li>
+</ul>
+
+<h2>5. Payroll &amp; Statutory Deductions Policy (India)</h2>
+<ul>
+  <li><strong>Calendar Pay Basis:</strong> Monthly gross is computed using calendar days:
+    <br><code>Payable Gross = (Monthly Gross / Calendar Days in Month) &times; Payable Days</code>.
+  </li>
+  <li><strong>CTC Breakdown:</strong> Basic Pay = 50% of Gross; HRA = 40% of Basic (50% in metros); Special Allowance = remaining balance.</li>
+  <li><strong>Provident Fund (EPF):</strong> 12% of Basic, capped at statutory wage ceiling of ₹15,000 monthly basic (maximum employee deduction ₹1,800/month). Employer matches 12% as CTC benefit.</li>
+  <li><strong>ESIC:</strong> Applicable when Monthly Gross &le; ₹21,000. Employee deduction = 0.75%; Employer contribution = 3.25%.</li>
+  <li><strong>Professional Tax (PT):</strong> Flat ₹200 / month deducted in pay months.</li>
+  <li><strong>Labour Welfare Fund (LWF):</strong> ₹25 employee share deducted in June and December.</li>
+  <li><strong>Hourly / Part-Time Staff:</strong> Remunerated strictly as <code>Logged Hours &times; Hourly Rate</code>; no paid leave, no PT deduction.</li>
+</ul>
+
+<h2>6. Employee Lifecycle, Onboarding &amp; Exit Protocol</h2>
+<ul>
+  <li><strong>Onboarding Milestones:</strong>
+    <ul>
+      <li>Day -3: Signed offer and appointment letter collected (HR).</li>
+      <li>Day 0: Identity, PAN, Aadhaar, degree verification; IT provisions hardware, email, and clinical credentials; Day 1 briefing (Manager).</li>
+      <li>Day 1: HR policy induction and compliance sign-off.</li>
+      <li>Day 3: Accounts verifies bank account, IFSC, PAN, and UAN.</li>
+      <li>Day 7: Background screening &amp; reference check.</li>
+      <li>Day 14: Manager assigns formal probation goals &amp; KPIs.</li>
+    </ul>
+  </li>
+  <li><strong>Offboarding &amp; Exit:</strong> Resignation initiates <code>NOTICE_PERIOD</code>. Last Working Day confirmed (LWD -25), manager handover completed (LWD -2), IT retrieves all equipment and revokes access (LWD 0), Full &amp; Final settlement released within 30 days.</li>
+</ul>
+
+<h2>7. IT Asset Governance</h2>
+<ul>
+  <li><strong>Digital Acknowledgement:</strong> Every provisioned laptop, workstation, mobile phone, and corporate SIM card must be digitally acknowledged by the recipient employee upon handoff.</li>
+  <li><strong>Warranty Alert:</strong> IT receives alert tickets 60 days before warranty expiry on any active device for scheduled maintenance or refresh.</li>
+</ul>
+
+<h2>8. Security, RBAC &amp; Payroll Confidentiality</h2>
+<ul>
+  <li><strong>Role Boundaries:</strong> Least-privilege access across 7 distinct roles (<code>EMPLOYEE</code>, <code>MANAGER</code>, <code>HR</code>, <code>ACCOUNTS</code>, <code>IT</code>, <code>LEADERSHIP</code>, <code>SYSTEM_ADMIN</code>).</li>
+  <li><strong>Payroll Confidentiality:</strong> Strict 403 Forbidden enforcement on all payroll endpoints for unauthorized roles.</li>
+  <li><strong>Audit Trail:</strong> Immutable cryptographic logging of all security events, role changes, salary revisions, and sensitive data exports.</li>
+</ul>
+
+<div style="margin-top:30px; padding:15px; background-color:#f1f5f9; border-left:4px solid #0f766e; font-size:9.5pt; color:#475569;">
+  <strong>Document Administration:</strong> To request policy updates (such as shifting grace periods, altering leave quotas, or modifying PF/ESIC deductions), notify HR/Management. Changes are updated in <code>src/config/policy.ts</code> and published to production.
+</div>
+
+</body>
+</html>
+
