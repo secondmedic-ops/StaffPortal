@@ -45,21 +45,25 @@ export interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 async function loadEmployeeForUser(user: User): Promise<{ employee: Employee; roles: RoleType[]; directReportCount: number }> {
+  const email = (user.email ?? '').trim().toLowerCase();
   const { data: emp, error: empError } = await supabase
     .from('employees')
     .select('*, department:departments!employees_department_id_fkey(name)')
-    .or(`auth_user_id.eq.${user.id},official_email.eq.${user.email ?? ''}`)
+    .or(`auth_user_id.eq.${user.id},official_email.ilike.${email},personal_email.ilike.${email}`)
     .maybeSingle();
 
   if (empError || !emp) {
     throw new Error('Your login is not linked to a staff record — contact HR');
   }
 
-  // Link auth_user_id if not yet linked
-  if (!emp.auth_user_id && user.id) {
+  // Link auth_user_id or update official_email if needed
+  if (user.id && (!emp.auth_user_id || (email && emp.official_email.toLowerCase() !== email))) {
     await supabase
       .from('employees')
-      .update({ auth_user_id: user.id })
+      .update({
+        auth_user_id: user.id,
+        official_email: emp.official_email.toLowerCase() === email ? emp.official_email : (email || emp.official_email)
+      })
       .eq('id', emp.id);
   }
 

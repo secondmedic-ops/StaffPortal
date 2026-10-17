@@ -15,11 +15,12 @@ export async function getSessionEmployee(): Promise<SessionEmployee> {
   const { data: sessionData } = await supabase.auth.getSession();
   const user = sessionData?.session?.user;
   if (user) {
+    const email = (user.email ?? '').trim().toLowerCase();
     const { data: emp, error: empError } = await supabase
       .from('employees')
       .select('id, emp_code, full_name, manager_id, department_id, department:departments!employees_department_id_fkey(name)')
-      .or(`auth_user_id.eq.${user.id},official_email.eq.${user.email ?? ''}`)
-      .single();
+      .or(`auth_user_id.eq.${user.id},official_email.ilike.${email},personal_email.ilike.${email}`)
+      .maybeSingle();
 
     if (!empError && emp) {
       return {
