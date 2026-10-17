@@ -20,8 +20,9 @@ import { SkeletonLoader } from '../common/SkeletonLoader';
 export const AttendanceRegister: React.FC = () => {
   const { currentUser, showToast } = useAuth();
   const [loading, setLoading] = useState(true);
-  const [month, setMonth] = useState(8); // August 2026
-  const [year, setYear] = useState(2026);
+  const todayDate = new Date();
+  const [month, setMonth] = useState(todayDate.getMonth() + 1);
+  const [year, setYear] = useState(todayDate.getFullYear());
   const [summaries, setSummaries] = useState<MonthlyAttendanceSummary[]>([]);
   const [locking, setLocking] = useState(false);
 
@@ -60,7 +61,7 @@ export const AttendanceRegister: React.FC = () => {
       await hrApi.lockAttendanceMonth(month, year);
       showToast(
         'Attendance Locked for Payroll',
-        `August 2026 attendance frozen. Dispatched ${totalLopDays} total LOP days to Accounts module.`,
+        `${getMonthName(month)} ${year} attendance frozen. Dispatched ${totalLopDays} total LOP days to Accounts module.`,
         'success'
       );
       fetchSummaries();

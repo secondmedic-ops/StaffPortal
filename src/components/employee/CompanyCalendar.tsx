@@ -2,15 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { meApi } from '../../api';
 import { Holiday, LeaveRequest } from '../../types';
-import { formatDate, getMonthName } from '../../utils/dateUtils';
+import { formatDate, getMonthName, getTodayIsoString } from '../../utils/dateUtils';
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Users, Lock } from 'lucide-react';
 import { SkeletonLoader } from '../common/SkeletonLoader';
 
 export const CompanyCalendar: React.FC = () => {
   const { currentUser, showToast } = useAuth();
   const [loading, setLoading] = useState(true);
-  const [month, setMonth] = useState(9); // September
-  const [year, setYear] = useState(2026);
+  const todayDate = new Date();
+  const [month, setMonth] = useState(todayDate.getMonth() + 1);
+  const [year, setYear] = useState(todayDate.getFullYear());
   const [holidays, setHolidays] = useState<Holiday[]>([]);
   const [myLeaves, setMyLeaves] = useState<LeaveRequest[]>([]);
   const [teamLeaves, setTeamLeaves] = useState<Array<{ employeeName: string; fromDate: string; toDate: string; totalDays: number }>>([]);
@@ -129,7 +130,7 @@ export const CompanyCalendar: React.FC = () => {
               const myLeaveToday = myLeaves.find(l => dateStr >= l.fromDate && dateStr <= l.toDate);
               const teammatesOut = teamLeaves.filter(tl => dateStr >= tl.fromDate && dateStr <= tl.toDate);
 
-              const isToday = dateStr === '2026-09-12';
+              const isToday = dateStr === getTodayIsoString();
 
               return (
                 <div
