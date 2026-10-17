@@ -16,7 +16,10 @@ begin
   end if;
 
   -- 2. Check if employee already exists, or generate next available emp_code
-  select id into v_emp_id from public.employees where official_email = 'snehal.kadam@gmail.com';
+  select id into v_emp_id 
+  from public.employees 
+  where official_email in ('snehal.kadam@secondmedic.com', 'snehal.kadam@gmail.com')
+     or personal_email in ('snehal.kadam@secondmedic.com', 'snehal.kadam@gmail.com');
   
   if v_emp_id is null then
     -- Generate unique emp_code if HR-002 already taken
@@ -40,7 +43,7 @@ begin
     ) values (
       v_emp_code,
       'Snehal Lalit Kadam',
-      'snehal.kadam@gmail.com',
+      'snehal.kadam@secondmedic.com',
       'snehal.kadam@gmail.com',
       '8104478856',
       '8104478856',
@@ -56,6 +59,8 @@ begin
     -- Update existing record
     update public.employees set
       full_name = 'Snehal Lalit Kadam',
+      official_email = 'snehal.kadam@secondmedic.com',
+      personal_email = 'snehal.kadam@gmail.com',
       mobile = '8104478856',
       phone = '8104478856',
       department_id = coalesce(department_id, v_dept_id),
