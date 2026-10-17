@@ -3,7 +3,7 @@ import { useAuth } from '../../context/AuthContext';
 import { hrApi } from '../../api';
 import { Employee, Department, EmploymentType } from '../../types';
 import { formatDate } from '../../utils/dateUtils';
-import { Users, Search, Plus, Edit2, Filter, Mail, Phone, Building2, ChevronRight } from 'lucide-react';
+import { Users, Search, Plus, Edit2, Filter, Mail, Phone, Building2, ChevronRight, RotateCw } from 'lucide-react';
 import { StatusPill } from '../common/StatusPill';
 import { Modal } from '../common/Modal';
 import { SkeletonLoader } from '../common/SkeletonLoader';
@@ -121,10 +121,15 @@ export const EmployeeDirectory: React.FC = () => {
   };
 
   const filtered = employees.filter(e => {
+    const q = searchQuery.toLowerCase().trim();
     const matchesSearch =
-      e.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      e.empCode.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      e.designation.toLowerCase().includes(searchQuery.toLowerCase());
+      !q ||
+      e.fullName.toLowerCase().includes(q) ||
+      e.empCode.toLowerCase().includes(q) ||
+      (e.officialEmail && e.officialEmail.toLowerCase().includes(q)) ||
+      (e.personalEmail && e.personalEmail.toLowerCase().includes(q)) ||
+      (e.phone && e.phone.includes(q)) ||
+      (e.designation && e.designation.toLowerCase().includes(q));
     const matchesDept = deptFilter === 'ALL' || e.departmentName === deptFilter;
     const matchesType = typeFilter === 'ALL' || e.employmentType === typeFilter;
     return matchesSearch && matchesDept && matchesType;
@@ -141,12 +146,22 @@ export const EmployeeDirectory: React.FC = () => {
           </p>
         </div>
 
-        <button
-          onClick={openAddModal}
-          className="px-4 py-2 text-xs font-semibold rounded-lg bg-teal-700 text-white hover:bg-teal-800 transition-colors shadow-xs flex items-center gap-1.5"
-        >
-          <Plus className="w-4 h-4" /> Enroll New Employee
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={fetchEmployees}
+            disabled={loading}
+            className="px-3 py-2 text-xs font-semibold rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors shadow-xs flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+            title="Refresh directory list from database"
+          >
+            <RotateCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-teal-700' : ''}`} /> Refresh
+          </button>
+          <button
+            onClick={openAddModal}
+            className="px-4 py-2 text-xs font-semibold rounded-lg bg-teal-700 text-white hover:bg-teal-800 transition-colors shadow-xs flex items-center gap-1.5 cursor-pointer"
+          >
+            <Plus className="w-4 h-4" /> Enroll New Employee
+          </button>
+        </div>
       </div>
 
       {/* Filter & Search Bar */}
@@ -157,7 +172,7 @@ export const EmployeeDirectory: React.FC = () => {
             type="text"
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            placeholder="Search by staff name, code, designation..."
+            placeholder="Search by staff name, code, email, designation..."
             className="w-full pl-9 pr-4 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 focus:outline-none focus:ring-1 focus:ring-teal-700"
           />
         </div>
