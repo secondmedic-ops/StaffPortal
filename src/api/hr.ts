@@ -15,6 +15,7 @@ import type {
   Holiday,
   Department
 } from '../types';
+import { HOLIDAY_TEMPLATES } from '../config/holidayTemplates';
 import { getSessionEmployee } from './session';
 
 async function getCurrentEmployee() {
@@ -179,13 +180,28 @@ export const hrApi = {
   },
 
   async getHolidays(): Promise<Holiday[]> {
-    const { data, error } = await supabase
-      .from('holidays')
-      .select('*')
-      .order('holiday_date', { ascending: true });
+    try {
+      const { data, error } = await supabase
+        .from('holidays')
+        .select('*')
+        .order('holiday_date', { ascending: true });
 
-    if (error) throw new Error(`Failed to load holidays: ${error.message}`);
-    return (data ?? []).map(mapHoliday);
+      if (!error && data && data.length > 0) {
+        return data.map(mapHoliday);
+      }
+    } catch {}
+
+    const y = new Date().getFullYear();
+    const templates = HOLIDAY_TEMPLATES[y] || HOLIDAY_TEMPLATES[2026] || [];
+    return templates.map((t, idx) => ({
+      id: 9000 + idx,
+      holidayDate: t.date,
+      name: t.name,
+      isOptional: Boolean(t.optional),
+      isRestricted: Boolean(t.optional),
+      holidayYear: Number(t.date.slice(0, 4)),
+      createdAt: new Date().toISOString()
+    }));
   },
 
   async createHoliday(data: Omit<Holiday, 'id'>): Promise<Holiday> {

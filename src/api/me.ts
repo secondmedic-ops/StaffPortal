@@ -10,6 +10,7 @@ import {
   mapKpiCycle,
   mapKpiDefinition
 } from './mappers';
+import { HOLIDAY_TEMPLATES } from '../config/holidayTemplates';
 import type {
   AttendanceRecord,
   AttendanceRegularization,
@@ -325,12 +326,43 @@ export const meApi = {
     const startMonth = `${year}-${monthStr}-01`;
     const endMonth = monthBounds(year, month).end;
 
-    const { data: holidaysData, error: holidaysError } = await supabase
-      .from('holidays')
-      .select('*')
-      .order('holiday_date', { ascending: true });
+    let holidays: Holiday[] = [];
+    try {
+      const { data: holidaysData, error: holidaysError } = await supabase
+        .from('holidays')
+        .select('*')
+        .order('holiday_date', { ascending: true });
 
-    if (holidaysError) throw new Error(`Failed to load holidays: ${holidaysError.message}`);
+      if (holidaysError) throw holidaysError;
+      const mappedDbHolidays = (holidaysData ?? []).map(mapHoliday);
+      const hasYearHolidays = mappedDbHolidays.some(h => h.holidayDate.startsWith(String(year)));
+      if (hasYearHolidays) {
+        holidays = mappedDbHolidays;
+      } else {
+        const templates = HOLIDAY_TEMPLATES[year] || HOLIDAY_TEMPLATES[2026] || [];
+        const fallbackHolidays: Holiday[] = templates.map((t, idx) => ({
+          id: 9000 + idx,
+          holidayDate: t.date,
+          name: t.name,
+          isOptional: Boolean(t.optional),
+          isRestricted: Boolean(t.optional),
+          holidayYear: Number(t.date.slice(0, 4)),
+          createdAt: new Date().toISOString()
+        }));
+        holidays = [...mappedDbHolidays, ...fallbackHolidays];
+      }
+    } catch {
+      const templates = HOLIDAY_TEMPLATES[year] || HOLIDAY_TEMPLATES[2026] || [];
+      holidays = templates.map((t, idx) => ({
+        id: 9000 + idx,
+        holidayDate: t.date,
+        name: t.name,
+        isOptional: Boolean(t.optional),
+        isRestricted: Boolean(t.optional),
+        holidayYear: Number(t.date.slice(0, 4)),
+        createdAt: new Date().toISOString()
+      }));
+    }
 
     const { data: myLeavesData, error: myLeavesError } = await supabase
       .from('leave_requests')
@@ -358,7 +390,7 @@ export const meApi = {
     }));
 
     return {
-      holidays: (holidaysData ?? []).map(mapHoliday),
+      holidays,
       myLeaves: (myLeavesData ?? []).map(mapLeaveRequest),
       teamLeaves
     };
