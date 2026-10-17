@@ -19,11 +19,12 @@ export const authApi = {
       throw new Error('Authentication failed: No user returned from session');
     }
 
+    const normalizedEmail = (officialEmail || user.email || '').trim().toLowerCase();
     const { data: empData, error: empError } = await supabase
       .from('employees')
       .select('*, department:departments!employees_department_id_fkey(name)')
-      .or(`auth_user_id.eq.${user.id},official_email.eq.${officialEmail}`)
-      .single();
+      .or(`auth_user_id.eq.${user.id},official_email.ilike.${normalizedEmail},personal_email.ilike.${normalizedEmail}`)
+      .maybeSingle();
 
     if (empError || !empData) {
       throw new Error('Your login is not linked to a staff record — contact HR');
@@ -66,11 +67,12 @@ export const authApi = {
       throw new Error('No active session found');
     }
 
+    const normalizedEmail = (session.user.email ?? '').trim().toLowerCase();
     const { data: empData, error: empError } = await supabase
       .from('employees')
       .select('*, department:departments!employees_department_id_fkey(name)')
-      .or(`auth_user_id.eq.${session.user.id},official_email.eq.${session.user.email ?? ''}`)
-      .single();
+      .or(`auth_user_id.eq.${session.user.id},official_email.ilike.${normalizedEmail},personal_email.ilike.${normalizedEmail}`)
+      .maybeSingle();
 
     if (empError || !empData) {
       throw new Error('Your login is not linked to a staff record — contact HR');
