@@ -40,3 +40,7 @@ export const supabase = createClient<Database>(effectiveUrl, effectiveKey, {
   auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
 });
 
+if (typeof window !== 'undefined') {
+  (window as any).supabase = supabase;
+}
+
