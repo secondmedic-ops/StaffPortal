@@ -162,14 +162,27 @@ export const adminApi = {
   },
 
   async getSystemUsers(): Promise<SystemUser[]> {
-    const { data, error } = await supabase
-      .from('system_users')
-      .select('*, employee:employees(full_name, official_email), employee_roles:employee_roles(role)');
+    const [{ data: users, error: userError }, { data: rolesData, error: rolesError }] = await Promise.all([
+      supabase
+        .from('system_users')
+        .select('*, employee:employees(full_name, official_email)'),
+      supabase
+        .from('employee_roles')
+        .select('employee_id, role')
+    ]);
 
-    if (error) throw new Error(`Failed to load system users: ${error.message}`);
+    if (userError) throw new Error(`Failed to load system users: ${userError.message}`);
+    if (rolesError) throw new Error(`Failed to load roles: ${rolesError.message}`);
 
-    return (data ?? []).map((u: any) => {
-      const roles = (u.employee_roles ?? []).map((r: any) => r.role as RoleType);
+    const rolesByEmpId = new Map<number, RoleType[]>();
+    for (const r of rolesData ?? []) {
+      const list = rolesByEmpId.get(r.employee_id) || [];
+      list.push(r.role as RoleType);
+      rolesByEmpId.set(r.employee_id, list);
+    }
+
+    return (users ?? []).map((u: any) => {
+      const roles = rolesByEmpId.get(u.employee_id) || [];
       return {
         id: u.id,
         name: u.employee?.full_name ?? 'System User',
@@ -227,17 +240,30 @@ export const adminApi = {
   },
 
   async getUsers(): Promise<Array<{ user: AppUser; employee: Employee }>> {
-    const { data: usersData, error } = await supabase
-      .from('system_users')
-      .select('*, employee:employees(*, department:departments!employees_department_id_fkey(name)), employee_roles:employee_roles(role)');
+    const [{ data: usersData, error: userError }, { data: rolesData, error: rolesError }] = await Promise.all([
+      supabase
+        .from('system_users')
+        .select('*, employee:employees(*, department:departments!employees_department_id_fkey(name))'),
+      supabase
+        .from('employee_roles')
+        .select('employee_id, role')
+    ]);
 
-    if (error) throw new Error(`Failed to load users: ${error.message}`);
+    if (userError) throw new Error(`Failed to load users: ${userError.message}`);
+    if (rolesError) throw new Error(`Failed to load roles: ${rolesError.message}`);
+
+    const rolesByEmpId = new Map<number, RoleType[]>();
+    for (const r of rolesData ?? []) {
+      const list = rolesByEmpId.get(r.employee_id) || [];
+      list.push(r.role as RoleType);
+      rolesByEmpId.set(r.employee_id, list);
+    }
 
     const employees = await withManagerNames((usersData ?? []).map((u: any) => u.employee).filter(Boolean));
     const employeeById = new Map(employees.map((e: any) => [e.id, e]));
 
     return (usersData ?? []).map((u: any) => {
-      const roles = (u.employee_roles ?? []).map((r: any) => r.role as RoleType);
+      const roles = rolesByEmpId.get(u.employee_id) || [];
       const appUser: AppUser = {
         id: u.id,
         employeeId: u.employee_id,
