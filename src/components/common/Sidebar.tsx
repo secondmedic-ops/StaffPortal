@@ -10,11 +10,11 @@ import { buildNavGroups, findNav, groupBadgeTotal, NavGroup } from '../../config
 
 /** Navigation groups for the signed-in person, shared by the sidebar, mobile menu and header. */
 export function useNavGroups(): NavGroup[] {
-  const { isManager, isHr, isAccounts, isIt, isCeo, isAdmin } = useAuth();
+  const { isManager, isHr, isAccounts, isIt, isCeo, isDirector, isAdmin } = useAuth();
   const { counts } = usePendingCounts();
   return useMemo(
-    () => buildNavGroups({ isManager, isHr, isAccounts, isIt, isCeo, isAdmin }, counts),
-    [isManager, isHr, isAccounts, isIt, isCeo, isAdmin, counts]
+    () => buildNavGroups({ isManager, isHr, isAccounts, isIt, isCeo, isDirector, isAdmin }, counts),
+    [isManager, isHr, isAccounts, isIt, isCeo, isDirector, isAdmin, counts]
   );
 }
 

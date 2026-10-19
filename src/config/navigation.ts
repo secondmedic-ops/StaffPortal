@@ -61,6 +61,7 @@ export interface NavAccess {
   isAccounts: boolean;
   isIt: boolean;
   isCeo: boolean;
+  isDirector: boolean;
   isAdmin: boolean;
 }
 
@@ -97,9 +98,6 @@ export function buildNavGroups(a: NavAccess, c: PendingCounts): NavGroup[] {
         { id: 'team-approvals', label: 'Leave approvals', icon: CheckSquare, badge: n(c.leaveApprovals) },
         { id: 'team-regularization', label: 'Time updates', icon: Clock, badge: n(c.regularizations) },
         { id: 'team-holiday-work', label: 'Comp-off & OT claims', icon: CalendarHeart, badge: n(c.holidayWorkClaims) },
-        ...(c.payrollApprovals > 0
-          ? [{ id: 'payroll-approval', label: 'Payroll approval', icon: BadgeCheck, badge: n(c.payrollApprovals) }]
-          : []),
         { id: 'team-calendar', label: 'Team calendar', icon: Calendar },
         { id: 'team-kpis', label: 'Team KPIs', icon: Award }
       ]
@@ -179,6 +177,20 @@ export function buildNavGroups(a: NavAccess, c: PendingCounts): NavGroup[] {
         ...(!a.isAccounts
           ? [{ id: 'payroll-increments', label: 'Salary approvals', icon: TrendingUp, badge: n(c.salaryRevisions) }]
           : []),
+        ...(c.payrollApprovals > 0
+          ? [{ id: 'payroll-approval', label: 'Payroll approval', icon: BadgeCheck, badge: n(c.payrollApprovals) }]
+          : []),
+        { id: 'ceo-orgchart', label: 'Full org chart', icon: GitFork },
+        { id: 'ceo-calendar', label: 'All-staff calendar', icon: Calendar }
+      ]
+    });
+  } else if (a.isDirector) {
+    groups.push({
+      id: 'leadership',
+      label: 'Leadership',
+      icon: Building2,
+      items: [
+        { id: 'ceo-dashboard', label: 'Organisation overview', icon: BarChart3 },
         { id: 'ceo-orgchart', label: 'Full org chart', icon: GitFork },
         { id: 'ceo-calendar', label: 'All-staff calendar', icon: Calendar }
       ]

@@ -1,4 +1,4 @@
-export type RoleType = 'EMPLOYEE' | 'MANAGER' | 'HR' | 'ACCOUNTS' | 'IT' | 'CEO' | 'SYSTEM_ADMIN';
+export type RoleType = 'EMPLOYEE' | 'MANAGER' | 'HR' | 'ACCOUNTS' | 'IT' | 'CEO' | 'SYSTEM_ADMIN' | 'DIRECTOR';
 
 export enum Role {
   EMPLOYEE = 'EMPLOYEE',
@@ -7,6 +7,7 @@ export enum Role {
   ACCOUNTS = 'ACCOUNTS',
   IT = 'IT',
   CEO = 'CEO',
+  DIRECTOR = 'DIRECTOR',
   SYSTEM_ADMIN = 'SYSTEM_ADMIN'
 }
 

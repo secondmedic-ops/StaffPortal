@@ -37,6 +37,7 @@ export interface AuthContextType {
   isAccounts: boolean;
   isIt: boolean;
   isCeo: boolean;
+  isDirector: boolean;
   /** Number of people reporting directly to the signed-in employee. */
   directReportCount: number;
   isAdmin: boolean;
@@ -287,6 +288,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const isAccounts = roles.includes('ACCOUNTS') || roles.includes('SYSTEM_ADMIN');
   const isIt = roles.includes('IT');
   const isCeo = roles.includes('CEO');
+  const isDirector = roles.includes('DIRECTOR');
   const isAdmin = roles.includes('SYSTEM_ADMIN');
 
   // While loading, render a full-page skeleton — never render children against a null employee
@@ -399,6 +401,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isAccounts,
         isIt,
         isCeo,
+        isDirector,
         directReportCount,
         isAdmin,
       }}

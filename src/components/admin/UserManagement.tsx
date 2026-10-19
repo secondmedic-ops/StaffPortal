@@ -155,6 +155,8 @@ export const UserManagement: React.FC = () => {
                             className={`text-[11.5px] font-mono font-bold px-2 py-0.5 rounded ${
                               r === Role.CEO
                                 ? 'bg-amber-100 dark:bg-amber-950/60 text-amber-900 dark:text-amber-200 border border-amber-300 dark:border-amber-700'
+                                : r === Role.DIRECTOR
+                                ? 'bg-blue-100 dark:bg-blue-950/60 text-blue-900 dark:text-blue-200 border border-blue-300 dark:border-blue-700'
                                 : r === Role.ACCOUNTS
                                 ? 'bg-purple-100 dark:bg-purple-950/60 text-purple-900 dark:text-purple-200 border border-purple-300 dark:border-purple-700'
                                 : r === Role.SYSTEM_ADMIN
@@ -220,6 +222,7 @@ export const UserManagement: React.FC = () => {
                 onChange={e => setTargetRole(e.target.value as Role)}
                 className="w-full text-xs p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 font-mono font-bold"
               >
+                <option value={Role.DIRECTOR}>DIRECTOR (Operations & Leadership Oversight)</option>
                 <option value={Role.ACCOUNTS}>ACCOUNTS (Confidential Payroll & Compensation)</option>
                 <option value={Role.HR}>HR (Employee Master, Shifts, Attendance Lock)</option>
                 <option value={Role.MANAGER}>MANAGER (Direct Reports Approvals & KPIs)</option>

@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { compensationApi, hrApi } from '../../api';
+import { supabase } from '../../lib/supabase';
 import type { Employee, PayType, SalaryRevision, SalaryRevisionType } from '../../types';
 import { SALARY_SPLIT_POLICY } from '../../config/policy';
 import { splitCtc, formatInr } from '../../lib/payrollEngine';
@@ -72,10 +73,11 @@ const blankForm = (): ProposalForm => ({
 });
 
 export const IncrementsRevisions: React.FC = () => {
-  const { currentUser, showToast } = useAuth();
+  const { currentUser, isCeo, isAccounts, showToast } = useAuth();
   const [loading, setLoading] = useState(true);
   const [revisions, setRevisions] = useState<SalaryRevision[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
+  const [accountsEmpIds, setAccountsEmpIds] = useState<Set<number>>(new Set());
   const [tab, setTab] = useState<'PENDING' | 'REGISTER' | 'HISTORY'>('PENDING');
   const [search, setSearch] = useState('');
   const [showForm, setShowForm] = useState(false);
@@ -86,9 +88,14 @@ export const IncrementsRevisions: React.FC = () => {
   const load = async () => {
     try {
       setLoading(true);
-      const [r, e] = await Promise.all([compensationApi.getRevisions(), hrApi.getEmployees()]);
+      const [r, e, rolesRes] = await Promise.all([
+        compensationApi.getRevisions(),
+        hrApi.getEmployees(),
+        supabase.from('employee_roles').select('employee_id').eq('role', 'ACCOUNTS')
+      ]);
       setRevisions(r);
       setEmployees(e.filter(x => x.status !== 'EXITED'));
+      setAccountsEmpIds(new Set((rolesRes.data ?? []).map(x => x.employee_id)));
     } catch (err: any) {
       showToast('Error', err.message || 'Failed to load salary data', 'error');
     } finally {
@@ -177,6 +184,14 @@ export const IncrementsRevisions: React.FC = () => {
     setForm(prev => applyCtc(ctc, prev.pfApplicable, prev.autoSplit, { ...prev, incrementPct: pct }));
   };
 
+  const selectableEmployees = useMemo(() => {
+    let list = employees.filter(e => e.id !== currentUser?.id);
+    if (isCeo && !isAccounts) {
+      list = list.filter(e => accountsEmpIds.has(e.id));
+    }
+    return list;
+  }, [employees, currentUser?.id, isCeo, isAccounts, accountsEmpIds]);
+
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.employeeId) return;
@@ -215,7 +230,7 @@ export const IncrementsRevisions: React.FC = () => {
         newDesignation: form.revisionType === 'PROMOTION' ? form.newDesignation : undefined,
         reason: form.reason
       });
-      showToast('Revision proposed', 'A second Accounts user or the CEO must approve it (maker-checker).', 'success');
+      showToast('Revision proposed', 'The CEO must approve it.', 'success');
       setShowForm(false);
       setTab('PENDING');
       load();
@@ -357,8 +372,10 @@ export const IncrementsRevisions: React.FC = () => {
                       ))}
                     </div>
                     <div className="flex justify-end gap-2 mt-3 pt-3 border-t border-slate-100 dark:border-slate-800">
-                      {isMine ? (
-                        <span className="text-[12.5px] text-slate-500 italic">You proposed this — another approver must act (maker-checker).</span>
+                      {!isCeo ? (
+                        <span className="text-[12.5px] text-slate-500 italic">Awaiting CEO approval</span>
+                      ) : r.employeeId === currentUser?.id ? (
+                        <span className="text-[12.5px] text-slate-500 italic">You cannot approve your own salary revision.</span>
                       ) : (
                         <>
                           <button onClick={() => action(r, 'REJECT')} disabled={actioning === r.id} className={secondaryBtn}>
@@ -407,7 +424,7 @@ export const IncrementsRevisions: React.FC = () => {
                         <td className="px-3 py-2.5">{cur ? `${formatDate(cur.effectiveFrom)} (${cur.revisionType.toLowerCase()})` : '—'}</td>
                         <td className="px-3 py-2.5">{cur ? (cur.pfApplicable ? 'Yes' : 'No') : '—'}</td>
                         <td className="px-3 py-2.5 text-right">
-                          {e.id !== currentUser?.id && (
+                          {e.id !== currentUser?.id && (!isCeo || isAccounts || accountsEmpIds.has(e.id)) && (
                             <button onClick={() => openPropose(e.id)} className="text-xs font-semibold text-teal-700 dark:text-teal-400 hover:underline">
                               {cur ? 'Increment' : 'Set salary'}
                             </button>
@@ -468,15 +485,14 @@ export const IncrementsRevisions: React.FC = () => {
         </div>
       )}
 
-      <Modal isOpen={showForm} onClose={() => setShowForm(false)} title="Propose Salary Revision" subtitle="Approval by a different Accounts user or the CEO is required" maxWidth="xl">
+      <Modal isOpen={showForm} onClose={() => setShowForm(false)} title="Propose Salary Revision" subtitle="The CEO must approve" maxWidth="xl">
         <form onSubmit={submit} className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
             <div className="col-span-2">
               <label className={labelClass}>Employee *</label>
               <select required value={form.employeeId} onChange={e => onEmployeeChange(e.target.value ? Number(e.target.value) : '')} className={inputClass}>
                 <option value="">Select…</option>
-                {employees
-                  .filter(e => e.id !== currentUser?.id)
+                {selectableEmployees
                   .map(e => (
                     <option key={e.id} value={e.id}>
                       {e.fullName} ({e.empCode}) — {e.designation}

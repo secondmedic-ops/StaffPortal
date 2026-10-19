@@ -96,8 +96,8 @@ const initialState = (): FormState => ({
 
 export const NewStaffRegistration: React.FC = () => {
   const { currentUser, showToast, setActiveNav, isCeo, isAdmin } = useAuth();
-  // Only the CEO / system admin may hand out Accounts access (it unlocks salaries and bank details).
-  const assignableRoles: RoleType[] = isCeo || isAdmin ? ['MANAGER', 'HR', 'ACCOUNTS', 'IT'] : ['MANAGER', 'HR', 'IT'];
+  // Only the CEO / system admin may hand out Accounts or Director access.
+  const assignableRoles: RoleType[] = isCeo || isAdmin ? ['MANAGER', 'DIRECTOR', 'HR', 'ACCOUNTS', 'IT'] : ['MANAGER', 'HR', 'IT'];
   const [loading, setLoading] = useState(true);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);

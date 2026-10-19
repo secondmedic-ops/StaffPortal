@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabase';
-import { assertPayrollAccess, getSessionEmployee, logAudit, monthBounds } from './session';
+import { assertPayrollAccess, getSessionEmployee, getSessionRoles, logAudit, monthBounds } from './session';
 import {
   mapAttendanceRecord,
   mapEmployee,
@@ -116,6 +116,15 @@ export const compensationApi = {
   }): Promise<SalaryRevision> {
     const me = await assertPayrollAccess();
     if (data.employeeId === me.id) throw new Error('You cannot propose a revision to your own salary.');
+    const myRoles = await getSessionRoles(me.id);
+    const isAccounts = myRoles.includes('ACCOUNTS');
+    const isCeo = myRoles.includes('CEO');
+    if (isCeo && !isAccounts) {
+      const targetRoles = await getSessionRoles(data.employeeId);
+      if (!targetRoles.includes('ACCOUNTS')) {
+        throw new Error('As CEO, you can only propose salary revisions for Accounts staff.');
+      }
+    }
     const { data: created, error } = await supabase
       .from('salary_revisions')
       .insert({
@@ -150,10 +159,15 @@ export const compensationApi = {
   /** Maker-checker approval. Returns a warning when the designation could not be updated. */
   async actionRevision(revision: SalaryRevision, action: 'APPROVE' | 'REJECT'): Promise<{ warning?: string }> {
     const me = await assertPayrollAccess();
-    if (revision.proposedById === me.id) {
-      throw new Error('Maker-checker: a different Accounts/CEO user must approve a revision you proposed.');
+    const myRoles = await getSessionRoles(me.id);
+    const isCeo = myRoles.includes('CEO');
+    if (!isCeo) {
+      throw new Error('Only the CEO can approve or reject salary revisions.');
     }
     if (revision.employeeId === me.id) throw new Error('You cannot approve your own salary revision.');
+    if (revision.proposedById === me.id && !isCeo) {
+      throw new Error('Maker-checker: a different user must approve a revision you proposed.');
+    }
 
     const { error } = await supabase
       .from('salary_revisions')
@@ -337,6 +351,10 @@ export const compensationApi = {
 
   async setEntriesStatus(year: number, month: number, from: 'DRAFT' | 'APPROVED', to: 'DRAFT' | 'APPROVED' | 'PUBLISHED'): Promise<number> {
     const me = await getSessionEmployee();
+    const myRoles = await getSessionRoles(me.id);
+    if (to === 'APPROVED' && !myRoles.includes('CEO')) {
+      throw new Error('Only the CEO can approve monthly payroll.');
+    }
     let query = supabase
       .from('payroll_entries')
       .update({ status: to, published_at: to === 'PUBLISHED' ? new Date().toISOString() : null })
@@ -351,11 +369,13 @@ export const compensationApi = {
     return data?.length ?? 0;
   },
 
-  // ---- Payroll approval (reporting manager of the Accounts person) ----------
+  // ---- Payroll approval (CEO exclusive sign-off) -----------------------------
 
-  /** Months that have drafts visible to me (RLS limits approvers to their reporting line). */
+  /** Months that have drafts visible to me (only the CEO approves payroll). */
   async getMonthsAwaitingApproval(): Promise<Array<{ year: number; month: number; count: number }>> {
     const me = await getSessionEmployee();
+    const myRoles = await getSessionRoles(me.id);
+    if (!myRoles.includes('CEO')) return [];
     const { data, error } = await supabase
       .from('payroll_entries')
       .select('year, month, computed_by')

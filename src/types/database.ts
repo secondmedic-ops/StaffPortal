@@ -122,19 +122,19 @@ export interface Database {
         Row: {
           id: number;
           employee_id: number;
-          role: 'EMPLOYEE' | 'MANAGER' | 'HR' | 'ACCOUNTS' | 'IT' | 'CEO' | 'SYSTEM_ADMIN';
+          role: 'EMPLOYEE' | 'MANAGER' | 'HR' | 'ACCOUNTS' | 'IT' | 'CEO' | 'SYSTEM_ADMIN' | 'DIRECTOR';
           created_at?: string;
         };
         Insert: {
           id?: number;
           employee_id: number;
-          role: 'EMPLOYEE' | 'MANAGER' | 'HR' | 'ACCOUNTS' | 'IT' | 'CEO' | 'SYSTEM_ADMIN';
+          role: 'EMPLOYEE' | 'MANAGER' | 'HR' | 'ACCOUNTS' | 'IT' | 'CEO' | 'SYSTEM_ADMIN' | 'DIRECTOR';
           created_at?: string;
         };
         Update: {
           id?: number;
           employee_id?: number;
-          role?: 'EMPLOYEE' | 'MANAGER' | 'HR' | 'ACCOUNTS' | 'IT' | 'CEO' | 'SYSTEM_ADMIN';
+          role?: 'EMPLOYEE' | 'MANAGER' | 'HR' | 'ACCOUNTS' | 'IT' | 'CEO' | 'SYSTEM_ADMIN' | 'DIRECTOR';
           created_at?: string;
         };
         Relationships: [
@@ -790,7 +790,7 @@ export interface Database {
           target_user_id: number;
           target_user_name: string;
           target_user_email: string;
-          proposed_role: 'EMPLOYEE' | 'MANAGER' | 'HR' | 'ACCOUNTS' | 'IT' | 'CEO' | 'SYSTEM_ADMIN';
+          proposed_role: 'EMPLOYEE' | 'MANAGER' | 'HR' | 'ACCOUNTS' | 'IT' | 'CEO' | 'SYSTEM_ADMIN' | 'DIRECTOR';
           justification: string;
           proposed_by_name: string;
           proposed_at: string;
@@ -801,7 +801,7 @@ export interface Database {
           target_user_id: number;
           target_user_name: string;
           target_user_email: string;
-          proposed_role: 'EMPLOYEE' | 'MANAGER' | 'HR' | 'ACCOUNTS' | 'IT' | 'CEO' | 'SYSTEM_ADMIN';
+          proposed_role: 'EMPLOYEE' | 'MANAGER' | 'HR' | 'ACCOUNTS' | 'IT' | 'CEO' | 'SYSTEM_ADMIN' | 'DIRECTOR';
           justification: string;
           proposed_by_name: string;
           proposed_at?: string;
@@ -812,7 +812,7 @@ export interface Database {
           target_user_id?: number;
           target_user_name?: string;
           target_user_email?: string;
-          proposed_role?: 'EMPLOYEE' | 'MANAGER' | 'HR' | 'ACCOUNTS' | 'IT' | 'CEO' | 'SYSTEM_ADMIN';
+          proposed_role?: 'EMPLOYEE' | 'MANAGER' | 'HR' | 'ACCOUNTS' | 'IT' | 'CEO' | 'SYSTEM_ADMIN' | 'DIRECTOR';
           justification?: string;
           proposed_by_name?: string;
           proposed_at?: string;

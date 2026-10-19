@@ -74,6 +74,7 @@ const MainPortal: React.FC = () => {
     isAccounts,
     isIt,
     isCeo,
+    isDirector,
     isAdmin
   } = useAuth();
   const [menuOpen, setMenuOpen] = React.useState(false);
@@ -117,7 +118,7 @@ const MainPortal: React.FC = () => {
       case 'team-holiday-work':
         return isManager || isHr ? <TeamHolidayWork /> : <UnauthorizedView role="MANAGER" />;
       case 'payroll-approval':
-        return isManager || isAccounts || isCeo ? <PayrollApproval /> : <UnauthorizedView role="MANAGER" />;
+        return isCeo ? <PayrollApproval /> : <UnauthorizedView role="CEO" />;
 
       // Manager views
       case 'team-dashboard':
@@ -191,13 +192,13 @@ const MainPortal: React.FC = () => {
       case 'it-requests':
         return isIt ? <ItRequests /> : <UnauthorizedView role="IT" />;
 
-      // CEO view
+      // CEO & Leadership views
       case 'ceo-dashboard':
-        return isCeo ? <CeoDashboard /> : <UnauthorizedView role="CEO" />;
+        return isCeo || isDirector ? <CeoDashboard /> : <UnauthorizedView role="CEO" />;
       case 'ceo-orgchart':
-        return isCeo ? <OrgChart /> : <UnauthorizedView role="CEO" />;
+        return isCeo || isDirector ? <OrgChart /> : <UnauthorizedView role="CEO" />;
       case 'ceo-calendar':
-        return isCeo ? <CompanyCalendar /> : <UnauthorizedView role="CEO" />;
+        return isCeo || isDirector ? <CompanyCalendar /> : <UnauthorizedView role="CEO" />;
 
       // Admin views
       case 'admin-users':
@@ -238,6 +239,7 @@ const ROLE_NAMES: Record<string, string> = {
   ACCOUNTS: 'Accounts',
   IT: 'IT',
   CEO: 'CEO',
+  DIRECTOR: 'Director',
   SYSTEM_ADMIN: 'System admin'
 };
 

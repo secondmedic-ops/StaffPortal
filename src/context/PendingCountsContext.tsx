@@ -72,8 +72,8 @@ export const PendingCountsProvider: React.FC<{ children: React.ReactNode }> = ({
         isManager || isHr
           ? safeCount(supabase.from('holiday_work_claims').select('id', head).eq('status', 'PENDING').neq('employee_id', me))
           : 0,
-        // Drafts visible to a manager are ones computed by someone in their reporting line.
-        isManager || isCeo
+        // Drafts awaiting approval are visible to the CEO only
+        isCeo
           ? safeCount(supabase.from('payroll_entries').select('id', head).eq('status', 'DRAFT').neq('computed_by', me))
           : 0
       ]);

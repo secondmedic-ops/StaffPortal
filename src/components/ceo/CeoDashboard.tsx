@@ -26,7 +26,7 @@ import {
 import { SkeletonLoader } from '../common/SkeletonLoader';
 
 export const CeoDashboard: React.FC = () => {
-  const { currentUser, showToast } = useAuth();
+  const { currentUser, isCeo, isDirector, showToast } = useAuth();
   const [loading, setLoading] = useState(true);
   const [metrics, setMetrics] = useState<any>(null);
   const [roleProposals, setRoleProposals] = useState<any[]>([]);
@@ -37,7 +37,7 @@ export const CeoDashboard: React.FC = () => {
       setLoading(true);
       const [overview, proposals] = await Promise.all([
         ceoApi.getExecutiveMetrics(),
-        ceoApi.getPendingRoleProposals()
+        isCeo ? ceoApi.getPendingRoleProposals() : Promise.resolve([])
       ]);
       setMetrics(overview);
       setRoleProposals(proposals);
@@ -75,9 +75,11 @@ export const CeoDashboard: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-1">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-[22px] sm:text-2xl font-semibold text-slate-900 dark:text-slate-50">Executive Command Center</h1>
+            <h1 className="text-[22px] sm:text-2xl font-semibold text-slate-900 dark:text-slate-50">
+              {isDirector && !isCeo ? 'Operations Command Center' : 'Executive Command Center'}
+            </h1>
             <span className="text-xs px-2 py-0.5 rounded font-bold bg-teal-50 dark:bg-teal-950/40 text-teal-800 dark:text-teal-300 border border-teal-200 dark:border-teal-800/70">
-              Chief Executive Officer
+              {isDirector && !isCeo ? 'Director' : 'Chief Executive Officer'}
             </span>
           </div>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-[70ch]">
@@ -95,7 +97,7 @@ export const CeoDashboard: React.FC = () => {
       ) : (
         <>
           {/* Metric Cards */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div className={`grid grid-cols-2 ${isDirector && !isCeo ? 'sm:grid-cols-3' : 'sm:grid-cols-4'} gap-4`}>
             <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs">
               <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">Total Staff Strength</span>
               <div className="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-1">{metrics.totalHeadcount}</div>
@@ -108,11 +110,13 @@ export const CeoDashboard: React.FC = () => {
               <span className="text-[12.5px] text-slate-400 dark:text-slate-500 mt-1 block">Shift compliance</span>
             </div>
 
-            <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs">
-              <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">Monthly Payroll Budget</span>
-              <div className="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-1">₹{metrics.monthlyPayrollExpense.toLocaleString('en-IN')}</div>
-              <span className="text-[12.5px] text-purple-700 dark:text-purple-300 font-medium mt-1 block">August 2026 Cycle</span>
-            </div>
+            {(!isDirector || isCeo) && (
+              <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs">
+                <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">Monthly Payroll Budget</span>
+                <div className="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-1">₹{metrics.monthlyPayrollExpense.toLocaleString('en-IN')}</div>
+                <span className="text-[12.5px] text-purple-700 dark:text-purple-300 font-medium mt-1 block">August 2026 Cycle</span>
+              </div>
+            )}
 
             <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs">
               <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">KPI Scorecard Progress</span>
@@ -154,63 +158,65 @@ export const CeoDashboard: React.FC = () => {
           </div>
 
           {/* Two-Person Rule Authorizations Queue (CEO Exclusive Sign-Off) */}
-          <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden">
-            <div className="p-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 flex items-center justify-between">
-              <div>
-                <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
-                  <ShieldCheck className="w-4 h-4 text-teal-700 dark:text-teal-300" />
-                  Two-Person Security Controls: Pending Role Promotions
-                </h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                  Proposed by System Admin • Requires CEO Sign-Off (Decision 0.1 Separation of Powers)
-                </p>
+          {isCeo && (
+            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden">
+              <div className="p-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 flex items-center justify-between">
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
+                    <ShieldCheck className="w-4 h-4 text-teal-700 dark:text-teal-300" />
+                    Two-Person Security Controls: Pending Role Promotions
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    Proposed by System Admin • Requires CEO Sign-Off (Decision 0.1 Separation of Powers)
+                  </p>
+                </div>
+                <span className="text-xs font-bold px-2 py-0.5 rounded bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300">
+                  {roleProposals.length} Action Required
+                </span>
               </div>
-              <span className="text-xs font-bold px-2 py-0.5 rounded bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300">
-                {roleProposals.length} Action Required
-              </span>
+
+              {roleProposals.length === 0 ? (
+                <div className="p-8 text-center text-xs text-slate-400 dark:text-slate-500">
+                  All proposed privilege modifications have been resolved.
+                </div>
+              ) : (
+                <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                  {roleProposals.map(prop => (
+                    <div key={prop.id} className="p-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                      <div>
+                        <div className="font-bold text-xs text-slate-900 dark:text-slate-100">
+                          {prop.targetUserName} <span className="font-mono text-slate-400 dark:text-slate-500">({prop.targetUserEmail})</span>
+                        </div>
+                        <div className="text-xs text-slate-600 dark:text-slate-400 mt-1">
+                          Proposed Role Elevation: <span className="font-bold text-teal-800 dark:text-teal-300 font-mono">{prop.proposedRole}</span>
+                        </div>
+                        <div className="text-[12.5px] text-slate-500 dark:text-slate-400 italic mt-0.5">
+                          Justification: "{prop.justification}" • Proposed by Admin {prop.proposedByName}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => handleActionProposal(prop.id, 'REJECT')}
+                          disabled={actioningId === prop.id}
+                          className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-950/60 border border-rose-200 dark:border-rose-800/70 transition-colors flex items-center gap-1"
+                        >
+                          <XCircle className="w-3.5 h-3.5" /> Reject
+                        </button>
+                        <button
+                          onClick={() => handleActionProposal(prop.id, 'APPROVE')}
+                          disabled={actioningId === prop.id}
+                          className="px-4 py-1.5 text-xs font-semibold rounded-lg bg-teal-700 text-white hover:bg-teal-800 transition-colors flex items-center gap-1 shadow-xs"
+                        >
+                          <CheckCircle2 className="w-3.5 h-3.5" /> Sign & Authorize
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
-
-            {roleProposals.length === 0 ? (
-              <div className="p-8 text-center text-xs text-slate-400 dark:text-slate-500">
-                All proposed privilege modifications have been resolved.
-              </div>
-            ) : (
-              <div className="divide-y divide-slate-100 dark:divide-slate-800">
-                {roleProposals.map(prop => (
-                  <div key={prop.id} className="p-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div>
-                      <div className="font-bold text-xs text-slate-900 dark:text-slate-100">
-                        {prop.targetUserName} <span className="font-mono text-slate-400 dark:text-slate-500">({prop.targetUserEmail})</span>
-                      </div>
-                      <div className="text-xs text-slate-600 dark:text-slate-400 mt-1">
-                        Proposed Role Elevation: <span className="font-bold text-teal-800 dark:text-teal-300 font-mono">{prop.proposedRole}</span>
-                      </div>
-                      <div className="text-[12.5px] text-slate-500 dark:text-slate-400 italic mt-0.5">
-                        Justification: "{prop.justification}" • Proposed by Admin {prop.proposedByName}
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => handleActionProposal(prop.id, 'REJECT')}
-                        disabled={actioningId === prop.id}
-                        className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-950/60 border border-rose-200 dark:border-rose-800/70 transition-colors flex items-center gap-1"
-                      >
-                        <XCircle className="w-3.5 h-3.5" /> Reject
-                      </button>
-                      <button
-                        onClick={() => handleActionProposal(prop.id, 'APPROVE')}
-                        disabled={actioningId === prop.id}
-                        className="px-4 py-1.5 text-xs font-semibold rounded-lg bg-teal-700 text-white hover:bg-teal-800 transition-colors flex items-center gap-1 shadow-xs"
-                      >
-                        <CheckCircle2 className="w-3.5 h-3.5" /> Sign & Authorize
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+          )}
         </>
       )}
     </div>

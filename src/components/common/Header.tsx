@@ -8,6 +8,7 @@ import { NavGroup } from '../../config/navigation';
 const ROLE_LABELS: Record<string, string> = {
   SYSTEM_ADMIN: 'System admin',
   CEO: 'CEO',
+  DIRECTOR: 'Director',
   HR: 'HR',
   ACCOUNTS: 'Accounts',
   IT: 'IT',
