@@ -87,8 +87,8 @@ create policy role_proposals_read on public.role_proposals
 drop policy if exists role_proposals_insert on public.role_proposals;
 create policy role_proposals_insert on public.role_proposals
   for insert to authenticated
-  using (public.has_role('HR') or public.has_role('CEO') or public.has_role('SYSTEM_ADMIN'))
   with check (public.has_role('HR') or public.has_role('CEO') or public.has_role('SYSTEM_ADMIN'));
+
 
 drop policy if exists role_proposals_update on public.role_proposals;
 create policy role_proposals_update on public.role_proposals
