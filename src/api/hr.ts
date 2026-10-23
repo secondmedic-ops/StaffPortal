@@ -245,6 +245,152 @@ export const hrApi = {
     if (error) throw new Error(`Failed to delete holiday: ${error.message}`);
   },
 
+  async sendLoginInviteToUnassignedStaff(): Promise<Array<{ id: number; name: string; email: string; status: 'INVITED' | 'FAILED'; error?: string }>> {
+    const { data: unassigned, error } = await supabase
+      .from('employees')
+      .select('id, full_name, official_email')
+      .is('auth_user_id', null)
+      .neq('status', 'EXITED');
+
+    if (error) throw new Error(`Failed to load staff without login: ${error.message}`);
+    const results: Array<{ id: number; name: string; email: string; status: 'INVITED' | 'FAILED'; error?: string }> = [];
+
+    for (const emp of (unassigned || [])) {
+      try {
+        await (supabase.rpc as any)('queue_email', {
+          p_template: 'login_invite',
+          p_to: emp.official_email,
+          p_cc: null,
+          p_subject: 'Welcome to SecondMedic Staff Portal - Your Account is Ready',
+          p_payload: {
+            employeeName: emp.full_name,
+            email: emp.official_email,
+            actionUrl: '/login'
+          },
+          p_dedupe_key: `login_invite:${emp.id}`
+        });
+        results.push({ id: emp.id, name: emp.full_name, email: emp.official_email, status: 'INVITED' });
+      } catch (err: any) {
+        results.push({ id: emp.id, name: emp.full_name, email: emp.official_email, status: 'FAILED', error: err.message });
+      }
+    }
+    return results;
+  },
+
+  async confirmProbation(employeeId: number): Promise<void> {
+    const { error: empError } = await supabase
+      .from('employees')
+      .update({ status: 'ACTIVE' })
+      .eq('id', employeeId);
+    if (empError) throw new Error(`Failed to confirm employee: ${empError.message}`);
+
+    // Pro-rate EL leave types (probation_eligible = false)
+    const now = new Date();
+    const monthsLeftInFy = now.getMonth() >= 3 ? (12 - now.getMonth() + 3) : (3 - now.getMonth());
+    const { data: elType } = await supabase
+      .from('leave_types')
+      .select('id, annual_quota')
+      .eq('probation_eligible', false)
+      .maybeSingle();
+
+    if (elType) {
+      const proratedDays = Math.round((Number(elType.annual_quota) / 12) * monthsLeftInFy);
+      const fyYear = now.getMonth() >= 3 ? `${now.getFullYear()}-${now.getFullYear() + 1}` : `${now.getFullYear() - 1}-${now.getFullYear()}`;
+      await supabase
+        .from('leave_balances')
+        .upsert({
+          employee_id: employeeId,
+          leave_type_id: elType.id,
+          fy_year: fyYear,
+          accrued: proratedDays
+        }, { onConflict: 'employee_id,leave_type_id,fy_year' });
+    }
+  },
+
+  async extendProbation(employeeId: number, newEndDate: string, reason: string): Promise<void> {
+    const { error } = await supabase
+      .from('employees')
+      .update({ probation_end_date: newEndDate })
+      .eq('id', employeeId);
+    if (error) throw new Error(`Failed to extend probation: ${error.message}`);
+  },
+
+  async getFullEmployeeProfile(employeeId: number): Promise<{
+    employee: any;
+    profile: any;
+    financials: any;
+    documents: any[];
+    history: any[];
+  }> {
+    const [empRes, profRes, finRes, docRes, histRes] = await Promise.all([
+      supabase.from('employees').select('*, department:departments(name), manager:employees!employees_manager_id_fkey(full_name), branch:branches(name)').eq('id', employeeId).single(),
+      supabase.from('employee_profiles').select('*').eq('employee_id', employeeId).maybeSingle(),
+      supabase.from('employee_financials').select('*').eq('employee_id', employeeId).maybeSingle(),
+      supabase.from('employee_documents').select('*, uploader:employees!employee_documents_uploaded_by_fkey(full_name)').eq('employee_id', employeeId).order('uploaded_at', { ascending: false }),
+      supabase.from('employee_history').select('*, changer:employees!employee_history_changed_by_fkey(full_name)').eq('employee_id', employeeId).order('changed_at', { ascending: false })
+    ]);
+
+    if (empRes.error) throw new Error(`Failed to load employee: ${empRes.error.message}`);
+    return {
+      employee: empRes.data,
+      profile: profRes.data,
+      financials: finRes.data,
+      documents: docRes.data || [],
+      history: histRes.data || []
+    };
+  },
+
+  async updateFullEmployeeProfile(
+    employeeId: number,
+    data: {
+      employee?: Record<string, any>;
+      profile?: Record<string, any>;
+      financials?: Record<string, any>;
+    }
+  ): Promise<void> {
+    if (data.employee && Object.keys(data.employee).length > 0) {
+      const { error } = await supabase.from('employees').update(data.employee as any).eq('id', employeeId);
+      if (error) throw new Error(`Failed to update employee details: ${error.message}`);
+    }
+
+    if (data.profile && Object.keys(data.profile).length > 0) {
+      const payload = { ...data.profile, employee_id: employeeId };
+      const { error } = await supabase.from('employee_profiles').upsert(payload, { onConflict: 'employee_id' });
+      if (error) throw new Error(`Failed to update profile details: ${error.message}`);
+    }
+
+    if (data.financials && Object.keys(data.financials).length > 0) {
+      const payload = { ...data.financials, employee_id: employeeId };
+      const { error } = await supabase.from('employee_financials').upsert(payload, { onConflict: 'employee_id' });
+      if (error) throw new Error(`Failed to update financials: ${error.message}`);
+    }
+  },
+
+  async getMissedSignouts(filters?: { startDate?: string; endDate?: string; branchId?: number; managerId?: number }): Promise<any[]> {
+    let query = supabase
+      .from('attendance_records')
+      .select('*, employee:employees!attendance_records_employee_id_fkey(id, full_name, emp_code, manager_id, branch_id, department:departments(name), branch:branches(name))')
+      .not('punch_in', 'is', null)
+      .is('punch_out', null)
+      .eq('is_regularized', false)
+      .order('work_date', { ascending: false });
+
+    if (filters?.startDate) query = query.gte('work_date', filters.startDate);
+    if (filters?.endDate) query = query.lte('work_date', filters.endDate);
+
+    const { data, error } = await query;
+    if (error) throw new Error(`Failed to load missed sign-outs: ${error.message}`);
+
+    let list = data || [];
+    if (filters?.branchId) {
+      list = list.filter((r: any) => r.employee?.branch_id === filters.branchId);
+    }
+    if (filters?.managerId) {
+      list = list.filter((r: any) => r.employee?.manager_id === filters.managerId);
+    }
+    return list;
+  },
+
   async getDepartments(): Promise<Department[]> {
     const { data, error } = await supabase
       .from('departments')

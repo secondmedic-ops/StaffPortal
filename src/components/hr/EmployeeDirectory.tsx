@@ -100,7 +100,6 @@ export const EmployeeDirectory: React.FC = () => {
           empCode,
           fullName,
           officialEmail,
-          personalEmail: `${fullName.toLowerCase().replace(' ', '.')}@gmail.com`,
           phone,
           joiningDate,
           departmentId,

@@ -23,7 +23,17 @@ import type {
   SalaryRevision,
   PayrollEntry,
   PayrollLine,
-  HolidayWorkClaim
+  HolidayWorkClaim,
+  Branch,
+  WfhRequest,
+  EmailOutboxItem,
+  EmployeeHistoryItem,
+  EmployeeDocument,
+  ProfileChangeRequest,
+  Resignation,
+  FnfSettlement,
+  GalleryAlbum,
+  GalleryPhoto
 } from '../types';
 
 export function mapEmployee(row: any): Employee {
@@ -511,5 +521,188 @@ export function mapHolidayWorkClaim(row: any): HolidayWorkClaim {
     approverRemarks: opt(row.approver_remarks),
     actedAt: opt(row.acted_at),
     createdAt: row.created_at
+  };
+}
+
+export function mapBranch(row: any): Branch {
+  return {
+    id: row.id,
+    name: row.name,
+    code: row.code,
+    address: row.address ?? undefined,
+    city: row.city ?? undefined,
+    state: row.state ?? undefined,
+    latitude: Number(row.latitude ?? 0),
+    longitude: Number(row.longitude ?? 0),
+    geofenceRadiusM: Number(row.geofence_radius_m ?? 100),
+    active: Boolean(row.active),
+    adminEmployeeIds: Array.isArray(row.admin_employee_ids) ? row.admin_employee_ids : [],
+    createdAt: row.created_at ?? undefined,
+    updatedAt: row.updated_at ?? undefined
+  };
+}
+
+export function mapWfhRequest(row: any): WfhRequest {
+  return {
+    id: row.id,
+    employeeId: row.employee_id,
+    employeeName: row.employee?.full_name ?? undefined,
+    employeeCode: row.employee?.emp_code ?? undefined,
+    fromDate: row.from_date,
+    toDate: row.to_date,
+    reason: row.reason,
+    status: row.status,
+    approverId: row.approver_id ?? undefined,
+    approverName: row.approver?.full_name ?? undefined,
+    approvedAt: row.approved_at ?? undefined,
+    rejectionReason: row.rejection_reason ?? undefined,
+    createdAt: row.created_at ?? undefined,
+    updatedAt: row.updated_at ?? undefined
+  };
+}
+
+export function mapEmailOutboxItem(row: any): EmailOutboxItem {
+  return {
+    id: row.id,
+    template: row.template,
+    to: row.to,
+    cc: row.cc ?? undefined,
+    subject: row.subject,
+    payload: row.payload ?? {},
+    status: row.status,
+    attempts: Number(row.attempts ?? 0),
+    lastError: row.last_error ?? undefined,
+    dedupeKey: row.dedupe_key ?? undefined,
+    createdAt: row.created_at,
+    sentAt: row.sent_at ?? undefined
+  };
+}
+
+export function mapEmployeeHistoryItem(row: any): EmployeeHistoryItem {
+  return {
+    id: row.id,
+    employeeId: row.employee_id,
+    field: row.field,
+    oldValue: row.old_value ?? undefined,
+    newValue: row.new_value ?? undefined,
+    changedBy: row.changed_by ?? undefined,
+    changedByName: row.changer?.full_name ?? undefined,
+    changedAt: row.changed_at
+  };
+}
+
+export function mapEmployeeDocument(row: any): EmployeeDocument {
+  return {
+    id: row.id,
+    employeeId: row.employee_id,
+    category: row.category,
+    filePath: row.file_path,
+    name: row.name,
+    size: Number(row.size ?? 0),
+    uploadedBy: row.uploaded_by ?? undefined,
+    uploadedByName: row.uploader?.full_name ?? undefined,
+    uploadedAt: row.uploaded_at
+  };
+}
+
+export function mapProfileChangeRequest(row: any): ProfileChangeRequest {
+  return {
+    id: row.id,
+    employeeId: row.employee_id,
+    employeeName: row.employee?.full_name ?? undefined,
+    employeeCode: row.employee?.emp_code ?? undefined,
+    field: row.field,
+    oldValue: row.old_value ?? undefined,
+    newValue: row.new_value,
+    reason: row.reason,
+    status: row.status,
+    actionedBy: row.actioned_by ?? undefined,
+    actionedByName: row.actioner?.full_name ?? undefined,
+    actionedAt: row.actioned_at ?? undefined,
+    rejectionReason: row.rejection_reason ?? undefined,
+    createdAt: row.created_at
+  };
+}
+
+export function mapResignation(row: any): Resignation {
+  return {
+    id: row.id,
+    employeeId: row.employee_id,
+    employeeName: row.employee?.full_name ?? undefined,
+    employeeCode: row.employee?.emp_code ?? undefined,
+    submittedDate: row.submitted_date,
+    reason: row.reason,
+    requestedLwd: row.requested_lwd,
+    confirmedLwd: row.confirmed_lwd ?? undefined,
+    noticeDays: Number(row.notice_days ?? 30),
+    status: row.status,
+    managerComments: row.manager_comments ?? undefined,
+    hrComments: row.hr_comments ?? undefined,
+    actionedByManagerAt: row.actioned_by_manager_at ?? undefined,
+    actionedByHrAt: row.actioned_by_hr_at ?? undefined,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at
+  };
+}
+
+export function mapFnfSettlement(row: any): FnfSettlement {
+  return {
+    id: row.id,
+    resignationId: row.resignation_id ?? undefined,
+    employeeId: row.employee_id,
+    employeeName: row.employee?.full_name ?? undefined,
+    employeeCode: row.employee?.emp_code ?? undefined,
+    status: row.status,
+    lastWorkingDay: row.last_working_day,
+    payableDays: Number(row.payable_days ?? 0),
+    perDayBasic: Number(row.per_day_basic ?? 0),
+    salaryDue: Number(row.salary_due ?? 0),
+    leaveEncashmentDays: Number(row.leave_encashment_days ?? 0),
+    leaveEncashmentAmount: Number(row.leave_encashment_amount ?? 0),
+    gratuityAmount: Number(row.gratuity_amount ?? 0),
+    bonusAmount: Number(row.bonus_amount ?? 0),
+    noticeShortfallDays: Number(row.notice_shortfall_days ?? 0),
+    noticeRecoveryAmount: Number(row.notice_recovery_amount ?? 0),
+    assetRecoveryAmount: Number(row.asset_recovery_amount ?? 0),
+    otherRecoveries: Number(row.other_recoveries ?? 0),
+    otherPayables: Number(row.other_payables ?? 0),
+    netPayable: Number(row.net_payable ?? 0),
+    remarks: row.remarks ?? undefined,
+    preparedBy: row.prepared_by ?? undefined,
+    preparedByName: row.preparer?.full_name ?? undefined,
+    preparedAt: row.prepared_at ?? undefined,
+    approvedBy: row.approved_by ?? undefined,
+    approvedByName: row.approver?.full_name ?? undefined,
+    approvedAt: row.approved_at ?? undefined,
+    createdAt: row.created_at ?? undefined,
+    updatedAt: row.updated_at ?? undefined
+  };
+}
+
+export function mapGalleryAlbum(row: any): GalleryAlbum {
+  return {
+    id: row.id,
+    branchId: row.branch_id ?? undefined,
+    branchName: row.branch?.name ?? undefined,
+    title: row.title,
+    eventType: row.event_type,
+    eventDate: row.event_date,
+    description: row.description ?? undefined,
+    createdBy: row.created_by ?? undefined,
+    createdByName: row.creator?.full_name ?? undefined,
+    createdAt: row.created_at ?? undefined,
+    photoCount: row.photos ? row.photos.length : undefined
+  };
+}
+
+export function mapGalleryPhoto(row: any): GalleryPhoto {
+  return {
+    id: row.id,
+    albumId: row.album_id,
+    filePath: row.file_path,
+    caption: row.caption ?? undefined,
+    uploadedBy: row.uploaded_by ?? undefined,
+    uploadedByName: row.uploader?.full_name ?? undefined,
+    uploadedAt: row.uploaded_at
   };
 }

@@ -46,7 +46,16 @@ export const meApi = {
     return (data ?? []).map(mapAttendanceRecord);
   },
 
-  async punch(data: { type: 'IN' | 'OUT'; lat?: number; lng?: number; source?: string }): Promise<AttendanceRecord> {
+  async punch(data: {
+    type: 'IN' | 'OUT';
+    lat?: number;
+    lng?: number;
+    source?: string;
+    workMode?: 'OFFICE' | 'WFH' | 'FIELD';
+    visitLocation?: string;
+    visitPurpose?: string;
+    visitClient?: string;
+  }): Promise<AttendanceRecord> {
     const emp = await getCurrentEmployee();
     const today = new Intl.DateTimeFormat('en-CA', {
       timeZone: 'Asia/Kolkata',

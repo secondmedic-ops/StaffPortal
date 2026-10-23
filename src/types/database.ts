@@ -79,6 +79,8 @@ export interface Database {
           status?: 'ACTIVE' | 'PROBATION' | 'NOTICE_PERIOD' | 'EXITED' | 'SUSPENDED';
           manager_id?: number | null;
           avatar_url?: string | null;
+          branch_id?: number | null;
+          probation_end_date?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -102,6 +104,8 @@ export interface Database {
           status?: 'ACTIVE' | 'PROBATION' | 'NOTICE_PERIOD' | 'EXITED' | 'SUSPENDED';
           manager_id?: number | null;
           avatar_url?: string | null;
+          branch_id?: number | null;
+          probation_end_date?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -1070,7 +1074,6 @@ export interface Database {
           EmployeeFk<'holiday_work_claims_approver_id_fkey', 'approver_id'>
         ]
       >;
-    };
       branches: LifecycleTable<
         {
           id: number;
@@ -1242,6 +1245,7 @@ export interface Database {
         },
         'album_id' | 'file_path'
       >;
+    };
     Views: Record<string, never>;
     Functions: Record<string, never>;
     Enums: Record<string, never>;
