@@ -1,7 +1,6 @@
 import { supabase } from '../lib/supabase';
 import { withManagerNames } from './managerNames';
 import { monthBounds, getSessionEmployee } from './session';
-import { LEAVE_APPROVAL_POLICY } from '../config/policy';
 import {
   mapEmployee,
   mapAttendanceRecord,
@@ -181,46 +180,6 @@ export const teamApi = {
       actedAt: nowIso
     };
 
-    const needsSkipLevel =
-      action === 'APPROVE' &&
-      isCurrentApprover &&
-      level === 1 &&
-      Number(req.total_days ?? 0) > LEAVE_APPROVAL_POLICY.skipLevelThresholdDays &&
-      emp.manager_id != null &&
-      emp.manager_id !== req.employee_id &&
-      emp.manager_id !== emp.id;
-
-    if (needsSkipLevel) {
-      const { data: nextApprover } = await supabase
-        .from('employees')
-        .select('id, full_name, status')
-        .eq('id', emp.manager_id as number)
-        .maybeSingle();
-
-      if (
-        nextApprover &&
-        nextApprover.status !== 'EXITED' &&
-        nextApprover.id !== req.employee_id &&
-        nextApprover.id !== emp.id
-      ) {
-        const { error } = await supabase
-          .from('leave_requests')
-          .update({
-            current_level: 2,
-            current_approver_id: nextApprover.id,
-            timeline: [
-              ...priorTimeline,
-              actedStep,
-              { level: 2, approverId: nextApprover.id, approverName: nextApprover.full_name, approverRole: 'Skip-level Manager', action: 'PENDING' }
-            ] as any
-          })
-          .eq('id', requestId)
-          .eq('status', 'PENDING');
-        if (error) throw new Error(`Failed to forward leave request: ${error.message}`);
-        return { forwardedTo: nextApprover.full_name };
-      }
-    }
-
     const { error: updateError } = await supabase
       .from('leave_requests')
       .update({
@@ -232,6 +191,7 @@ export const teamApi = {
       .eq('status', 'PENDING');
 
     if (updateError) throw new Error(`Failed to action leave request: ${updateError.message}`);
+    return { forwardedTo: undefined };
 
     // Leave balance (reserved → used / released) is updated by the leave_requests_sync_balance trigger.
     return {};

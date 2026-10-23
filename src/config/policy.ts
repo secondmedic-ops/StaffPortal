@@ -30,6 +30,11 @@ export const ATTENDANCE_POLICY = {
   missingPunchOutAsHalfDay: true,
 } as const;
 
+export const GEOFENCE_POLICY = {
+  /** Default geofence radius in meters for office punch-in. */
+  defaultRadiusMeters: 100,
+} as const;
+
 export const PAYROLL_POLICY = {
   /**
    * CALENDAR: monthly salary ÷ days in month × payable days (most common in India).
@@ -67,14 +72,25 @@ export const OVERTIME_POLICY = {
 } as const;
 
 export const LEAVE_APPROVAL_POLICY = {
-  /**
-   * Leave longer than this many days needs a second approval from the
-   * reporting manager's own manager (skip-level).
-   */
-  skipLevelThresholdDays: 3,
+  /** Single-level approval by reporting authority only; HR is notified by email. */
+  singleLevel: true,
   /** If an employee has no reporting manager, HR approves. */
   fallbackToHr: true,
 } as const;
+
+export const PROBATION_POLICY = {
+  /** Default probation period in months from date of joining. */
+  months: 6,
+  /** Alert HR and reporting manager this many days before probation ends. */
+  alertDaysBefore: 15,
+} as const;
+
+export const NOTICE_PERIOD_POLICY = {
+  /** Default notice period in days for full-time staff. */
+  defaultDays: 30,
+} as const;
+
+export const ANNIVERSARY_MILESTONES = [1, 3, 5, 10] as const;
 
 export const ASSET_POLICY = {
   /** Warn IT when warranty ends within this many days. */

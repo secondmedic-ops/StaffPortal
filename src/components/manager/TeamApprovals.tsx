@@ -5,7 +5,7 @@ import { LeaveRequest } from '../../types';
 import { formatDate } from '../../utils/dateUtils';
 import { CheckCircle2, XCircle, AlertTriangle, Clock, FileText, UserCheck, MessageSquare } from 'lucide-react';
 import { Modal } from '../common/Modal';
-import { LEAVE_APPROVAL_POLICY } from '../../config/policy';
+
 import { SkeletonLoader } from '../common/SkeletonLoader';
 
 type Scope = 'MINE' | 'HR_QUEUE' | 'ALL';
@@ -46,9 +46,7 @@ export const TeamApprovals: React.FC = () => {
       const { forwardedTo } = await teamApi.actionLeave(id, 'APPROVE', undefined, { asHr: req ? asHr(req) : false });
       showToast(
         forwardedTo ? 'Approved — forwarded' : 'Leave Approved',
-        forwardedTo
-          ? `Leave over ${LEAVE_APPROVAL_POLICY.skipLevelThresholdDays} days also needs ${forwardedTo}'s approval (skip-level).`
-          : 'Request approved and leave balance updated.',
+        'Request approved and leave balance updated.',
         'success'
       );
       fetchPendingLeaves();
@@ -93,8 +91,7 @@ export const TeamApprovals: React.FC = () => {
             </span>
           </div>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-[70ch]">
-            Requests route up your reporting line: reporting manager first, then skip-level for leave over{' '}
-            {LEAVE_APPROVAL_POLICY.skipLevelThresholdDays} days
+            Requests are approved directly by the reporting authority. HR is notified by email.
           </p>
           {isHr && (
             <div className="flex gap-1.5 mt-3">
@@ -254,8 +251,6 @@ export const TeamApprovals: React.FC = () => {
                   <CheckCircle2 className="w-4 h-4" />
                   {actioningId === req.id
                     ? 'Approving...'
-                    : !asHr(req) && req.currentLevel === 1 && req.totalDays > LEAVE_APPROVAL_POLICY.skipLevelThresholdDays
-                    ? 'Approve & Forward'
                     : 'Approve Leave'}
                 </button>
               </div>

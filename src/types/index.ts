@@ -62,6 +62,177 @@ export interface Employee {
   managerId?: number;
   managerName?: string;
   avatarUrl?: string;
+  branchId?: number;
+  branchName?: string;
+  probationEndDate?: string;
+}
+
+export type WorkMode = 'OFFICE' | 'WFH' | 'FIELD';
+
+export interface Branch {
+  id: number;
+  name: string;
+  code: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  latitude: number;
+  longitude: number;
+  geofenceRadiusM: number;
+  active: boolean;
+  adminEmployeeIds?: number[];
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface WfhRequest {
+  id: number;
+  employeeId: number;
+  employeeName?: string;
+  employeeCode?: string;
+  fromDate: string;
+  toDate: string;
+  reason: string;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED';
+  approverId?: number;
+  approverName?: string;
+  approvedAt?: string;
+  rejectionReason?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface EmailOutboxItem {
+  id: number;
+  template: string;
+  to: string;
+  cc?: string;
+  subject: string;
+  payload: Record<string, any>;
+  status: 'PENDING' | 'SENT' | 'FAILED';
+  attempts: number;
+  lastError?: string;
+  dedupeKey?: string;
+  createdAt: string;
+  sentAt?: string;
+}
+
+export interface EmployeeHistoryItem {
+  id: number;
+  employeeId: number;
+  field: string;
+  oldValue?: string;
+  newValue?: string;
+  changedBy?: number;
+  changedByName?: string;
+  changedAt: string;
+}
+
+export interface EmployeeDocument {
+  id: number;
+  employeeId: number;
+  category: 'Offer letter' | 'Appointment letter' | 'ID proof' | 'Address proof' | 'Education' | 'Experience/Relieving' | 'Medical registration' | 'Other';
+  filePath: string;
+  name: string;
+  size: number;
+  uploadedBy?: number;
+  uploadedByName?: string;
+  uploadedAt: string;
+  signedUrl?: string;
+}
+
+export interface ProfileChangeRequest {
+  id: number;
+  employeeId: number;
+  employeeName?: string;
+  employeeCode?: string;
+  field: string;
+  oldValue?: string;
+  newValue: string;
+  reason: string;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  actionedBy?: number;
+  actionedByName?: string;
+  actionedAt?: string;
+  rejectionReason?: string;
+  createdAt: string;
+}
+
+export interface Resignation {
+  id: number;
+  employeeId: number;
+  employeeName?: string;
+  employeeCode?: string;
+  submittedDate: string;
+  reason: string;
+  requestedLwd: string;
+  confirmedLwd?: string;
+  noticeDays: number;
+  status: 'SUBMITTED' | 'ACCEPTED_BY_MANAGER' | 'ACCEPTED' | 'REJECTED' | 'WITHDRAWN';
+  managerComments?: string;
+  hrComments?: string;
+  actionedByManagerAt?: string;
+  actionedByHrAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface FnfSettlement {
+  id: number;
+  resignationId?: number;
+  employeeId: number;
+  employeeName?: string;
+  employeeCode?: string;
+  status: 'DRAFT' | 'SUBMITTED' | 'APPROVED' | 'REJECTED';
+  lastWorkingDay: string;
+  payableDays: number;
+  perDayBasic: number;
+  salaryDue: number;
+  leaveEncashmentDays: number;
+  leaveEncashmentAmount: number;
+  gratuityAmount: number;
+  bonusAmount: number;
+  noticeShortfallDays: number;
+  noticeRecoveryAmount: number;
+  assetRecoveryAmount: number;
+  otherRecoveries: number;
+  otherPayables: number;
+  netPayable: number;
+  remarks?: string;
+  preparedBy?: number;
+  preparedByName?: string;
+  preparedAt?: string;
+  approvedBy?: number;
+  approvedByName?: string;
+  approvedAt?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface GalleryAlbum {
+  id: number;
+  branchId?: number;
+  branchName?: string;
+  title: string;
+  eventType: 'FESTIVAL' | 'BIRTHDAY' | 'OTHER';
+  eventDate: string;
+  description?: string;
+  createdBy?: number;
+  createdByName?: string;
+  createdAt?: string;
+  photoCount?: number;
+  coverPhotoUrl?: string;
+}
+
+export interface GalleryPhoto {
+  id: number;
+  albumId: number;
+  filePath: string;
+  caption?: string;
+  uploadedBy?: number;
+  uploadedByName?: string;
+  uploadedAt: string;
+  signedUrl?: string;
 }
 
 export interface AppUser {
@@ -207,6 +378,11 @@ export interface AttendanceRecord {
   leaveRequestId?: number;
   isRegularized: boolean;
   remarks?: string;
+  workMode?: WorkMode;
+  visitLocation?: string;
+  visitPurpose?: string;
+  visitClient?: string;
+  distanceM?: number;
 }
 
 export interface AttendanceRegularization {

@@ -3,7 +3,7 @@ import { useAuth } from '../../context/AuthContext';
 import { meApi } from '../../api';
 import { LeaveType, LeaveBalance, Holiday } from '../../types';
 import { calculateLeaveDays, getTodayIsoString } from '../../utils/dateUtils';
-import { LEAVE_APPROVAL_POLICY } from '../../config/policy';
+
 import {
   CalendarPlus,
   AlertCircle,
@@ -178,7 +178,7 @@ export const ApplyLeave: React.FC = () => {
       <div className="pb-1">
         <h1 className="text-[22px] sm:text-2xl font-semibold text-slate-900 dark:text-slate-50">Apply for Leave</h1>
         <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-[70ch]">
-          Goes to your reporting manager; leave over {LEAVE_APPROVAL_POLICY.skipLevelThresholdDays} days also needs their manager's approval
+          Approved by your reporting authority; HR is notified by email
         </p>
       </div>
 

@@ -23,7 +23,7 @@ const FACTS = [
   },
   {
     title: 'Leave goes to your manager',
-    body: `Requests over ${LEAVE_APPROVAL_POLICY.skipLevelThresholdDays} days also go to their manager. You can follow each step.`
+    body: 'Leave is approved by your reporting authority. You can follow each step in your leave register.'
   },
   {
     title: 'Pay follows attendance',

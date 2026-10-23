@@ -54,6 +54,8 @@ export interface Database {
           status: 'ACTIVE' | 'PROBATION' | 'NOTICE_PERIOD' | 'EXITED' | 'SUSPENDED';
           manager_id: number | null;
           avatar_url: string | null;
+          branch_id?: number | null;
+          probation_end_date?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -439,6 +441,11 @@ export interface Database {
           status: 'PRESENT' | 'ABSENT' | 'HALF_DAY' | 'ON_LEAVE' | 'WEEK_OFF' | 'HOLIDAY' | 'LOP';
           leave_request_id: number | null;
           is_regularized: boolean;
+          work_mode?: 'OFFICE' | 'WFH' | 'FIELD';
+          visit_location?: string | null;
+          visit_purpose?: string | null;
+          visit_client?: string | null;
+          distance_m?: number | null;
           remarks: string | null;
           created_at?: string;
           updated_at?: string;
@@ -1064,6 +1071,177 @@ export interface Database {
         ]
       >;
     };
+      branches: LifecycleTable<
+        {
+          id: number;
+          name: string;
+          code: string;
+          address: string | null;
+          city: string | null;
+          state: string | null;
+          latitude: number;
+          longitude: number;
+          geofence_radius_m: number;
+          active: boolean;
+          admin_employee_ids: number[];
+          created_at: string;
+          updated_at: string;
+        },
+        'name' | 'code'
+      >;
+      wfh_requests: LifecycleTable<
+        {
+          id: number;
+          employee_id: number;
+          from_date: string;
+          to_date: string;
+          reason: string;
+          status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED';
+          approver_id: number | null;
+          approved_at: string | null;
+          rejection_reason: string | null;
+          created_at: string;
+          updated_at: string;
+        },
+        'employee_id' | 'from_date' | 'to_date' | 'reason',
+        [EmployeeFk<'wfh_requests_employee_id_fkey', 'employee_id'>]
+      >;
+      email_outbox: LifecycleTable<
+        {
+          id: number;
+          template: string;
+          to: string;
+          cc: string | null;
+          subject: string;
+          payload: Record<string, any>;
+          status: 'PENDING' | 'SENT' | 'FAILED';
+          attempts: number;
+          last_error: string | null;
+          dedupe_key: string | null;
+          created_at: string;
+          sent_at: string | null;
+        },
+        'template' | 'to' | 'subject'
+      >;
+      employee_history: LifecycleTable<
+        {
+          id: number;
+          employee_id: number;
+          field: string;
+          old_value: string | null;
+          new_value: string | null;
+          changed_by: number | null;
+          changed_at: string;
+        },
+        'employee_id' | 'field',
+        [EmployeeFk<'employee_history_employee_id_fkey', 'employee_id'>]
+      >;
+      employee_documents: LifecycleTable<
+        {
+          id: number;
+          employee_id: number;
+          category: string;
+          file_path: string;
+          name: string;
+          size: number;
+          uploaded_by: number | null;
+          uploaded_at: string;
+        },
+        'employee_id' | 'category' | 'file_path' | 'name',
+        [EmployeeFk<'employee_documents_employee_id_fkey', 'employee_id'>]
+      >;
+      profile_change_requests: LifecycleTable<
+        {
+          id: number;
+          employee_id: number;
+          field: string;
+          old_value: string | null;
+          new_value: string;
+          reason: string;
+          status: 'PENDING' | 'APPROVED' | 'REJECTED';
+          actioned_by: number | null;
+          actioned_at: string | null;
+          rejection_reason: string | null;
+          created_at: string;
+        },
+        'employee_id' | 'field' | 'new_value' | 'reason',
+        [EmployeeFk<'profile_change_requests_employee_id_fkey', 'employee_id'>]
+      >;
+      resignations: LifecycleTable<
+        {
+          id: number;
+          employee_id: number;
+          submitted_date: string;
+          reason: string;
+          requested_lwd: string;
+          confirmed_lwd: string | null;
+          notice_days: number;
+          status: 'SUBMITTED' | 'ACCEPTED_BY_MANAGER' | 'ACCEPTED' | 'REJECTED' | 'WITHDRAWN';
+          manager_comments: string | null;
+          hr_comments: string | null;
+          actioned_by_manager_at: string | null;
+          actioned_by_hr_at: string | null;
+          created_at: string;
+          updated_at: string;
+        },
+        'employee_id' | 'reason' | 'requested_lwd',
+        [EmployeeFk<'resignations_employee_id_fkey', 'employee_id'>]
+      >;
+      fnf_settlements: LifecycleTable<
+        {
+          id: number;
+          resignation_id: number | null;
+          employee_id: number;
+          status: 'DRAFT' | 'SUBMITTED' | 'APPROVED' | 'REJECTED';
+          last_working_day: string;
+          payable_days: number;
+          per_day_basic: number;
+          salary_due: number;
+          leave_encashment_days: number;
+          leave_encashment_amount: number;
+          gratuity_amount: number;
+          bonus_amount: number;
+          notice_shortfall_days: number;
+          notice_recovery_amount: number;
+          asset_recovery_amount: number;
+          other_recoveries: number;
+          other_payables: number;
+          net_payable: number;
+          remarks: string | null;
+          prepared_by: number | null;
+          prepared_at: string | null;
+          approved_by: number | null;
+          approved_at: string | null;
+          created_at: string;
+          updated_at: string;
+        },
+        'employee_id' | 'last_working_day',
+        [EmployeeFk<'fnf_settlements_employee_id_fkey', 'employee_id'>]
+      >;
+      gallery_albums: LifecycleTable<
+        {
+          id: number;
+          branch_id: number | null;
+          title: string;
+          event_type: 'FESTIVAL' | 'BIRTHDAY' | 'OTHER';
+          event_date: string;
+          description: string | null;
+          created_by: number | null;
+          created_at: string;
+        },
+        'title' | 'event_type'
+      >;
+      gallery_photos: LifecycleTable<
+        {
+          id: number;
+          album_id: number;
+          file_path: string;
+          caption: string | null;
+          uploaded_by: number | null;
+          uploaded_at: string;
+        },
+        'album_id' | 'file_path'
+      >;
     Views: Record<string, never>;
     Functions: Record<string, never>;
     Enums: Record<string, never>;
