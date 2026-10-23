@@ -34,24 +34,71 @@ Apply the migrations in `supabase/migrations/` in filename order (Supabase SQL e
 
 `20261014000000_holiday_work_claims.sql` adds comp-off / overtime claims and makes monthly payroll need approval from the reporting manager of the Accounts person who computed it. For comp-off to credit leave, create a leave type with code `COMP_OFF` in Leave Policy Config.
 
+`20261024000001_branches_and_geofencing.sql` through `20261024000011_add_employee_confirmation_date.sql`:
+- **Branch Master**: `branches` table with coordinates, 100m geofence radius, and HR branch management screen with GPS picker.
+- **Supabase Storage**: Private buckets (`employee-documents`, `leave-attachments`, `avatars`, `gallery`) with signed URLs and RLS policies.
+- **Email Service & Outbox**: `email_outbox` table, `send-email` Edge Function (Gmail SMTP with SSL), and `daily-jobs` scheduler with `pg_cron`.
+- **Mandatory Sign-out**: Blocks subsequent punch-in if previous punch is unclosed; regularization banner and audit reports for HR & Managers.
+- **Work Mode Selector**: Office / WFH / Field modes with 100m branch geofence enforcement and advance WFH request validation.
+- **Single-level Leave Approval**: Direct reporting authority (`employees.manager_id`) sign-off only (skip-level threshold eliminated).
+- **Employee 360 & Self-Service**: 6-tab profile with Document Vault, History audit, photo upload/crop (<=300KB WebP), masked statutory numbers, and correction requests.
+- **Holidays in Attendance**: 12 mandatory 2026 holidays on attendance month grid & upcoming card; removed separate calendar.
+- **Resignation & F&F Settlements**: 30-day notice resignation workflow, Accounts maker-checker F&F tool with CEO sign-off, printable F&F statement, relieving letter, and experience certificate.
+- **Branch Photo Gallery**: Multi-upload with client WebP compression, albums, and lightbox viewer.
+
 After migrating, grant the `IT` role to your IT staff (User & Role Mgmt → propose → CEO approves, or insert into `employee_roles`).
 
 ## Who sees what
 
 | Login | Gets |
 |---|---|
-| **Everyone** | Attendance punch, leave, payslips (incl. day-by-day attendance breakdown), salary history, **My Assets** (acknowledge receipt, raise IT requests) |
-| **Manager** *(automatic for anyone with direct reports)* | Leave approvals & regularizations for their reporting line, team calendar/KPIs, manager onboarding tasks |
-| **HR** | **Register New Staff** wizard, onboarding & exit checklists, directory, holiday calendar (with 2026/2027 import), attendance lock, HR leave queue & override |
-| **Accounts** | **Attendance Payroll** (compute → draft → approve → publish), **Increments & Revisions** (maker-checker), payroll register CSV, bank details |
-| **IT** | IT overview, **Asset Register** (laptops, handsets, company SIMs/mobile numbers, warranty, custody history), service desk |
-| **CEO** | Org dashboard, approves salary revisions and role changes |
+| **Everyone** | Attendance punch (Office/WFH/Field with GPS geofence), leave, payslips, My Assets, My Profile self-service (photo crop, masked PAN/Aadhaar/UAN, correction requests), Company Gallery, Resignation & exit |
+| **Manager** *(automatic for anyone with direct reports)* | Leave approvals & regularizations for direct reports (single-level), team calendar/KPIs, team missed sign-outs report |
+| **HR** | Staff directory & Employee 360 profile, branch master (GPS coordinates + 100m radius), attendance register (with Company Holidays tab), missed sign-outs report, email outbox log, birthday popups & alerts |
+| **Accounts** | **Attendance Payroll**, **Increments & Revisions**, **F&F Settlements** (separation clearance, leave encashment, gratuity, notice adjustments, printable statements) |
+| **IT** | IT overview, **Asset Register** (laptops, handsets, company SIMs, warranty, custody history), service desk |
+| **CEO** | Org dashboard, approves salary revisions, role changes, and executive sign-off for F&F settlements |
 
 ## Leave approval hierarchy
 
 1. Employee applies → request goes to their **reporting manager** (`employees.manager_id`).
-2. Leave longer than `LEAVE_APPROVAL_POLICY.skipLevelThresholdDays` (3) is forwarded to the **manager's manager** after level-1 approval.
+2. Single-level approval: once the reporting manager approves, the leave is fully approved (no skip-level threshold required).
 3. No reporting manager → **HR queue**. HR can also override any pending request (recorded as "HR Override" in the timeline).
+
+## Edge Functions & Email Service (SMTP via Gmail)
+
+Outbound automated emails and background scheduler jobs run on Supabase Edge Functions (Deno).
+
+### Required Secrets Configuration
+
+All SMTP and service configuration is read strictly from Supabase function secrets (never hardcoded, committed to Git, or exposed to the frontend). Set the secrets in your Supabase project:
+
+```bash
+supabase secrets set \
+  SMTP_HOST="smtp.gmail.com" \
+  SMTP_PORT="465" \
+  SMTP_SECURE="true" \
+  SMTP_USER="placeholder@gmail.com" \
+  SMTP_PASS="placeholder_app_password" \
+  SMTP_FROM_NAME="Second Medic" \
+  SMTP_FROM_EMAIL="notifications@secondmedic.com" \
+  APP_BASE_URL="https://staffportal.secondmedic.workers.dev" \
+  HR_EMAIL="hr@secondmedic.com" \
+  SMTP_DEBUG="false"
+```
+
+### Deploying Edge Functions
+
+Deploy the functions to your linked Supabase project:
+
+```bash
+supabase functions deploy send-email
+supabase functions deploy daily-jobs
+```
+
+The database includes an automated `pg_cron` schedule:
+- **`secondmedic-daily-jobs`**: Executes daily at 08:00 IST (`30 2 * * *` UTC) to queue birthday wishes, milestone anniversary alerts (1, 3, 5, 10 yrs), 15-day probation confirmation reminders, missed sign-out notices, and auto-exit processing.
+- **`secondmedic-flush-email-outbox`**: Triggers every 5 minutes (`*/5 * * * *`) to process and dispatch pending rows in `public.email_outbox` with exponential retry backoff.
 
 ## Salary from attendance
 

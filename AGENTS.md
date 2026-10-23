@@ -47,6 +47,7 @@ StaffPortal/
 │   ├── types/            # TypeScript schemas and database type definitions
 │   └── utils/            # Date formatting, Indian currency helpers, calculations
 ├── supabase/
+│   ├── functions/        # Supabase Edge Functions (Deno): send-email, daily-jobs
 │   └── migrations/       # Idempotent PostgreSQL schema definitions, RLS, seed scripts
 ├── wrangler.toml         # Cloudflare Workers preview & production configuration
 └── AGENTS.md             # Autonomy operating instructions & project context
@@ -60,3 +61,26 @@ StaffPortal/
 - **Build production bundle**: `npm run build` (outputs optimized assets to `./dist`)
 - **Preview production build locally**: `npm run preview`
 - **Deploy**: Merging into branch `main` triggers automated Cloudflare Workers Builds deployment to `https://staffportal.secondmedic.workers.dev`.
+
+### Supabase Edge Functions Secrets Setup
+All outbound automated notifications and daily background jobs read credentials strictly from Supabase function secrets (never committed to Git or exposed in `.env`):
+
+```bash
+supabase secrets set \
+  SMTP_HOST="smtp.gmail.com" \
+  SMTP_PORT="465" \
+  SMTP_SECURE="true" \
+  SMTP_USER="placeholder@gmail.com" \
+  SMTP_PASS="placeholder_app_password" \
+  SMTP_FROM_NAME="Second Medic" \
+  SMTP_FROM_EMAIL="notifications@secondmedic.com" \
+  APP_BASE_URL="https://staffportal.secondmedic.workers.dev" \
+  HR_EMAIL="hr@secondmedic.com" \
+  SMTP_DEBUG="false"
+```
+
+Deploying functions:
+```bash
+supabase functions deploy send-email
+supabase functions deploy daily-jobs
+```
