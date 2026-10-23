@@ -480,5 +480,117 @@ export const meApi = {
     }
 
     return data as Payslip;
+  },
+
+  async getMyProfileDetails(): Promise<{
+    employee: any;
+    profile: any;
+    financials: any;
+    statutory?: any;
+    avatarSignedUrl: string | null;
+  }> {
+    const emp = await getCurrentEmployee();
+    const { data: employeeData, error: empErr } = await supabase
+      .from('employees')
+      .select('*, department:departments(name), manager:employees!employees_manager_id_fkey(full_name, official_email)')
+      .eq('id', emp.id)
+      .single();
+
+    if (empErr) throw new Error(`Failed to load employee details: ${empErr.message}`);
+
+    const [profileRes, statutoryRes] = await Promise.all([
+      supabase.from('employee_profiles').select('*').eq('employee_id', emp.id).maybeSingle(),
+      supabase.from('employee_financials').select('*').eq('employee_id', emp.id).maybeSingle()
+    ]);
+
+    let avatarSignedUrl: string | null = null;
+    if (employeeData.avatar_url) {
+      try {
+        const { data: urlData } = await supabase.storage
+          .from('avatars')
+          .createSignedUrl(employeeData.avatar_url, 3600);
+        avatarSignedUrl = urlData?.signedUrl ?? null;
+      } catch {
+        avatarSignedUrl = null;
+      }
+    }
+
+    return {
+      employee: employeeData,
+      profile: profileRes.data ?? null,
+      financials: statutoryRes.data ?? null,
+      statutory: statutoryRes.data ?? null,
+      avatarSignedUrl
+    };
+  },
+
+  async updateSelfServiceProfile(data: {
+    mobile?: string;
+    personalEmail?: string;
+    currentAddress?: string;
+    emergencyContactName?: string;
+    emergencyContactRelation?: string;
+    emergencyContactPhone?: string;
+  }): Promise<void> {
+    const emp = await getCurrentEmployee();
+
+    if (data.mobile !== undefined || data.personalEmail !== undefined) {
+      const empUpdate: Record<string, any> = {};
+      if (data.mobile !== undefined) empUpdate.mobile = data.mobile;
+      if (data.personalEmail !== undefined) empUpdate.personal_email = data.personalEmail;
+
+      const { error: empError } = await supabase
+        .from('employees')
+        .update(empUpdate as any)
+        .eq('id', emp.id);
+
+      if (empError) throw new Error(`Failed to update contact info: ${empError.message}`);
+    }
+
+    if (
+      data.currentAddress !== undefined ||
+      data.emergencyContactName !== undefined ||
+      data.emergencyContactRelation !== undefined ||
+      data.emergencyContactPhone !== undefined
+    ) {
+      const { error: profError } = await supabase
+        .from('employee_profiles')
+        .upsert(
+          {
+            employee_id: emp.id,
+            current_address: data.currentAddress,
+            emergency_contact_name: data.emergencyContactName,
+            emergency_contact_relation: data.emergencyContactRelation,
+            emergency_contact_phone: data.emergencyContactPhone
+          },
+          { onConflict: 'employee_id' }
+        );
+
+      if (profError) throw new Error(`Failed to update emergency/address info: ${profError.message}`);
+    }
+  },
+
+  async uploadAvatar(file: File): Promise<string> {
+    const emp = await getCurrentEmployee();
+    const cleanFileName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+    const storagePath = `${emp.id}/${Date.now()}_${cleanFileName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('avatars')
+      .upload(storagePath, file, {
+        cacheControl: '3600',
+        upsert: true
+      });
+
+    if (uploadError) throw new Error(`Failed to upload avatar: ${uploadError.message}`);
+
+    const { error: updateError } = await supabase
+      .from('employees')
+      .update({ avatar_url: storagePath })
+      .eq('id', emp.id);
+
+    if (updateError) throw new Error(`Failed to update avatar link: ${updateError.message}`);
+
+    return storagePath;
   }
 };

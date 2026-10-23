@@ -171,19 +171,19 @@ begin
 
   -- Rule A: Feature 3 Mandatory Sign-Out Check
   -- Block punch-in if an earlier working day has punch_in without punch_out and no pending/approved regularization
-  select a.date into unclosed_date
+  select a.work_date into unclosed_date
   from public.attendance_records a
   where a.employee_id = new.employee_id
-    and a.date < new.date
+    and a.work_date < new.work_date
     and a.punch_in is not null
     and a.punch_out is null
     and not exists (
       select 1 from public.attendance_regularizations r
       where r.employee_id = new.employee_id
-        and r.attendance_date = a.date
+        and r.work_date = a.work_date
         and r.status in ('PENDING', 'APPROVED')
     )
-  order by a.date desc
+  order by a.work_date desc
   limit 1;
 
   if unclosed_date is not null then
@@ -197,8 +197,8 @@ begin
       select 1 from public.wfh_requests
       where employee_id = new.employee_id
         and status = 'APPROVED'
-        and new.date >= from_date
-        and new.date <= to_date
+        and new.work_date >= from_date
+        and new.work_date <= to_date
     ) into has_wfh;
 
     if not has_wfh then
@@ -213,11 +213,11 @@ begin
     where e.id = new.employee_id and b.active = true;
 
     if found and b_lat is not null and b_lat != 0.0 and b_lon is not null and b_lon != 0.0 then
-      if new.latitude is null or new.longitude is null then
+      if new.in_lat is null or new.in_lng is null then
         raise exception 'GPS coordinates are required for Office punch-in';
       end if;
 
-      dist := public.calculate_distance_m(new.latitude, new.longitude, b_lat, b_lon);
+      dist := public.calculate_distance_m(new.in_lat, new.in_lng, b_lat, b_lon);
       new.distance_m := dist;
 
       if dist > coalesce(b_radius, 100) then

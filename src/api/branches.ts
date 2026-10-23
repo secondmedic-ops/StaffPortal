@@ -1,5 +1,6 @@
 import { supabase } from '../lib/supabase';
 import { mapBranch } from './mappers';
+import { getSessionEmployee, logAudit } from './session';
 import type { Branch } from '../types';
 
 export const branchesApi = {
@@ -47,6 +48,10 @@ export const branchesApi = {
       .single();
 
     if (error) throw new Error(`Failed to create branch: ${error.message}`);
+    const actor = await getSessionEmployee().catch(() => null);
+    if (actor) {
+      await logAudit(actor, 'EMPLOYEE', 'BRANCH_CREATED', `Created branch ${payload.name} (${payload.code})`, { type: 'branch', id: data.id });
+    }
     return mapBranch(data);
   },
 
@@ -73,6 +78,10 @@ export const branchesApi = {
       .single();
 
     if (error) throw new Error(`Failed to update branch: ${error.message}`);
+    const actor = await getSessionEmployee().catch(() => null);
+    if (actor) {
+      await logAudit(actor, 'EMPLOYEE', 'BRANCH_UPDATED', `Updated branch ${data.name} (${data.code})`, { type: 'branch', id: data.id });
+    }
     return mapBranch(data);
   },
 
@@ -83,5 +92,9 @@ export const branchesApi = {
       .eq('id', id);
 
     if (error) throw new Error(`Failed to update branch status: ${error.message}`);
+    const actor = await getSessionEmployee().catch(() => null);
+    if (actor) {
+      await logAudit(actor, 'EMPLOYEE', 'BRANCH_STATUS_CHANGED', `Set branch #${id} active=${active}`, { type: 'branch', id });
+    }
   }
 };

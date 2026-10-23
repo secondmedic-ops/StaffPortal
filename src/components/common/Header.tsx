@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Bell, LogOut, Menu, ChevronDown, Search, CornerDownLeft } from 'lucide-react';
+import { Bell, LogOut, Menu, ChevronDown, Search, CornerDownLeft, UserRound } from 'lucide-react';
+import { UserAvatar } from './UserAvatar';
 import { useAuth } from '../../context/AuthContext';
 import { usePendingCounts } from '../../context/PendingCountsContext';
 import { useNavGroups, BrandMark } from './Sidebar';
@@ -276,9 +277,7 @@ export const Header: React.FC<{ onOpenMenu?: () => void }> = ({ onOpenMenu }) =>
             aria-expanded={showAccount}
             aria-label="Account"
           >
-            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-teal-400 to-teal-700 text-white font-display text-[13px] font-semibold ring-2 ring-white dark:ring-slate-900 shadow-sm">
-              {initials}
-            </span>
+            <UserAvatar fullName={currentUser.fullName} avatarUrl={currentUser.avatarUrl} size="md" />
             <span className="hidden lg:block text-left leading-tight">
               <span className="block text-[14.5px] font-semibold text-slate-900 dark:text-slate-100 max-w-[11rem] truncate">
                 {currentUser.fullName}
@@ -308,6 +307,16 @@ export const Header: React.FC<{ onOpenMenu?: () => void }> = ({ onOpenMenu }) =>
                   ))}
                 </div>
               </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveNav('profile');
+                  setShowAccount(false);
+                }}
+                className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/60 border-b border-slate-100 dark:border-slate-800"
+              >
+                <UserRound className="h-4 w-4 text-teal-600 dark:text-teal-400" /> My profile
+              </button>
               <button
                 type="button"
                 onClick={logout}

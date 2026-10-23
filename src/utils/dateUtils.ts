@@ -185,3 +185,26 @@ export function calculateLeaveDays(
 }
 
 export const calculateLeaveDuration = calculateLeaveDays;
+
+export function formatServiceDuration(doj?: string | null): string {
+  if (!doj) return '—';
+  const start = new Date(doj);
+  if (isNaN(start.getTime())) return '—';
+  const now = new Date();
+  let years = now.getFullYear() - start.getFullYear();
+  let months = now.getMonth() - start.getMonth();
+  if (now.getDate() < start.getDate()) {
+    months--;
+  }
+  if (months < 0) {
+    years--;
+    months += 12;
+  }
+  if (years < 0) return '0 months';
+  const yStr = years > 0 ? `${years} yr${years > 1 ? 's' : ''}` : '';
+  const mStr = months > 0 ? `${months} mo${months > 1 ? 's' : ''}` : '';
+  if (yStr && mStr) return `${yStr} ${mStr}`;
+  if (yStr) return yStr;
+  if (mStr) return mStr;
+  return '< 1 month';
+}
