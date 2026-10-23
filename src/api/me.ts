@@ -592,5 +592,30 @@ export const meApi = {
     if (updateError) throw new Error(`Failed to update avatar link: ${updateError.message}`);
 
     return storagePath;
+  },
+
+  async getUnclosedPreviousPunch(): Promise<AttendanceRecord | null> {
+    const emp = await getCurrentEmployee();
+    const today = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Asia/Kolkata',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    }).format(new Date());
+
+    const { data, error } = await supabase
+      .from('attendance_records')
+      .select('*')
+      .eq('employee_id', emp.id)
+      .lt('work_date', today)
+      .not('punch_in', 'is', null)
+      .is('punch_out', null)
+      .eq('is_regularized', false)
+      .order('work_date', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (error || !data) return null;
+    return mapAttendanceRecord(data);
   }
 };

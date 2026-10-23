@@ -19,12 +19,17 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { meApi, compensationApi } from '../../api';
+import { wfhApi } from '../../api/wfh';
+import { branchesApi } from '../../api/branches';
+import { supabase } from '../../lib/supabase';
 import { AttendanceRecord, LeaveBalance, Holiday, LeaveRequest } from '../../types';
-import { formatTime, getTodayIsoString, getMonthName, toISODate } from '../../utils/dateUtils';
+import { formatTime, getTodayIsoString, getMonthName, toISODate, formatServiceDuration, formatDate } from '../../utils/dateUtils';
+import { calculateDistanceMeters } from '../../utils/geoUtils';
 import { SHIFT_POLICY, ATTENDANCE_POLICY } from '../../config/policy';
 import { SkeletonLoader } from '../common/SkeletonLoader';
 import { StatusPill } from '../common/StatusPill';
 import { cardClass } from '../common/PageHeader';
+import { Cake, Sparkles, Building, Home, Briefcase, AlertOctagon } from 'lucide-react';
 
 const toMinutes = (hhmm: string) => {
   const [h, m] = hhmm.split(':').map(Number);
@@ -449,6 +454,15 @@ export const EmployeeDashboard: React.FC = () => {
   const [latestPayslip, setLatestPayslip] = useState<{ month: number; year: number; netPay: number } | null>(null);
   const [now, setNow] = useState(() => new Date());
 
+  // Work mode & Geofencing state
+  const [workMode, setWorkMode] = useState<'OFFICE' | 'WFH' | 'FIELD'>('OFFICE');
+  const [unclosedPunch, setUnclosedPunch] = useState<AttendanceRecord | null>(null);
+  const [assignedBranch, setAssignedBranch] = useState<any>(null);
+  const [todayBirthdays, setTodayBirthdays] = useState<string[]>([]);
+  const [showFieldModal, setShowFieldModal] = useState(false);
+  const [fieldLocation, setFieldLocation] = useState('');
+  const [fieldClient, setFieldClient] = useState('');
+
   const todayIso = getTodayIsoString();
 
   useEffect(() => {
@@ -461,12 +475,13 @@ export const EmployeeDashboard: React.FC = () => {
     (async () => {
       setLoading(true);
       const d = new Date();
-      const [att, bal, cal, req, slips] = await Promise.allSettled([
+      const [att, bal, cal, req, slips, unclosed] = await Promise.allSettled([
         meApi.getAttendance(d.getMonth() + 1, d.getFullYear()),
         meApi.getLeaveBalances(),
         meApi.getCalendar(d.getMonth() + 1, d.getFullYear()),
         meApi.getLeaveRequests(),
-        compensationApi.getMyPublishedEntries()
+        compensationApi.getMyPublishedEntries(),
+        meApi.getUnclosedPreviousPunch()
       ]);
       if (cancelled) return;
       if (att.status === 'fulfilled') setMonthRecords(att.value);
@@ -481,6 +496,45 @@ export const EmployeeDashboard: React.FC = () => {
         const published = slips.value[0];
         setLatestPayslip(published ? { month: published.month, year: published.year, netPay: published.netPay } : null);
       }
+      if (unclosed.status === 'fulfilled' && unclosed.value) {
+        setUnclosedPunch(unclosed.value);
+      }
+
+      // Load branch details if assigned
+      if (currentUser?.branchId) {
+        try {
+          const br = await branchesApi.getBranchById(currentUser.branchId);
+          if (!cancelled && br) setAssignedBranch(br);
+        } catch {
+          // Ignored
+        }
+      }
+
+      // Check today's birthdays
+      try {
+        const { data: bdays } = await supabase
+          .from('employee_profiles')
+          .select('date_of_birth, employee:employees!employee_profiles_employee_id_fkey(full_name, status)')
+          .not('date_of_birth', 'is', null);
+
+        if (bdays) {
+          const names: string[] = [];
+          const curM = d.getMonth();
+          const curD = d.getDate();
+          bdays.forEach((b: any) => {
+            if (b.employee?.status === 'ACTIVE' && b.date_of_birth) {
+              const dt = new Date(b.date_of_birth);
+              if (dt.getMonth() === curM && dt.getDate() === curD) {
+                names.push(b.employee.full_name);
+              }
+            }
+          });
+          if (!cancelled) setTodayBirthdays(names);
+        }
+      } catch {
+        // Ignored
+      }
+
       const failed = [att, bal, cal, req].find(r => r.status === 'rejected') as PromiseRejectedResult | undefined;
       if (failed) showToast('Some details did not load', failed.reason?.message ?? 'Try refreshing the page.', 'error');
       setLoading(false);
@@ -494,32 +548,83 @@ export const EmployeeDashboard: React.FC = () => {
 
   const handlePunch = async (type: 'IN' | 'OUT') => {
     if (punching) return;
+
+    if (type === 'IN') {
+      if (unclosedPunch) {
+        showToast(
+          'Punch-In Blocked',
+          `You did not punch out on ${formatDate(unclosedPunch.workDate)}. Company policy requires attendance regularization before punching in today.`,
+          'error'
+        );
+        return;
+      }
+
+      if (workMode === 'WFH') {
+        const approved = await wfhApi.hasApprovedWfhToday();
+        if (!approved) {
+          showToast(
+            'WFH Approval Required',
+            'WFH punch requires an approved advance WFH request for today. Please apply for WFH in My Attendance.',
+            'error'
+          );
+          return;
+        }
+      }
+
+      if (workMode === 'FIELD' && !fieldLocation.trim()) {
+        setShowFieldModal(true);
+        return;
+      }
+    }
+
     setPunching(true);
     let lat: number | undefined;
     let lng: number | undefined;
+
     if (navigator.geolocation) {
       try {
         const pos = await new Promise<GeolocationPosition>((resolve, reject) =>
-          navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 5000, enableHighAccuracy: true })
+          navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 6000, enableHighAccuracy: true })
         );
         lat = Number(pos.coords.latitude.toFixed(6));
         lng = Number(pos.coords.longitude.toFixed(6));
       } catch {
-        // Location is optional; the punch is still recorded without it.
+        // Geolocation failed or denied
       }
     }
+
+    if (type === 'IN' && workMode === 'OFFICE' && assignedBranch?.latitude && assignedBranch?.longitude) {
+      if (lat !== undefined && lng !== undefined) {
+        const dist = calculateDistanceMeters(lat, lng, assignedBranch.latitude, assignedBranch.longitude);
+        const radius = assignedBranch.geofenceRadiusM || 100;
+        if (dist > radius) {
+          setPunching(false);
+          showToast(
+            'Geofence Restriction',
+            `You are ${dist}m away from ${assignedBranch.name}. Allowed radius is ${radius}m for office punch-in.`,
+            'error'
+          );
+          return;
+        }
+      }
+    }
+
     try {
       const updated = await meApi.punch({
         type,
         lat,
         lng,
-        source: currentUser?.employmentType === 'FIELD' ? 'MOBILE' : 'WEB'
+        source: currentUser?.employmentType === 'FIELD' ? 'MOBILE' : 'WEB',
+        workMode: type === 'IN' ? workMode : undefined,
+        visitLocation: type === 'IN' && workMode === 'FIELD' ? fieldLocation : undefined,
+        visitClient: type === 'IN' && workMode === 'FIELD' ? fieldClient : undefined
       });
       setMonthRecords(prev => [...prev.filter(r => r.workDate !== updated.workDate), updated]);
       setNow(new Date());
+      setShowFieldModal(false);
       showToast(
         type === 'IN' ? 'Punched in' : 'Punched out',
-        `Recorded at ${formatTime(type === 'IN' ? updated.punchIn : updated.punchOut)}${lat ? ' with your location' : ''}.`,
+        `Recorded at ${formatTime(type === 'IN' ? updated.punchIn : updated.punchOut)}${lat ? ' with location' : ''} (${workMode}).`,
         'success'
       );
     } catch (err: any) {
@@ -645,6 +750,26 @@ export const EmployeeDashboard: React.FC = () => {
 
   return (
     <div className="px-4 sm:px-6 lg:px-8 py-6 sm:py-8 max-w-[1440px] mx-auto space-y-6">
+      {/* Birthday Celebration Banner */}
+      {todayBirthdays.length > 0 && (
+        <div className="p-4 rounded-2xl bg-gradient-to-r from-pink-500 via-rose-500 to-amber-500 text-white shadow-md flex items-center justify-between gap-4 animate-in fade-in">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-xl bg-white/20 backdrop-blur-sm">
+              <Cake className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <div className="font-bold text-sm sm:text-base flex items-center gap-1.5">
+                🎉 Birthday Celebration Today!
+                <Sparkles className="w-4 h-4 text-amber-200" />
+              </div>
+              <p className="text-xs sm:text-sm text-pink-100">
+                Wishing a very Happy Birthday to <strong>{todayBirthdays.join(', ')}</strong>! 🎂
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Welcome */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
@@ -655,6 +780,7 @@ export const EmployeeDashboard: React.FC = () => {
             {currentUser?.designation}
             {currentUser?.departmentName ? ` · ${currentUser.departmentName}` : ''}
             {currentUser?.empCode ? ` · ${currentUser.empCode}` : ''}
+            {currentUser?.dateOfJoining ? ` · Service: ${formatServiceDuration(currentUser.dateOfJoining)}` : ''}
           </p>
         </div>
         <div className="flex gap-2">
@@ -751,16 +877,75 @@ export const EmployeeDashboard: React.FC = () => {
                   <div className="min-w-0 flex-1 w-full text-center sm:text-left">
                     <h3 className="text-[19px] font-semibold text-slate-900 dark:text-slate-50">{status.title}</h3>
                     <p className="mt-1 text-[14px] text-slate-500 dark:text-slate-400">{status.detail}</p>
+
+                    {/* Unclosed punch warning banner */}
+                    {unclosedPunch && (
+                      <div className="mt-3 p-3 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 rounded-xl text-xs text-rose-800 dark:text-rose-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <AlertOctagon className="w-4 h-4 text-rose-600 shrink-0" />
+                          <span>
+                            <strong>Mandatory Sign-out Alert:</strong> You didn't punch out on {formatDate(unclosedPunch.workDate)}. Regularization required before punching in.
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setActiveNav('attendance')}
+                          className="px-3 py-1 bg-rose-600 text-white rounded-lg font-semibold hover:bg-rose-700 whitespace-nowrap text-xs shrink-0"
+                        >
+                          Regularize Now
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Work Mode Selector when not punched in */}
+                    {inMin === undefined && !unclosedPunch && (
+                      <div className="mt-3 flex items-center gap-1.5 p-1 bg-slate-100 dark:bg-slate-800/80 rounded-lg w-fit">
+                        <button
+                          type="button"
+                          onClick={() => setWorkMode('OFFICE')}
+                          className={`px-3 py-1 text-xs font-semibold rounded-md transition ${
+                            workMode === 'OFFICE'
+                              ? 'bg-white dark:bg-slate-700 text-teal-700 dark:text-teal-300 shadow-xs'
+                              : 'text-slate-500 hover:text-slate-700'
+                          }`}
+                        >
+                          🏢 Office
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setWorkMode('WFH')}
+                          className={`px-3 py-1 text-xs font-semibold rounded-md transition ${
+                            workMode === 'WFH'
+                              ? 'bg-white dark:bg-slate-700 text-purple-700 dark:text-purple-300 shadow-xs'
+                              : 'text-slate-500 hover:text-slate-700'
+                          }`}
+                        >
+                          🏠 WFH
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setWorkMode('FIELD')}
+                          className={`px-3 py-1 text-xs font-semibold rounded-md transition ${
+                            workMode === 'FIELD'
+                              ? 'bg-white dark:bg-slate-700 text-amber-700 dark:text-amber-300 shadow-xs'
+                              : 'text-slate-500 hover:text-slate-700'
+                          }`}
+                        >
+                          🚗 Field
+                        </button>
+                      </div>
+                    )}
+
                     <div className="mt-4 flex flex-wrap items-center justify-center sm:justify-start gap-x-4 gap-y-2">
                       {inMin === undefined ? (
                         <button
                           type="button"
                           onClick={() => handlePunch('IN')}
-                          disabled={punching}
-                          className="h-11 px-6 whitespace-nowrap rounded-xl bg-teal-600 hover:bg-teal-700 active:bg-teal-800 disabled:opacity-60 text-white text-[14.5px] font-medium shadow-primary inline-flex items-center justify-center gap-2 transition-colors"
+                          disabled={punching || !!unclosedPunch}
+                          className="h-11 px-6 whitespace-nowrap rounded-xl bg-teal-600 hover:bg-teal-700 active:bg-teal-800 disabled:opacity-50 text-white text-[14.5px] font-medium shadow-primary inline-flex items-center justify-center gap-2 transition-colors"
                         >
                           {punching ? <Loader2 className="h-4 w-4 animate-spin" /> : <LogIn className="h-[18px] w-[18px]" />}
-                          {punching ? 'Recording' : 'Punch in'}
+                          {punching ? 'Recording' : `Punch in (${workMode})`}
                         </button>
                       ) : outMin === undefined ? (
                         <button
@@ -992,7 +1177,7 @@ export const EmployeeDashboard: React.FC = () => {
           </section>
 
           <section className={`${cardClass} p-5`} aria-labelledby="holidays-heading">
-            <CardHeader id="holidays-heading" title="Upcoming holidays" action={<LinkButton onClick={() => setActiveNav('calendar')}>View all</LinkButton>} />
+            <CardHeader id="holidays-heading" title="Upcoming holidays" action={<LinkButton onClick={() => setActiveNav('attendance')}>View all</LinkButton>} />
             {upcoming.length === 0 ? (
               <p className="mt-4 text-sm text-slate-500 dark:text-slate-400">No holidays left on the calendar this year.</p>
             ) : (
@@ -1020,6 +1205,74 @@ export const EmployeeDashboard: React.FC = () => {
           </section>
         </div>
       </div>
+
+      {/* Field Visit Punch-in Modal */}
+      {showFieldModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6 max-w-md w-full space-y-4 shadow-xl">
+            <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <Briefcase className="w-5 h-5 text-amber-600" />
+              Field Visit Punch-In Details
+            </h3>
+            <p className="text-xs text-slate-500">
+              Company policy requires recording destination and client information for audit when working on the field.
+            </p>
+
+            <div className="space-y-3 text-xs">
+              <div>
+                <label className="block font-semibold text-slate-700 dark:text-slate-300 uppercase mb-1">
+                  Visit Location / Site *
+                </label>
+                <input
+                  type="text"
+                  value={fieldLocation}
+                  onChange={e => setFieldLocation(e.target.value)}
+                  placeholder="e.g. Kokilaben Dhirubhai Ambani Hospital, Andheri"
+                  required
+                  className="w-full text-xs rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-2"
+                />
+              </div>
+
+              <div>
+                <label className="block font-semibold text-slate-700 dark:text-slate-300 uppercase mb-1">
+                  Client / Institutional Partner Name
+                </label>
+                <input
+                  type="text"
+                  value={fieldClient}
+                  onChange={e => setFieldClient(e.target.value)}
+                  placeholder="e.g. Dr. Sharma / Corporate Wellness Head"
+                  className="w-full text-xs rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-2"
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowFieldModal(false)}
+                className="px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-100 rounded-lg"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (!fieldLocation.trim()) {
+                    showToast('Required', 'Please enter visit location.', 'error');
+                    return;
+                  }
+                  handlePunch('IN');
+                }}
+                disabled={punching}
+                className="px-4 py-2 text-xs font-semibold text-white bg-teal-600 hover:bg-teal-700 rounded-lg shadow-sm"
+              >
+                {punching ? 'Recording...' : 'Confirm Field Punch-in'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

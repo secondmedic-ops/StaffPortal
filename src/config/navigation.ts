@@ -37,7 +37,12 @@ import {
   Wallet,
   Cpu,
   Building2,
-  KeyRound
+  KeyRound,
+  Images,
+  UserMinus,
+  AlertTriangle,
+  MapPin,
+  Mail
 } from 'lucide-react';
 import type { PendingCounts } from '../context/PendingCountsContext';
 
@@ -76,6 +81,7 @@ export function buildNavGroups(a: NavAccess, c: PendingCounts): NavGroup[] {
       icon: UserRound,
       items: [
         { id: 'dashboard', label: 'Today', icon: LayoutDashboard },
+        { id: 'profile', label: 'My profile', icon: UserRound },
         { id: 'attendance', label: 'Attendance', icon: CalendarCheck },
         { id: 'apply-leave', label: 'Apply for leave', icon: CalendarPlus },
         { id: 'leave-requests', label: 'My leave', icon: Clock },
@@ -83,7 +89,8 @@ export function buildNavGroups(a: NavAccess, c: PendingCounts): NavGroup[] {
         { id: 'payslips', label: 'Payslips', icon: FileText },
         { id: 'my-assets', label: 'Assets & IT help', icon: Laptop, badge: n(c.myUnacknowledgedAssets) },
         { id: 'kpis', label: 'Goals & KPIs', icon: Award },
-        { id: 'calendar', label: 'Holiday calendar', icon: Calendar }
+        { id: 'gallery', label: 'Company gallery', icon: Images },
+        { id: 'resign', label: 'Resignation & exit', icon: UserMinus }
       ]
     }
   ];
@@ -97,8 +104,8 @@ export function buildNavGroups(a: NavAccess, c: PendingCounts): NavGroup[] {
         { id: 'team-dashboard', label: 'Team overview', icon: Users },
         { id: 'team-approvals', label: 'Leave approvals', icon: CheckSquare, badge: n(c.leaveApprovals) },
         { id: 'team-regularization', label: 'Time updates', icon: Clock, badge: n(c.regularizations) },
+        { id: 'team-missed-signouts', label: 'Missed sign-outs', icon: AlertTriangle },
         { id: 'team-holiday-work', label: 'Comp-off & OT claims', icon: CalendarHeart, badge: n(c.holidayWorkClaims) },
-        { id: 'team-calendar', label: 'Team calendar', icon: Calendar },
         { id: 'team-kpis', label: 'Team KPIs', icon: Award }
       ]
     });
@@ -121,7 +128,9 @@ export function buildNavGroups(a: NavAccess, c: PendingCounts): NavGroup[] {
         { id: 'hr-directory', label: 'Staff directory', icon: Users },
         { id: 'hr-orgchart', label: 'Org chart', icon: GitFork },
         { id: 'hr-attendance', label: 'Attendance register', icon: FileSpreadsheet },
-        { id: 'hr-holidays', label: 'Holiday calendar', icon: Calendar },
+        { id: 'hr-missed-signouts', label: 'Missed sign-outs', icon: AlertTriangle },
+        { id: 'hr-branches', label: 'Branch master', icon: MapPin },
+        { id: 'hr-email-log', label: 'Email log', icon: Mail },
         { id: 'hr-leave-policies', label: 'Leave policy', icon: Settings },
         { id: 'hr-ats', label: 'Hiring pipeline', icon: Briefcase },
         { id: 'hr-benefits', label: 'Benefits', icon: HeartHandshake },
@@ -138,6 +147,7 @@ export function buildNavGroups(a: NavAccess, c: PendingCounts): NavGroup[] {
       icon: Wallet,
       items: [
         { id: 'payroll-attendance', label: 'Run payroll', icon: Calculator },
+        { id: 'fnf-settlements', label: 'F&F settlements', icon: Calculator },
         { id: 'payroll-increments', label: 'Increments & revisions', icon: TrendingUp, badge: n(c.salaryRevisions) },
         ...(!a.isHr
           ? [{ id: 'hr-lifecycle', label: 'Joiner & exit tasks', icon: ClipboardCheck, badge: n(c.myLifecycleTasks) }]
@@ -174,14 +184,14 @@ export function buildNavGroups(a: NavAccess, c: PendingCounts): NavGroup[] {
       icon: Building2,
       items: [
         { id: 'ceo-dashboard', label: 'Organisation overview', icon: BarChart3 },
+        { id: 'ceo-fnf-approvals', label: 'F&F sign-offs', icon: ShieldCheck },
         ...(!a.isAccounts
           ? [{ id: 'payroll-increments', label: 'Salary approvals', icon: TrendingUp, badge: n(c.salaryRevisions) }]
           : []),
         ...(c.payrollApprovals > 0
           ? [{ id: 'payroll-approval', label: 'Payroll approval', icon: BadgeCheck, badge: n(c.payrollApprovals) }]
           : []),
-        { id: 'ceo-orgchart', label: 'Full org chart', icon: GitFork },
-        { id: 'ceo-calendar', label: 'All-staff calendar', icon: Calendar }
+        { id: 'ceo-orgchart', label: 'Full org chart', icon: GitFork }
       ]
     });
   } else if (a.isDirector) {
@@ -191,8 +201,8 @@ export function buildNavGroups(a: NavAccess, c: PendingCounts): NavGroup[] {
       icon: Building2,
       items: [
         { id: 'ceo-dashboard', label: 'Organisation overview', icon: BarChart3 },
-        { id: 'ceo-orgchart', label: 'Full org chart', icon: GitFork },
-        { id: 'ceo-calendar', label: 'All-staff calendar', icon: Calendar }
+        { id: 'ceo-fnf-approvals', label: 'F&F sign-offs', icon: ShieldCheck },
+        { id: 'ceo-orgchart', label: 'Full org chart', icon: GitFork }
       ]
     });
   }

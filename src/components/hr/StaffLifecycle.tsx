@@ -7,6 +7,7 @@ import { ClipboardCheck, UserMinus, UserPlus, CheckCircle2, Circle, AlertTriangl
 import { Modal } from '../common/Modal';
 import { SkeletonLoader } from '../common/SkeletonLoader';
 import { PageHeader, EmptyState, inputClass, labelClass, primaryBtn, secondaryBtn, cardClass } from '../common/PageHeader';
+import { ProbationAnniversaryWidgets } from './ProbationAnniversaryWidgets';
 
 const OWNER_CLASS: Record<LifecycleTask['ownerRole'], string> = {
   HR: 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/50 dark:text-purple-300 dark:border-purple-800',
@@ -125,6 +126,9 @@ export const StaffLifecycle: React.FC = () => {
           ) : undefined
         }
       />
+
+      {/* Probation & Milestone Anniversary Widgets */}
+      <ProbationAnniversaryWidgets />
 
       <div className="flex flex-wrap items-center gap-2">
         {(['ONBOARDING', 'OFFBOARDING'] as const).map(k => (

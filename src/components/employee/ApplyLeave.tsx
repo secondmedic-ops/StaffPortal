@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { meApi } from '../../api';
+import { documentsApi } from '../../api/documents';
 import { LeaveType, LeaveBalance, Holiday } from '../../types';
 import { calculateLeaveDays, getTodayIsoString } from '../../utils/dateUtils';
 
@@ -34,6 +35,7 @@ export const ApplyLeave: React.FC = () => {
   const [reason, setReason] = useState('');
   const [contactDuring, setContactDuring] = useState('');
   const [attachedFile, setAttachedFile] = useState<{ name: string; size: number } | null>(null);
+  const [realFile, setRealFile] = useState<File | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -108,6 +110,7 @@ export const ApplyLeave: React.FC = () => {
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       const file = e.dataTransfer.files[0];
       setAttachedFile({ name: file.name, size: file.size });
+      setRealFile(file);
     }
   };
 
@@ -115,6 +118,7 @@ export const ApplyLeave: React.FC = () => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       setAttachedFile({ name: file.name, size: file.size });
+      setRealFile(file);
     }
   };
 
@@ -139,6 +143,11 @@ export const ApplyLeave: React.FC = () => {
 
     setSubmitting(true);
     try {
+      let documentUrl: string | undefined = undefined;
+      if (realFile) {
+        documentUrl = await documentsApi.uploadLeaveAttachment(realFile);
+      }
+
       await meApi.applyLeave({
         leaveTypeId: selectedTypeId,
         fromDate,
@@ -148,7 +157,7 @@ export const ApplyLeave: React.FC = () => {
         totalDays: calculation.totalDays,
         reason,
         contactDuring,
-        documentUrl: attachedFile ? 'medical_attachment_simulated_vault.pdf' : undefined
+        documentUrl
       });
 
       showToast(

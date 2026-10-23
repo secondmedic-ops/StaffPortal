@@ -10,11 +10,12 @@ import { PendingCountsProvider } from './context/PendingCountsContext';
 
 // Employee Components
 import { EmployeeDashboard } from './components/employee/EmployeeDashboard';
-
+import { MyProfile } from './components/employee/MyProfile';
+import { GalleryView } from './components/employee/GalleryView';
+import { ResignationView } from './components/employee/ResignationView';
 import { MyAttendance } from './components/employee/MyAttendance';
 import { ApplyLeave } from './components/employee/ApplyLeave';
 import { MyLeaveRequests } from './components/employee/MyLeaveRequests';
-import { CompanyCalendar } from './components/employee/CompanyCalendar';
 import { MyKpis } from './components/employee/MyKpis';
 import { MyPayslips } from './components/employee/MyPayslips';
 import { MyAssets } from './components/employee/MyAssets';
@@ -28,12 +29,15 @@ import { TeamRegularization } from './components/manager/TeamRegularization';
 import { TeamCalendar } from './components/manager/TeamCalendar';
 import { TeamKpis } from './components/manager/TeamKpis';
 
-// HR Components
+// HR & Shared Components
+import { MissedSignoutReport } from './components/common/MissedSignoutReport';
+import { BirthdayModal } from './components/hr/BirthdayModal';
+import { BranchManagement } from './components/hr/BranchManagement';
+import { EmailLogView } from './components/hr/EmailLogView';
 import { EmployeeDirectory } from './components/hr/EmployeeDirectory';
 import { OrgChart } from './components/hr/OrgChart';
 import { AttendanceRegister } from './components/hr/AttendanceRegister';
 import { LeavePolicyConfig } from './components/hr/LeavePolicyConfig';
-import { HolidayCalendar } from './components/hr/HolidayCalendar';
 import { ApplicantTracking } from './components/hr/ApplicantTracking';
 import { BenefitsManagement } from './components/hr/BenefitsManagement';
 import { DocumentManagement } from './components/hr/DocumentManagement';
@@ -43,6 +47,7 @@ import { NewStaffRegistration } from './components/hr/NewStaffRegistration';
 import { StaffLifecycle } from './components/hr/StaffLifecycle';
 
 // Accounts Components
+import { FnfSettlementView } from './components/accounts/FnfSettlementView';
 import { PayrollDashboard } from './components/accounts/PayrollDashboard';
 import { SalaryStructures } from './components/accounts/SalaryStructures';
 import { PayslipGenerator } from './components/accounts/PayslipGenerator';
@@ -94,9 +99,18 @@ const MainPortal: React.FC = () => {
       case 'dashboard':
       case 'employee-dashboard':
         return <EmployeeDashboard />;
+      case 'profile':
+      case 'my-profile':
+        return <MyProfile />;
       case 'attendance':
       case 'my-attendance':
         return <MyAttendance />;
+      case 'gallery':
+      case 'company-gallery':
+        return <GalleryView />;
+      case 'resign':
+      case 'resignation':
+        return <ResignationView />;
       case 'apply-leave':
         return <ApplyLeave />;
       case 'leave-requests':
@@ -104,7 +118,7 @@ const MainPortal: React.FC = () => {
         return <MyLeaveRequests />;
       case 'calendar':
       case 'company-calendar':
-        return <CompanyCalendar />;
+        return <MyAttendance />;
       case 'kpis':
       case 'my-kpis':
         return <MyKpis />;
@@ -127,6 +141,8 @@ const MainPortal: React.FC = () => {
         return isManager || isHr ? <TeamApprovals /> : <UnauthorizedView role="MANAGER" />;
       case 'team-regularization':
         return isManager || isHr ? <TeamRegularization /> : <UnauthorizedView role="MANAGER" />;
+      case 'team-missed-signouts':
+        return isManager || isHr ? <MissedSignoutReport forManager={true} /> : <UnauthorizedView role="MANAGER" />;
       case 'team-calendar':
         return isManager ? <TeamCalendar /> : <UnauthorizedView role="MANAGER" />;
       case 'team-kpis':
@@ -146,12 +162,20 @@ const MainPortal: React.FC = () => {
       case 'hr-attendance':
       case 'attendance-register':
         return isHr ? <AttendanceRegister /> : <UnauthorizedView role="HR" />;
+      case 'hr-missed-signouts':
+        return isHr ? <MissedSignoutReport forManager={false} /> : <UnauthorizedView role="HR" />;
+      case 'hr-branches':
+      case 'branches':
+        return isHr ? <BranchManagement /> : <UnauthorizedView role="HR" />;
+      case 'hr-email-log':
+      case 'email-log':
+        return isHr ? <EmailLogView /> : <UnauthorizedView role="HR" />;
       case 'hr-leave-policies':
       case 'leave-policies':
         return isHr ? <LeavePolicyConfig /> : <UnauthorizedView role="HR" />;
       case 'hr-holidays':
       case 'holiday-calendar':
-        return isHr ? <HolidayCalendar /> : <UnauthorizedView role="HR" />;
+        return isHr ? <AttendanceRegister /> : <UnauthorizedView role="HR" />;
       case 'hr-ats':
       case 'applicant-tracking':
         return isHr ? <ApplicantTracking /> : <UnauthorizedView role="HR" />;
@@ -168,6 +192,8 @@ const MainPortal: React.FC = () => {
       // Accounts views (Confidential)
       case 'payroll-attendance':
         return isAccounts ? <AttendancePayroll /> : <UnauthorizedView role="ACCOUNTS" />;
+      case 'fnf-settlements':
+        return isAccounts ? <FnfSettlementView /> : <UnauthorizedView role="ACCOUNTS" />;
       case 'payroll-increments':
         return isAccounts || isCeo ? <IncrementsRevisions /> : <UnauthorizedView role="ACCOUNTS" />;
       case 'payroll-dashboard':
@@ -195,10 +221,12 @@ const MainPortal: React.FC = () => {
       // CEO & Leadership views
       case 'ceo-dashboard':
         return isCeo || isDirector ? <CeoDashboard /> : <UnauthorizedView role="CEO" />;
+      case 'ceo-fnf-approvals':
+        return isCeo || isDirector ? <FnfSettlementView isCeoView={true} /> : <UnauthorizedView role="CEO" />;
       case 'ceo-orgchart':
         return isCeo || isDirector ? <OrgChart /> : <UnauthorizedView role="CEO" />;
       case 'ceo-calendar':
-        return isCeo || isDirector ? <CompanyCalendar /> : <UnauthorizedView role="CEO" />;
+        return isCeo || isDirector ? <MyAttendance /> : <UnauthorizedView role="CEO" />;
 
       // Admin views
       case 'admin-users':
@@ -229,6 +257,7 @@ const MainPortal: React.FC = () => {
 
       <MobileNav open={menuOpen} onOpenChange={setMenuOpen} />
       <ToastContainer />
+      <BirthdayModal />
     </div>
   );
 };

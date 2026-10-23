@@ -70,5 +70,22 @@ export const wfhApi = {
       .eq('id', id);
 
     if (error) throw new Error(`Failed to cancel WFH request: ${error.message}`);
+  },
+
+  async hasApprovedWfhToday(): Promise<boolean> {
+    const emp = await getSessionEmployee();
+    const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' }).format(new Date());
+    const { data, error } = await supabase
+      .from('wfh_requests')
+      .select('id')
+      .eq('employee_id', emp.id)
+      .eq('status', 'APPROVED')
+      .lte('from_date', today)
+      .gte('to_date', today)
+      .limit(1)
+      .maybeSingle();
+
+    if (error) return false;
+    return !!data;
   }
 };

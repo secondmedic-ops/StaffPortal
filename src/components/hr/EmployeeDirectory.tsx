@@ -3,10 +3,11 @@ import { useAuth } from '../../context/AuthContext';
 import { hrApi } from '../../api';
 import { Employee, Department, EmploymentType } from '../../types';
 import { formatDate } from '../../utils/dateUtils';
-import { Users, Search, Plus, Edit2, Filter, Mail, Phone, Building2, ChevronRight, RotateCw } from 'lucide-react';
+import { Users, Search, Plus, Edit2, Filter, Mail, Phone, Building2, ChevronRight, RotateCw, ExternalLink } from 'lucide-react';
 import { StatusPill } from '../common/StatusPill';
 import { Modal } from '../common/Modal';
 import { SkeletonLoader } from '../common/SkeletonLoader';
+import { EmployeeProfileView } from './EmployeeProfileView';
 
 export const EmployeeDirectory: React.FC = () => {
   const { currentUser, showToast } = useAuth();
@@ -16,6 +17,10 @@ export const EmployeeDirectory: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [deptFilter, setDeptFilter] = useState('ALL');
   const [typeFilter, setTypeFilter] = useState('ALL');
+
+  // Full profile view state
+  const [viewingProfileId, setViewingProfileId] = useState<number | null>(null);
+  const [sendingLogins, setSendingLogins] = useState(false);
 
   // Add / Edit Modal
   const [showAddModal, setShowAddModal] = useState(false);
@@ -119,6 +124,28 @@ export const EmployeeDirectory: React.FC = () => {
     }
   };
 
+  const handleSendLoginsToUnassigned = async () => {
+    if (!confirm('This will dispatch portal login invites to all active employees who do not currently have a portal login. Continue?')) {
+      return;
+    }
+
+    setSendingLogins(true);
+    try {
+      const results = await hrApi.sendLoginInviteToUnassignedStaff();
+      const successCount = results.filter(r => r.status === 'INVITED').length;
+      showToast(
+        'Login Invites Sent',
+        `Dispatched login invites to ${successCount} staff member(s).`,
+        'success'
+      );
+      fetchEmployees();
+    } catch (err: any) {
+      showToast('Invite Error', err.message || 'Could not send invites', 'error');
+    } finally {
+      setSendingLogins(false);
+    }
+  };
+
   const filtered = employees.filter(e => {
     const q = searchQuery.toLowerCase().trim();
     const matchesSearch =
@@ -134,6 +161,18 @@ export const EmployeeDirectory: React.FC = () => {
     return matchesSearch && matchesDept && matchesType;
   });
 
+  if (viewingProfileId !== null) {
+    return (
+      <EmployeeProfileView
+        employeeId={viewingProfileId}
+        onBack={() => {
+          setViewingProfileId(null);
+          fetchEmployees();
+        }}
+      />
+    );
+  }
+
   return (
     <div className="px-4 sm:px-8 py-6 sm:py-8 max-w-7xl mx-auto space-y-6">
       {/* Header */}
@@ -146,6 +185,15 @@ export const EmployeeDirectory: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-2">
+          <button
+            onClick={handleSendLoginsToUnassigned}
+            disabled={sendingLogins}
+            className="px-3.5 py-2 text-xs font-semibold rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 hover:bg-slate-50 transition flex items-center gap-1.5 disabled:opacity-50"
+            title="Send portal login credentials to staff without active logins"
+          >
+            <Mail className="w-3.5 h-3.5 text-teal-600" />
+            {sendingLogins ? 'Sending...' : 'Send Login Invites'}
+          </button>
           <button
             onClick={fetchEmployees}
             disabled={loading}
@@ -224,7 +272,12 @@ export const EmployeeDirectory: React.FC = () => {
                 {filtered.map(emp => (
                   <tr key={emp.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors">
                     <td className="px-5 py-3.5">
-                      <div className="font-bold text-slate-900 dark:text-slate-100">{emp.fullName}</div>
+                      <button
+                        onClick={() => setViewingProfileId(emp.id)}
+                        className="font-bold text-slate-900 dark:text-slate-100 hover:text-teal-600 dark:hover:text-teal-400 text-left transition"
+                      >
+                        {emp.fullName}
+                      </button>
                       <div className="text-[12.5px] text-slate-500 dark:text-slate-400 font-mono">{emp.empCode} • {emp.officialEmail}</div>
                     </td>
                     <td className="px-5 py-3.5 font-medium text-slate-800 dark:text-slate-200">
@@ -247,13 +300,22 @@ export const EmployeeDirectory: React.FC = () => {
                       <StatusPill status={emp.status} />
                     </td>
                     <td className="px-5 py-3.5 text-right whitespace-nowrap">
-                      <button
-                        onClick={() => openEditModal(emp)}
-                        className="p-1.5 rounded-lg text-slate-400 dark:text-slate-500 hover:text-teal-700 dark:hover:text-teal-300 hover:bg-teal-50 dark:hover:bg-teal-950/40 transition-colors"
-                        title="Edit Details & Manager"
-                      >
-                        <Edit2 className="w-4 h-4" />
-                      </button>
+                      <div className="flex items-center justify-end gap-1">
+                        <button
+                          onClick={() => setViewingProfileId(emp.id)}
+                          className="px-2.5 py-1 rounded-md text-[11px] font-semibold text-teal-700 bg-teal-50 hover:bg-teal-100 dark:bg-teal-950/40 dark:text-teal-300 transition"
+                          title="View 360 Profile"
+                        >
+                          View 360°
+                        </button>
+                        <button
+                          onClick={() => openEditModal(emp)}
+                          className="p-1.5 rounded-lg text-slate-400 dark:text-slate-500 hover:text-teal-700 dark:hover:text-teal-300 hover:bg-teal-50 dark:hover:bg-teal-950/40 transition-colors"
+                          title="Quick Edit"
+                        >
+                          <Edit2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}

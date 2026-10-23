@@ -56,6 +56,7 @@ export interface Database {
           avatar_url: string | null;
           branch_id?: number | null;
           probation_end_date?: string | null;
+          confirmation_date?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -81,6 +82,7 @@ export interface Database {
           avatar_url?: string | null;
           branch_id?: number | null;
           probation_end_date?: string | null;
+          confirmation_date?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -106,6 +108,7 @@ export interface Database {
           avatar_url?: string | null;
           branch_id?: number | null;
           probation_end_date?: string | null;
+          confirmation_date?: string | null;
           created_at?: string;
           updated_at?: string;
         };

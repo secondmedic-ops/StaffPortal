@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { meApi } from '../../api';
+import { wfhApi } from '../../api/wfh';
 import { AttendanceRecord, Holiday, LeaveRequest } from '../../types';
 import { formatTime, formatDate, getMonthName, getTodayIsoString } from '../../utils/dateUtils';
 import {
@@ -11,7 +12,9 @@ import {
   Calendar,
   CheckCircle2,
   Clock,
-  Sparkles
+  Sparkles,
+  AlertTriangle,
+  Home
 } from 'lucide-react';
 import { StatusPill } from '../common/StatusPill';
 import { Modal } from '../common/Modal';
@@ -39,6 +42,9 @@ export const MyAttendance: React.FC = () => {
   const [myLeaves, setMyLeaves] = useState<LeaveRequest[]>([]);
   const [selectedDay, setSelectedDay] = useState<SelectedDayState | null>(null);
 
+  // Unclosed previous punch
+  const [unclosedPunch, setUnclosedPunch] = useState<AttendanceRecord | null>(null);
+
   // Regularization modal state
   const [showRegModal, setShowRegModal] = useState(false);
   const [regInTime, setRegInTime] = useState('09:30 AM');
@@ -46,16 +52,25 @@ export const MyAttendance: React.FC = () => {
   const [regReason, setRegReason] = useState('');
   const [submittingReg, setSubmittingReg] = useState(false);
 
+  // WFH application modal state
+  const [showWfhModal, setShowWfhModal] = useState(false);
+  const [wfhFromDate, setWfhFromDate] = useState(getTodayIsoString());
+  const [wfhToDate, setWfhToDate] = useState(getTodayIsoString());
+  const [wfhReason, setWfhReason] = useState('');
+  const [submittingWfh, setSubmittingWfh] = useState(false);
+
   const fetchAttendance = async () => {
     try {
       setLoading(true);
-      const [att, cal] = await Promise.all([
+      const [att, cal, unclosed] = await Promise.all([
         meApi.getAttendance(month, year),
-        meApi.getCalendar(month, year)
+        meApi.getCalendar(month, year),
+        meApi.getUnclosedPreviousPunch()
       ]);
       setAttendanceList(att);
       setHolidays(cal.holidays || []);
       setMyLeaves(cal.myLeaves || []);
+      setUnclosedPunch(unclosed);
     } catch (err: any) {
       showToast('Attendance Error', err.message || 'Failed to load attendance records', 'error');
     } finally {
@@ -155,8 +170,64 @@ export const MyAttendance: React.FC = () => {
     }
   };
 
+  const handleWfhSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!wfhReason.trim()) {
+      showToast('Validation Error', 'Please specify a reason for working from home.', 'error');
+      return;
+    }
+
+    setSubmittingWfh(true);
+    try {
+      await wfhApi.applyWfh(wfhFromDate, wfhToDate, wfhReason);
+      showToast('WFH Request Submitted', `WFH application for ${wfhFromDate} to ${wfhToDate} forwarded to reporting authority.`, 'success');
+      setShowWfhModal(false);
+      setWfhReason('');
+    } catch (err: any) {
+      showToast('Submission Failed', err.message || 'Could not submit WFH request', 'error');
+    } finally {
+      setSubmittingWfh(false);
+    }
+  };
+
+  const upcomingHolidays = holidays
+    .filter(h => h.holidayDate >= todayStr)
+    .sort((a, b) => a.holidayDate.localeCompare(b.holidayDate))
+    .slice(0, 8);
+
   return (
     <div className="px-4 sm:px-8 py-6 sm:py-8 max-w-7xl mx-auto space-y-6">
+      {/* Mandatory Sign-out Banner */}
+      {unclosedPunch && (
+        <div className="p-4 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 text-amber-900 dark:text-amber-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0" />
+            <div>
+              <span className="font-bold text-sm">Action Required — Unclosed Punch:</span>
+              <p className="mt-0.5">
+                You did not record punch-out on <strong>{formatDate(unclosedPunch.workDate)}</strong>. Company policy requires submitting an attendance regularization request before punching in on subsequent days.
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => {
+              setSelectedDay({
+                dateStr: unclosedPunch.workDate,
+                record: unclosedPunch,
+                isSunday: false,
+                isFuture: false,
+                category: 'ABSENT',
+                statusLabel: 'Missed Punch-out'
+              });
+              setShowRegModal(true);
+            }}
+            className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white font-semibold rounded-lg shrink-0 transition"
+          >
+            Regularize {formatDate(unclosedPunch.workDate)}
+          </button>
+        </div>
+      )}
+
       {/* Header & Controls */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-1">
         <div>
@@ -166,25 +237,41 @@ export const MyAttendance: React.FC = () => {
           </p>
         </div>
 
-        {/* Month Selector */}
-        <div className="flex items-center gap-2">
+        {/* Action Controls */}
+        <div className="flex items-center gap-3">
           <button
-            onClick={handlePrevMonth}
-            className="p-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition-colors"
-            title="Previous Month"
+            onClick={() => {
+              setWfhFromDate(getTodayIsoString());
+              setWfhToDate(getTodayIsoString());
+              setWfhReason('');
+              setShowWfhModal(true);
+            }}
+            className="px-3.5 py-2 text-xs font-semibold rounded-lg bg-purple-50 text-purple-700 dark:bg-purple-950/50 dark:text-purple-300 border border-purple-200 dark:border-purple-800 hover:bg-purple-100 transition flex items-center gap-1.5"
           >
-            <ChevronLeft className="w-4 h-4" />
+            <Home className="w-3.5 h-3.5" />
+            Apply for WFH
           </button>
-          <div className="px-4 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 font-bold text-xs text-slate-800 dark:text-slate-200 min-w-36 text-center border border-slate-200/60 dark:border-slate-700/60">
-            {getMonthName(month)} {year}
+
+          {/* Month Selector */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handlePrevMonth}
+              className="p-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition-colors"
+              title="Previous Month"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <div className="px-4 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 font-bold text-xs text-slate-800 dark:text-slate-200 min-w-36 text-center border border-slate-200/60 dark:border-slate-700/60">
+              {getMonthName(month)} {year}
+            </div>
+            <button
+              onClick={handleNextMonth}
+              className="p-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition-colors"
+              title="Next Month"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
           </div>
-          <button
-            onClick={handleNextMonth}
-            className="p-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition-colors"
-            title="Next Month"
-          >
-            <ChevronRight className="w-4 h-4" />
-          </button>
         </div>
       </div>
 
@@ -635,6 +722,121 @@ export const MyAttendance: React.FC = () => {
                 className="px-4 py-2 text-xs font-semibold rounded-lg bg-teal-700 text-white hover:bg-teal-800 disabled:opacity-50"
               >
                 {submittingReg ? 'Submitting...' : 'Submit Request'}
+              </button>
+            </div>
+          </form>
+        </Modal>
+      )}
+
+      {/* Upcoming Company Holidays Section */}
+      <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-5 shadow-xs space-y-4">
+        <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+            <h2 className="text-sm font-bold text-slate-900 dark:text-white">
+              Upcoming Company Holidays (2026)
+            </h2>
+          </div>
+          <span className="text-xs text-slate-500">
+            {upcomingHolidays.length} upcoming gazetted holidays
+          </span>
+        </div>
+
+        {upcomingHolidays.length === 0 ? (
+          <p className="text-xs text-slate-500 text-center py-4">No upcoming holidays remaining in the calendar.</p>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+            {upcomingHolidays.map(h => {
+              const d = new Date(h.holidayDate + 'T00:00:00');
+              return (
+                <div
+                  key={h.id}
+                  className="p-3 rounded-lg border border-purple-100 dark:border-purple-900/50 bg-purple-50/40 dark:bg-purple-950/20 flex flex-col justify-between"
+                >
+                  <div>
+                    <span className="text-xs font-bold text-purple-950 dark:text-purple-200 block truncate">
+                      {h.name}
+                    </span>
+                    <span className="text-[11px] text-slate-500 font-mono mt-0.5 block">
+                      {formatDate(h.holidayDate)} ({d.toLocaleDateString('en-US', { weekday: 'short' })})
+                    </span>
+                  </div>
+                  <div className="mt-2.5 flex items-center justify-between">
+                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900/60 dark:text-purple-300">
+                      Mandatory Paid Holiday
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* WFH Advance Application Modal */}
+      {showWfhModal && (
+        <Modal
+          isOpen={showWfhModal}
+          onClose={() => setShowWfhModal(false)}
+          title="Apply for Work From Home (WFH)"
+          subtitle="Advance WFH approval from your Reporting Authority is required for attendance credit."
+        >
+          <form onSubmit={handleWfhSubmit} className="space-y-4 text-xs">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block font-semibold text-slate-700 dark:text-slate-300 uppercase mb-1">
+                  From Date *
+                </label>
+                <input
+                  type="date"
+                  value={wfhFromDate}
+                  onChange={e => setWfhFromDate(e.target.value)}
+                  required
+                  className="w-full text-xs rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white p-2.5"
+                />
+              </div>
+              <div>
+                <label className="block font-semibold text-slate-700 dark:text-slate-300 uppercase mb-1">
+                  To Date *
+                </label>
+                <input
+                  type="date"
+                  value={wfhToDate}
+                  onChange={e => setWfhToDate(e.target.value)}
+                  required
+                  className="w-full text-xs rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white p-2.5"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block font-semibold text-slate-700 dark:text-slate-300 uppercase mb-1">
+                Reason for WFH *
+              </label>
+              <textarea
+                rows={3}
+                value={wfhReason}
+                onChange={e => setWfhReason(e.target.value)}
+                placeholder="Reason for remote work (e.g. personal exigency, client offsite coordination)..."
+                required
+                className="w-full text-xs rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white p-2.5"
+              />
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowWfhModal(false)}
+                className="px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-100 rounded-lg"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={submittingWfh}
+                className="px-4 py-2 text-xs font-semibold text-white bg-purple-600 hover:bg-purple-700 rounded-lg shadow-sm"
+              >
+                {submittingWfh ? 'Submitting...' : 'Submit WFH Application'}
               </button>
             </div>
           </form>
