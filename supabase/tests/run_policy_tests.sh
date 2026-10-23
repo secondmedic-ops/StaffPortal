@@ -31,13 +31,10 @@ expect_val()  { out=$(as "$1" "$2" | tail -1); if [ "$out" == "$3" ]; then echo 
 $P -c "insert into leave_requests(id, employee_id, leave_type_id, from_date, to_date, total_days, current_approver_id) values (100,3,1,'2026-10-20','2026-10-25',5,2),(101,3,1,'2026-11-02','2026-11-02',1,2)"
 $P -c "insert into attendance_regularizations(id, employee_id, work_date, requested_in, requested_out, reason, approver_id) values (200,3,'2026-10-01','09:30','18:30','forgot',2),(201,3,'2026-10-02','09:30','18:30','forgot',2)"
 
-echo "== Leave approvals follow the reporting line =="
+echo "== Leave approvals follow the reporting line (single-level) =="
 expect_blocked 3 "update leave_requests set status='APPROVED' where id=100" "Nurse cannot approve own leave"
-expect_blocked 1 "update leave_requests set status='APPROVED' where id=100" "CEO (not current approver, not HR) cannot jump the queue"
 expect_blocked 7 "update leave_requests set status='APPROVED' where id=100" "Unrelated IT staff cannot approve"
-expect_ok   2 "update leave_requests set current_level=2, current_approver_id=1 where id=100" "Manager (L1) approves & forwards to skip-level"
-expect_blocked 2 "update leave_requests set status='APPROVED' where id=100" "Manager can no longer act once forwarded"
-expect_ok   1 "update leave_requests set status='APPROVED' where id=100" "CEO (L2 skip-level) gives final approval"
+expect_ok   2 "update leave_requests set status='APPROVED' where id=100" "Manager (reporting authority) directly approves leave"
 expect_blocked 1 "update leave_requests set status='REJECTED' where id=100" "Closed request cannot be re-actioned"
 expect_ok   3 "update leave_requests set status='WITHDRAWN' where id=101" "Employee can withdraw own pending leave"
 
@@ -175,6 +172,52 @@ expect_blocked 8 "update role_proposals set status='APPROVED' where id=90" "Dire
 
 echo "== Leave balance trigger =="
 expect_val 5 "select reserved||'/'||used from leave_balances where fy_year='2026-2027' and leave_type_id=1" "0/5" "Approved 5 days used, withdrawn day released (latest FY row)"
+
+
+
+echo "== Branch master & geofencing =="
+expect_ok   3 "select count(*) from branches" "All staff can read branches"
+expect_fail 3 "insert into branches(name, code) values ('Fake Branch', 'FB')" "Employee cannot add branch"
+expect_ok   4 "insert into branches(name, code, latitude, longitude) values ('Delhi Branch', 'DEL', 28.6139, 77.2090)" "HR can add branch"
+
+echo "== WFH Requests =="
+expect_ok   3 "insert into wfh_requests(id, employee_id, from_date, to_date, reason) values (1,3,'2026-11-01','2026-11-02','Home repair')" "Employee applies for WFH"
+expect_fail 7 "update wfh_requests set status='APPROVED' where id=1" "Unrelated staff cannot approve WFH"
+expect_fail 3 "update wfh_requests set status='APPROVED' where id=1" "Employee cannot approve own WFH"
+expect_ok   2 "update wfh_requests set status='APPROVED' where id=1" "Reporting manager approves WFH"
+
+echo "== Employee documents (HR only) =="
+expect_fail 3 "insert into employee_documents(employee_id, category, file_path, name) values (3,'ID proof','id.pdf','ID')" "Employee cannot upload to employee_documents directly"
+expect_fail 3 "select count(*) from employee_documents" "Employee cannot read employee_documents table"
+expect_ok   4 "insert into employee_documents(id, employee_id, category, file_path, name) values (1,3,'ID proof','id.pdf','ID')" "HR uploads document"
+expect_ok   4 "select count(*) from employee_documents" "HR reads employee documents"
+
+echo "== Profile change requests =="
+expect_ok   3 "insert into profile_change_requests(id, employee_id, field, old_value, new_value, reason) values (1,3,'full_name','Nurse','Nurse Kumar','Name change')" "Employee submits name change"
+expect_fail 3 "update profile_change_requests set status='APPROVED' where id=1" "Employee cannot approve own name change"
+expect_ok   4 "update profile_change_requests set status='APPROVED' where id=1" "HR approves name change"
+expect_val  3 "select full_name from employees where id=3" "Nurse Kumar" "Employee full_name updated upon HR approval"
+
+echo "== Resignations & F&F settlement =="
+expect_ok   3 "insert into resignations(id, employee_id, requested_lwd, reason) values (1,3,'2026-12-01','Career growth')" "Employee submits resignation"
+expect_blocked 7 "update resignations set status='ACCEPTED_BY_MANAGER' where id=1" "Unrelated staff cannot accept resignation"
+expect_ok   2 "update resignations set status='ACCEPTED_BY_MANAGER' where id=1" "Reporting manager accepts resignation"
+expect_ok   4 "update resignations set status='ACCEPTED', confirmed_lwd='2026-12-01' where id=1" "HR accepts resignation and confirms LWD"
+expect_val  3 "select status from employees where id=3" "NOTICE_PERIOD" "Employee status updated to NOTICE_PERIOD"
+
+echo "== F&F Settlements (Maker-Checker Accounts / CEO) =="
+expect_ok   5 "insert into fnf_settlements(id, employee_id, last_working_day, payable_days, net_payable) values (1,3,'2026-12-01',15,25000)" "Accounts prepares F&F"
+expect_fail 4 "update fnf_settlements set status='APPROVED' where id=1" "HR cannot approve F&F"
+expect_fail 5 "update fnf_settlements set status='APPROVED' where id=1" "Accounts cannot approve F&F"
+expect_val  3 "select count(*) from fnf_settlements" "0" "Employee cannot see draft F&F"
+expect_ok   1 "update fnf_settlements set status='APPROVED' where id=1" "CEO approves F&F settlement"
+expect_val  3 "select count(*) from fnf_settlements" "1" "Employee sees approved F&F"
+
+echo "== Branch photo gallery =="
+expect_ok   3 "select count(*) from gallery_albums" "All staff can view gallery albums"
+expect_fail 3 "insert into gallery_albums(branch_id, title, event_type) values (1,'Diwali','FESTIVAL')" "Regular staff cannot create album"
+expect_ok   4 "insert into gallery_albums(id, branch_id, title, event_type) values (1,1,'Diwali 2026','FESTIVAL')" "HR creates album"
+expect_ok   3 "select count(*) from gallery_albums" "Staff sees created album"
 
 
 psql "$ADMIN" -qc "drop database if exists $TEST_DB" >/dev/null
