@@ -187,6 +187,7 @@ export function mapAttendanceRegularization(row: any): AttendanceRegularization 
     status: row.status,
     approverId: row.approver_id ?? undefined,
     approverName: row.approver?.full_name ?? undefined,
+    approverRemarks: row.approver_remarks ?? undefined,
     actedAt: row.acted_at ?? undefined
   };
 }

@@ -503,6 +503,7 @@ export interface Database {
           reason: string;
           status: 'PENDING' | 'APPROVED' | 'REJECTED';
           approver_id: number | null;
+          approver_remarks: string | null;
           acted_at: string | null;
           created_at?: string;
         };
@@ -516,6 +517,7 @@ export interface Database {
           reason: string;
           status?: 'PENDING' | 'APPROVED' | 'REJECTED';
           approver_id?: number | null;
+          approver_remarks?: string | null;
           acted_at?: string | null;
           created_at?: string;
         };
@@ -529,6 +531,7 @@ export interface Database {
           reason?: string;
           status?: 'PENDING' | 'APPROVED' | 'REJECTED';
           approver_id?: number | null;
+          approver_remarks?: string | null;
           acted_at?: string | null;
           created_at?: string;
         };
