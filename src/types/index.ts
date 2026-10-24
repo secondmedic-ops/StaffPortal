@@ -222,7 +222,11 @@ export interface AttendanceRegularization {
   status: 'PENDING' | 'APPROVED' | 'REJECTED';
   approverId?: number;
   approverName?: string;
+  approverRemarks?: string;
   actedAt?: string;
+  /** Punches already on record for the work date (shown to the approver). */
+  currentPunchIn?: string;
+  currentPunchOut?: string;
 }
 
 export interface MonthlyAttendanceSummary {

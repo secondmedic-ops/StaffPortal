@@ -65,6 +65,31 @@ export function formatTime(val?: string | Date | null): string {
   return `${String(hours).padStart(2, '0')}:${minutes} ${ampm}`;
 }
 
+/**
+ * Normalise a clock time to 24-hour "HH:MM".
+ * Accepts "18:00", "9:30", "06:30 PM", "6:30pm" or an ISO timestamp; returns null if unreadable.
+ */
+export function toClockHm(val?: string | null): string | null {
+  if (!val) return null;
+  const v = val.trim();
+  if (v.includes('T')) {
+    const d = new Date(v);
+    return isNaN(d.getTime()) ? null : `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+  }
+  const m = v.match(/^(\d{1,2}):(\d{2})(?::\d{2})?\s*([ap]\.?m\.?)?$/i);
+  if (!m) return null;
+  let h = Number(m[1]);
+  const min = Number(m[2]);
+  const meridiem = m[3]?.[0].toLowerCase();
+  if (meridiem) {
+    if (h < 1 || h > 12) return null;
+    if (meridiem === 'p' && h !== 12) h += 12;
+    if (meridiem === 'a' && h === 12) h = 0;
+  }
+  if (h > 23 || min > 59) return null;
+  return `${String(h).padStart(2, '0')}:${String(min).padStart(2, '0')}`;
+}
+
 export function getMonthName(monthNumber: number, short = false): string {
   const idx = Math.max(0, Math.min(11, monthNumber - 1));
   return short ? MONTH_NAMES_SHORT[idx] : MONTH_NAMES_FULL[idx];

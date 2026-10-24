@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { meApi } from '../../api';
-import { AttendanceRecord, Holiday, LeaveRequest } from '../../types';
-import { formatTime, formatDate, getMonthName, getTodayIsoString } from '../../utils/dateUtils';
+import { AttendanceRecord, AttendanceRegularization, Holiday, LeaveRequest } from '../../types';
+import { SHIFT_POLICY } from '../../config/policy';
+import { formatTime, formatDate, getMonthName, getTodayIsoString, toClockHm } from '../../utils/dateUtils';
 import {
   ChevronLeft,
   ChevronRight,
@@ -41,19 +42,22 @@ export const MyAttendance: React.FC = () => {
 
   // Regularization modal state
   const [showRegModal, setShowRegModal] = useState(false);
-  const [regInTime, setRegInTime] = useState('09:30 AM');
-  const [regOutTime, setRegOutTime] = useState('06:30 PM');
+  const [regInTime, setRegInTime] = useState<string>(SHIFT_POLICY.startTime);
+  const [regOutTime, setRegOutTime] = useState<string>(SHIFT_POLICY.endTime);
+  const [myRegs, setMyRegs] = useState<AttendanceRegularization[]>([]);
   const [regReason, setRegReason] = useState('');
   const [submittingReg, setSubmittingReg] = useState(false);
 
   const fetchAttendance = async () => {
     try {
       setLoading(true);
-      const [att, cal] = await Promise.all([
+      const [att, cal, regs] = await Promise.all([
         meApi.getAttendance(month, year),
-        meApi.getCalendar(month, year)
+        meApi.getCalendar(month, year),
+        meApi.getMyRegularizations(month, year).catch(() => [] as AttendanceRegularization[])
       ]);
       setAttendanceList(att);
+      setMyRegs(regs);
       setHolidays(cal.holidays || []);
       setMyLeaves(cal.myLeaves || []);
     } catch (err: any) {
@@ -124,11 +128,26 @@ export const MyAttendance: React.FC = () => {
     }
   }
 
+  const approverLabel = currentUser?.managerName || 'HR';
+  const dayRegs = selectedDay ? myRegs.filter(r => r.workDate === selectedDay.dateStr) : [];
+  const hasPendingReg = dayRegs.some(r => r.status === 'PENDING');
+
+  const openRegModal = () => {
+    const rec = selectedDay?.record;
+    setRegInTime((rec?.punchIn && toClockHm(rec.punchIn)) || SHIFT_POLICY.startTime);
+    setRegOutTime((rec?.punchOut && toClockHm(rec.punchOut)) || SHIFT_POLICY.endTime);
+    setShowRegModal(true);
+  };
+
   const submitRegularization = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedDay) return;
     if (!regReason.trim()) {
       showToast('Validation Error', 'Please provide a valid reason for regularization', 'error');
+      return;
+    }
+    if (regOutTime <= regInTime) {
+      showToast('Validation Error', 'Punch-out time must be after punch-in time', 'error');
       return;
     }
 
@@ -142,10 +161,11 @@ export const MyAttendance: React.FC = () => {
       });
       showToast(
         'Regularization Requested',
-        `Request submitted to reporting manager for ${formatDate(selectedDay.dateStr)}`,
+        `Request sent to ${approverLabel} for ${formatDate(selectedDay.dateStr)}`,
         'success'
       );
       setShowRegModal(false);
+      setSelectedDay(null);
       setRegReason('');
       fetchAttendance();
     } catch (err: any) {
@@ -316,6 +336,7 @@ export const MyAttendance: React.FC = () => {
               return (
                 <div
                   key={dateStr}
+                  data-testid={`day-${dateStr}`}
                   onClick={() =>
                     setSelectedDay({
                       dateStr,
@@ -543,15 +564,37 @@ export const MyAttendance: React.FC = () => {
               </div>
             )}
 
-            {/* Action to regularize (available on Absent days or working records) */}
-            {(selectedDay.category === 'ABSENT' || selectedDay.category === 'HALF_DAY' || selectedDay.record) && (
+            {/* Time update requests already raised for this day */}
+            {dayRegs.map(r => (
+              <div
+                key={r.id}
+                data-testid={`my-reg-${r.status.toLowerCase()}`}
+                className={`p-3 rounded-lg border text-xs space-y-1 ${
+                  r.status === 'PENDING'
+                    ? 'border-amber-200 dark:border-amber-800 bg-amber-50/70 dark:bg-amber-950/40 text-amber-900 dark:text-amber-200'
+                    : r.status === 'APPROVED'
+                    ? 'border-emerald-200 dark:border-emerald-800 bg-emerald-50/70 dark:bg-emerald-950/40 text-emerald-900 dark:text-emerald-200'
+                    : 'border-rose-200 dark:border-rose-900 bg-rose-50/70 dark:bg-rose-950/40 text-rose-900 dark:text-rose-200'
+                }`}
+              >
+                <div className="font-bold">
+                  Time update {toClockHm(r.requestedIn) ?? r.requestedIn}–{toClockHm(r.requestedOut) ?? r.requestedOut}:{' '}
+                  {r.status === 'PENDING' ? `waiting for ${r.approverName || approverLabel}` : `${r.status.toLowerCase()}${r.approverName ? ` by ${r.approverName}` : ''}`}
+                </div>
+                {r.approverRemarks && <p className="text-[12px]">Remarks: {r.approverRemarks}</p>}
+              </div>
+            ))}
+
+            {/* Action to regularize (past/today working days only) */}
+            {!selectedDay.isFuture && (selectedDay.category === 'ABSENT' || selectedDay.category === 'HALF_DAY' || selectedDay.record) && (
               <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-3">
                 <span className="text-[12.5px] text-slate-500 dark:text-slate-400">
-                  Missed a punch or network issue?
+                  {hasPendingReg ? 'Your time update is waiting for approval.' : 'Missed a punch or network issue?'}
                 </span>
                 <button
-                  onClick={() => setShowRegModal(true)}
-                  className="px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-teal-700 hover:bg-teal-800 text-white transition-colors"
+                  onClick={openRegModal}
+                  disabled={hasPendingReg}
+                  className="px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-teal-700 hover:bg-teal-800 text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Request Regularization
                 </button>
@@ -567,44 +610,45 @@ export const MyAttendance: React.FC = () => {
           isOpen={showRegModal}
           onClose={() => setShowRegModal(false)}
           title="Attendance Regularization Request"
-          subtitle={`Date: ${formatDate(selectedDay.dateStr)} • Forwarded to Reporting Authority`}
+          subtitle={`Date: ${formatDate(selectedDay.dateStr)} • Sent to ${approverLabel}`}
         >
           <form onSubmit={submitRegularization} className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                <label htmlFor="reg-in-time" className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                   Expected In Time
                 </label>
                 <input
-                  type="text"
+                  id="reg-in-time"
+                  type="time"
                   value={regInTime}
                   onChange={e => setRegInTime(e.target.value)}
                   className="w-full text-xs p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-teal-700 font-mono"
-                  placeholder="09:30 AM"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                <label htmlFor="reg-out-time" className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                   Expected Out Time
                 </label>
                 <input
-                  type="text"
+                  id="reg-out-time"
+                  type="time"
                   value={regOutTime}
                   onChange={e => setRegOutTime(e.target.value)}
                   className="w-full text-xs p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-teal-700 font-mono"
-                  placeholder="06:30 PM"
                   required
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+              <label htmlFor="reg-reason" className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                 Reason for Missed Punch / Discrepancy <span className="text-rose-500">*</span>
               </label>
               <textarea
+                id="reg-reason"
                 rows={3}
                 value={regReason}
                 onChange={e => setRegReason(e.target.value)}
@@ -617,7 +661,7 @@ export const MyAttendance: React.FC = () => {
             <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 text-[12.5px] text-amber-800 dark:text-amber-300 flex items-start gap-2">
               <HelpCircle className="w-4 h-4 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
               <span>
-                Regularization requests are audited and sent directly to your Reporting Authority ({currentUser?.managerName || 'Manager'}). Approved requests adjust your payable days for payroll.
+                Regularization requests are audited and sent directly to {currentUser?.managerName ? `your reporting manager (${currentUser.managerName})` : 'HR (you have no reporting manager)'}. Approved times replace your punches for that day and count towards payroll.
               </span>
             </div>
 

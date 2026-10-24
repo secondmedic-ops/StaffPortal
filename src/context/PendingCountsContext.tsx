@@ -56,12 +56,21 @@ export const PendingCountsProvider: React.FC<{ children: React.ReactNode }> = ({
       const head = { count: 'exact' as const, head: true };
 
       const ownerRoles = roles.filter(r => ['HR', 'IT', 'ACCOUNTS'].includes(r));
-      const [leaveMine, leaveHr, regs, it, revisions, assets, tasks, claims, payroll] = await Promise.all([
+      // Same rule as the time-update queue: addressed to me, or raised by a direct report.
+      let regsMine: PromiseLike<number> | number = 0;
+      if (isManager) {
+        const { data: reports } = await supabase.from('employees').select('id').eq('manager_id', me);
+        const ids = (reports ?? []).map(r => r.id);
+        const pendingRegs = supabase.from('attendance_regularizations').select('id', head).eq('status', 'PENDING').neq('employee_id', me);
+        regsMine = safeCount(ids.length > 0 ? pendingRegs.or(`approver_id.eq.${me},employee_id.in.(${ids.join(',')})`) : pendingRegs.eq('approver_id', me));
+      }
+      const [leaveMine, leaveHr, regs, regsHr, it, revisions, assets, tasks, claims, payroll] = await Promise.all([
         isManager || isHr
           ? safeCount(supabase.from('leave_requests').select('id', head).eq('status', 'PENDING').eq('current_approver_id', me))
           : 0,
         isHr ? safeCount(supabase.from('leave_requests').select('id', head).eq('status', 'PENDING').is('current_approver_id', null)) : 0,
-        isManager ? safeCount(supabase.from('attendance_regularizations').select('id', head).eq('status', 'PENDING').eq('approver_id', me)) : 0,
+        regsMine,
+        isHr ? safeCount(supabase.from('attendance_regularizations').select('id', head).eq('status', 'PENDING').is('approver_id', null)) : 0,
         isIt ? safeCount(supabase.from('it_requests').select('id', head).in('status', ['OPEN', 'IN_PROGRESS'])) : 0,
         isAccounts || isCeo ? safeCount(supabase.from('salary_revisions').select('id', head).eq('status', 'PROPOSED').neq('proposed_by', me)) : 0,
         safeCount(supabase.from('assets').select('id', head).eq('assigned_to', me).is('acknowledged_at', null)),
@@ -80,7 +89,7 @@ export const PendingCountsProvider: React.FC<{ children: React.ReactNode }> = ({
 
       const nextCounts: PendingCounts = {
         leaveApprovals: leaveMine + leaveHr,
-        regularizations: regs,
+        regularizations: regs + regsHr,
         itRequests: it,
         salaryRevisions: revisions,
         myUnacknowledgedAssets: assets,

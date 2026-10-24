@@ -11,6 +11,7 @@ import {
   mapKpiDefinition
 } from './mappers';
 import { HOLIDAY_TEMPLATES } from '../config/holidayTemplates';
+import { toClockHm, getTodayIsoString } from '../utils/dateUtils';
 import type {
   AttendanceRecord,
   AttendanceRegularization,
@@ -44,6 +45,22 @@ export const meApi = {
 
     if (error) throw new Error(`Failed to load attendance records: ${error.message}`);
     return (data ?? []).map(mapAttendanceRecord);
+  },
+
+  /** My time-update requests for a month, newest first. */
+  async getMyRegularizations(month: number, year: number): Promise<AttendanceRegularization[]> {
+    const emp = await getCurrentEmployee();
+    const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
+    const { data, error } = await supabase
+      .from('attendance_regularizations')
+      .select('*, approver:employees!attendance_regularizations_approver_id_fkey(full_name)')
+      .eq('employee_id', emp.id)
+      .gte('work_date', startDate)
+      .lte('work_date', monthBounds(year, month).end)
+      .order('created_at', { ascending: false });
+
+    if (error) throw new Error(`Failed to load time update requests: ${error.message}`);
+    return (data ?? []).map(mapAttendanceRegularization);
   },
 
   async punch(data: { type: 'IN' | 'OUT'; lat?: number; lng?: number; source?: string }): Promise<AttendanceRecord> {
@@ -161,7 +178,23 @@ export const meApi = {
     requestedOut: string;
     reason: string;
   }): Promise<AttendanceRegularization> {
+    const requestedIn = toClockHm(data.requestedIn);
+    const requestedOut = toClockHm(data.requestedOut);
+    if (!requestedIn || !requestedOut) throw new Error('Enter valid punch-in and punch-out times.');
+    if (requestedOut <= requestedIn) throw new Error('Punch-out time must be after punch-in time.');
+    if (data.workDate > getTodayIsoString()) throw new Error('You cannot request a time update for a future date.');
+    if (!data.reason.trim()) throw new Error('Please give a reason for the time update.');
+
     const emp = await getCurrentEmployee();
+
+    const { data: pending } = await supabase
+      .from('attendance_regularizations')
+      .select('id')
+      .eq('employee_id', emp.id)
+      .eq('work_date', data.workDate)
+      .eq('status', 'PENDING')
+      .limit(1);
+    if (pending && pending.length > 0) throw new Error('A time update for this date is already waiting for approval.');
 
     const { data: att } = await supabase
       .from('attendance_records')
@@ -176,9 +209,9 @@ export const meApi = {
         attendance_id: att?.id ?? null,
         employee_id: emp.id,
         work_date: data.workDate,
-        requested_in: data.requestedIn,
-        requested_out: data.requestedOut,
-        reason: data.reason,
+        requested_in: requestedIn,
+        requested_out: requestedOut,
+        reason: data.reason.trim(),
         status: 'PENDING',
         approver_id: emp.manager_id ?? null
       })

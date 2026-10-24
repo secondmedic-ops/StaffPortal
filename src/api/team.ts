@@ -19,20 +19,6 @@ import type {
   KpiDefinition
 } from '../types';
 
-/** Hours between two "HH:MM" (or ISO) times, rounded to 0.1h. */
-function hoursBetween(from: string, to: string): number | null {
-  const toMinutes = (v: string) => {
-    if (v.includes('T')) {
-      const d = new Date(v);
-      return d.getHours() * 60 + d.getMinutes();
-    }
-    const [h, m] = v.split(':').map(Number);
-    return h * 60 + (m || 0);
-  };
-  const diff = toMinutes(to) - toMinutes(from);
-  return Number.isFinite(diff) && diff > 0 ? Number((diff / 60).toFixed(1)) : null;
-}
-
 async function getCurrentEmployee() {
   return getSessionEmployee();
 }
@@ -237,40 +223,72 @@ export const teamApi = {
     return {};
   },
 
-  async getPendingRegularizations(): Promise<AttendanceRegularization[]> {
+  /**
+   * Time-update (regularization) requests waiting on the signed-in user.
+   * MINE      — requests addressed to me or raised by my direct reports.
+   * HR_QUEUE  — requests with no approver (employee has no reporting manager).
+   * ALL       — every pending request (HR override view).
+   */
+  async getPendingRegularizations(scope: 'MINE' | 'HR_QUEUE' | 'ALL' = 'MINE'): Promise<AttendanceRegularization[]> {
     const emp = await getCurrentEmployee();
-    const { data: members } = await supabase
-      .from('employees')
-      .select('id')
-      .eq('manager_id', emp.id);
-
-    const directReportIds = (members ?? []).map(m => m.id);
 
     let query = supabase
       .from('attendance_regularizations')
       .select('*, employee:employees!attendance_regularizations_employee_id_fkey(emp_code, full_name), approver:employees!attendance_regularizations_approver_id_fkey(full_name)')
-      .eq('status', 'PENDING');
+      .eq('status', 'PENDING')
+      .neq('employee_id', emp.id);
 
-    if (directReportIds.length > 0) {
-      query = query.or(`approver_id.eq.${emp.id},employee_id.in.(${directReportIds.join(',')})`);
-    } else {
-      query = query.eq('approver_id', emp.id);
+    if (scope === 'MINE') {
+      const { data: members } = await supabase.from('employees').select('id').eq('manager_id', emp.id);
+      const directReportIds = (members ?? []).map(m => m.id);
+      query = directReportIds.length > 0
+        ? query.or(`approver_id.eq.${emp.id},employee_id.in.(${directReportIds.join(',')})`)
+        : query.eq('approver_id', emp.id);
+    } else if (scope === 'HR_QUEUE') {
+      query = query.is('approver_id', null);
     }
 
-    const { data, error } = await query;
+    const { data, error } = await query.order('work_date', { ascending: true });
     if (error) throw new Error(`Failed to load pending regularizations: ${error.message}`);
-    return (data ?? []).map(mapAttendanceRegularization);
+    const regs = (data ?? []).map(mapAttendanceRegularization);
+    if (regs.length === 0) return regs;
+
+    // Show the approver what is on record today next to what is being requested.
+    const { data: punches } = await supabase
+      .from('attendance_records')
+      .select('employee_id, work_date, punch_in, punch_out')
+      .in('employee_id', [...new Set(regs.map(r => r.employeeId))])
+      .in('work_date', [...new Set(regs.map(r => r.workDate))]);
+    const punchOf = new Map((punches ?? []).map(p => [`${p.employee_id}|${p.work_date}`, p]));
+
+    return regs.map(r => {
+      const p = punchOf.get(`${r.employeeId}|${r.workDate}`);
+      return p ? { ...r, currentPunchIn: p.punch_in ?? undefined, currentPunchOut: p.punch_out ?? undefined } : r;
+    });
   },
 
-  async actionRegularization(regId: number, action: 'APPROVE' | 'REJECT', opts: { asHr?: boolean } = {}): Promise<void> {
+  /**
+   * Approve or reject a time update. On approval the database writes the requested
+   * times onto that day's attendance (apply_approved_regularization trigger).
+   */
+  async actionRegularization(
+    regId: number,
+    action: 'APPROVE' | 'REJECT',
+    remarks?: string,
+    opts: { asHr?: boolean } = {}
+  ): Promise<void> {
+    if (action === 'REJECT' && !remarks?.trim()) {
+      throw new Error('Remarks are required when rejecting a time update.');
+    }
     const emp = await getCurrentEmployee();
 
     const { data: pending, error: pendingError } = await supabase
       .from('attendance_regularizations')
-      .select('employee_id, approver_id, employee:employees!attendance_regularizations_employee_id_fkey(manager_id)')
+      .select('employee_id, approver_id, status, employee:employees!attendance_regularizations_employee_id_fkey(manager_id)')
       .eq('id', regId)
       .single();
     if (pendingError || !pending) throw new Error(`Regularization not found: ${pendingError?.message}`);
+    if (pending.status !== 'PENDING') throw new Error(`This time update is already ${pending.status.toLowerCase()}.`);
     if (pending.employee_id === emp.id) throw new Error('You cannot approve your own attendance regularization.');
     const isReportingManager =
       pending.approver_id === emp.id || (pending as any).employee?.manager_id === emp.id;
@@ -283,43 +301,16 @@ export const teamApi = {
       .update({
         status: action === 'APPROVE' ? 'APPROVED' : 'REJECTED',
         approver_id: emp.id,
+        approver_remarks: remarks?.trim() || null,
         acted_at: new Date().toISOString()
       })
       .eq('id', regId)
-      .select()
-      .single();
+      .eq('status', 'PENDING')
+      .select('id')
+      .maybeSingle();
 
-    if (regError || !reg) throw new Error(`Failed to action regularization: ${regError?.message}`);
-
-    if (action === 'APPROVE') {
-      // Apply the approved times to the day's attendance so payroll uses them.
-      // Days with no punch at all (forgot to punch in) get a record created.
-      const toIso = (t: string) => (t.includes('T') ? t : new Date(`${reg.work_date}T${t.slice(0, 5)}:00`).toISOString());
-      const fields = {
-        punch_in: toIso(reg.requested_in),
-        punch_out: toIso(reg.requested_out),
-        worked_hours: hoursBetween(reg.requested_in, reg.requested_out),
-        is_regularized: true,
-        status: 'PRESENT' as const,
-        remarks: `Time updated, approved by ${emp.full_name}: ${reg.reason}`
-      };
-
-      let attendanceId = reg.attendance_id;
-      if (!attendanceId) {
-        const { data: existing } = await supabase
-          .from('attendance_records')
-          .select('id')
-          .eq('employee_id', reg.employee_id)
-          .eq('work_date', reg.work_date)
-          .maybeSingle();
-        attendanceId = existing?.id ?? null;
-      }
-
-      const { error: attError } = attendanceId
-        ? await supabase.from('attendance_records').update(fields).eq('id', attendanceId)
-        : await supabase.from('attendance_records').insert({ employee_id: reg.employee_id, work_date: reg.work_date, shift_id: 1, ...fields });
-      if (attError) throw new Error(`Request approved, but attendance not updated: ${attError.message}`);
-    }
+    if (regError) throw new Error(`Failed to action regularization: ${regError.message}`);
+    if (!reg) throw new Error('This time update was already actioned by someone else. Refresh the queue.');
   },
 
   async getTeamCalendar(month: number, year: number) {

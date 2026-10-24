@@ -115,6 +115,7 @@ export function buildNavGroups(a: NavAccess, c: PendingCounts): NavGroup[] {
         ...(!a.isManager
           ? [
               { id: 'team-approvals', label: 'HR leave queue', icon: CheckSquare, badge: n(c.leaveApprovals) },
+              { id: 'team-regularization', label: 'HR time updates', icon: Clock, badge: n(c.regularizations) },
               { id: 'team-holiday-work', label: 'Comp-off & OT claims', icon: CalendarHeart, badge: n(c.holidayWorkClaims) }
             ]
           : []),
